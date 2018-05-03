@@ -7,17 +7,21 @@ from torchvision import datasets, transforms
 from utils import net_measurer
 
 
-class Net(nn.Module):
+class MyNet(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super(MyNet, self).__init__()
+        self.first_conv_size = 40
+        self.second_conv_size = 80
+        self.last_mp_kernel_size = 2
+        self.feature_size = ((self.last_mp_kernel_size ** 2) ** 2) * self.second_conv_size
         self.features = nn.Sequential(
-            nn.Conv2d(1, 40, kernel_size=5),
+            nn.Conv2d(1, self.first_conv_size, kernel_size=5),
             nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(40, 80, kernel_size=5),
-            nn.MaxPool2d(kernel_size=2)
+            nn.Conv2d(self.first_conv_size, self.second_conv_size, kernel_size=5),
+            nn.MaxPool2d(kernel_size=self.last_mp_kernel_size)
         )
         self.classifier = nn.Sequential(
-            nn.Linear(1280, 100),
+            nn.Linear(self.feature_size, 100),
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(100, 50),
@@ -29,7 +33,7 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(-1, 1280)
+        x = x.view(-1, self.feature_size)
         return self.classifier(x)
 
 
@@ -50,7 +54,7 @@ def get_argparser():
                         help='disables CUDA training')
     parser.add_argument('-seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('-log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('-log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
     return parser
 
@@ -110,11 +114,11 @@ def test(model, test_loader, device):
 def run(args):
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     torch.manual_seed(args.seed)
-    device = torch.device("cuda" if use_cuda else "cpu")
-    model = Net().to(device)
+    device = torch.device('cuda' if use_cuda else 'cpu')
+    model = MyNet().to(device)
     train_loader, test_loader = get_data_loaders(use_cuda, args)
-    input_size = train_loader.dataset[0][0].size()
-    net_measurer.print_model_parm_flops(model, list(input_size))
+    input_shape = train_loader.dataset[0][0].size()
+    net_measurer.calc_model_flops_and_size(model, list(input_shape))
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, epoch, device, args)
         test(model, test_loader, device)

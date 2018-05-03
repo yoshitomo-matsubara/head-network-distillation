@@ -1,8 +1,33 @@
 import torch
+import matplotlib.pyplot as plt
+import numpy as np
 from torch.autograd import Variable
 
 
-def print_model_parm_flops(model, input_size):
+def plot_model_flops_and_size(total_flops, all_flops, all_bandwidth, all_layers):
+    print('Number of FLOPs: %.5fM' % (total_flops / 1e6))
+    print(all_flops)
+    print(all_bandwidth)
+    print(all_layers)
+    xs = list(range(len(all_layers)))
+    plt.semilogy(xs[1:], all_flops, label='network')
+    plt.xticks(xs, all_layers)
+    plt.xlabel('Layer')
+    plt.ylabel('FLOPS')
+    plt.legend()
+    plt.show()
+
+    all_bandwidth = all_bandwidth / (8 * (1024 ** 1))
+    plt.semilogy(xs, all_bandwidth, label='network')
+    plt.semilogy(xs, [all_bandwidth[0] for x in xs], '-', label='input')
+    plt.xticks(xs, all_layers)
+    plt.xlabel('Layer')
+    plt.ylabel('Size [KB]')
+    plt.legend()
+    plt.show()
+
+
+def calc_model_flops_and_size(model, input_shape):
     multiply_adds = False
     list_conv = list()
     list_linear = list()
@@ -10,6 +35,7 @@ def print_model_parm_flops(model, input_size):
     list_relu = list()
     list_pooling = list()
     all_flops = list()
+    all_bandwidth = list()
     all_layers = list()
 
     def conv_hook(self, input, output):
@@ -22,6 +48,7 @@ def print_model_parm_flops(model, input_size):
         flops = batch_size * params * output_height * output_width
         list_conv.append(flops)
         all_flops.append(flops)
+        all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('Conv2d')
 
     def linear_hook(self, input, output):
@@ -31,18 +58,21 @@ def print_model_parm_flops(model, input_size):
         flops = batch_size * (weight_ops + bias_ops)
         list_linear.append(flops)
         all_flops.append(flops)
+        all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('Linear')
 
     def bn_hook(self, input, output):
         flops = input[0].nelement()
         list_bn.append(flops)
         all_flops.append(flops)
+        all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('BatchNorm2d')
 
     def relu_hook(self, input, output):
         flops = input[0].nelement()
         list_relu.append(flops)
         all_flops.append(flops)
+        all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('ReLU')
 
     def pooling_hook(self, input, output):
@@ -54,6 +84,7 @@ def print_model_parm_flops(model, input_size):
         flops = batch_size * params * output_height * output_width
         list_pooling.append(flops)
         all_flops.append(flops)
+        all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('MaxPool2d')
 
     def move_next_layer(net):
@@ -77,11 +108,10 @@ def print_model_parm_flops(model, input_size):
             move_next_layer(child)
 
     move_next_layer(model)
-    input = Variable(torch.rand(input_size).unsqueeze(0), requires_grad=True)
+    all_bandwidth.append(np.prod(input_shape))
+    all_layers.append('Input')
+    input = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
     output = model(input)
-    print(len(list_conv), len(list_linear), len(list_bn), len(list_relu), len(list_pooling))
-    total_flops = (sum(list_conv) + sum(list_linear) + sum(list_bn) + sum(list_relu) + sum(list_pooling))
-    print('Number of FLOPs: %.5fM' % (total_flops / 1e6))
-    print(all_flops)
-    print(all_layers)
-    return total_flops, all_flops, all_layers
+    total_flops = sum(all_flops)
+    plot_model_flops_and_size(total_flops, np.array(all_flops), np.array(all_bandwidth), all_layers)
+    return total_flops, all_flops, all_bandwidth, all_layers
