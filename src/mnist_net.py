@@ -118,7 +118,7 @@ def run(args):
     model = MyNet().to(device)
     train_loader, test_loader = get_data_loaders(use_cuda, args)
     input_shape = train_loader.dataset[0][0].size()
-    net_measurer.calc_model_flops_and_size(model, list(input_shape))
+    net_measurer.calc_model_complexity_and_size(model, list(input_shape))
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, epoch, device, args)
         test(model, test_loader, device)

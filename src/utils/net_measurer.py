@@ -4,16 +4,16 @@ import numpy as np
 from torch.autograd import Variable
 
 
-def plot_model_flops_and_size(total_flops, all_flops, all_bandwidth, all_layers):
-    print('Number of FLOPs: %.5fM' % (total_flops / 1e6))
-    print(all_flops)
+def plot_model_complexity_and_size(total_op_size, all_op_sizes, all_bandwidth, all_layers):
+    print('Number of Operations: %.5fM' % (total_op_size / 1e6))
+    print(all_op_sizes)
     print(all_bandwidth)
     print(all_layers)
     xs = list(range(len(all_layers)))
-    plt.semilogy(xs[1:], all_flops, label='network')
-    plt.xticks(xs, all_layers)
+    plt.semilogy(xs[1:], all_op_sizes, label='network')
+    plt.xticks(xs[1:], all_layers[1:])
     plt.xlabel('Layer')
-    plt.ylabel('FLOPS')
+    plt.ylabel('Complexity')
     plt.legend()
     plt.show()
 
@@ -27,27 +27,27 @@ def plot_model_flops_and_size(total_flops, all_flops, all_bandwidth, all_layers)
     plt.show()
 
 
-def calc_model_flops_and_size(model, input_shape):
+def calc_model_complexity_and_size(model, input_shape):
     multiply_adds = False
     list_conv = list()
     list_linear = list()
     list_bn = list()
     list_relu = list()
     list_pooling = list()
-    all_flops = list()
+    all_op_sizes = list()
     all_bandwidth = list()
     all_layers = list()
 
     def conv_hook(self, input, output):
         batch_size, input_channels, input_height, input_width = input[0].size()
         output_channels, output_height, output_width = output[0].size()
-        kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups) * (
-            2 if multiply_adds else 1)
+        kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)\
+                     * (2 if multiply_adds else 1)
         bias_ops = 1 if self.bias is not None else 0
         params = output_channels * (kernel_ops + bias_ops)
-        flops = batch_size * params * output_height * output_width
-        list_conv.append(flops)
-        all_flops.append(flops)
+        op_size = batch_size * params * output_height * output_width
+        list_conv.append(op_size)
+        all_op_sizes.append(op_size)
         all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('Conv2d')
 
@@ -55,23 +55,23 @@ def calc_model_flops_and_size(model, input_shape):
         batch_size = input[0].size(0) if input[0].dim() == 2 else 1
         weight_ops = self.weight.nelement() * (2 if multiply_adds else 1)
         bias_ops = self.bias.nelement()
-        flops = batch_size * (weight_ops + bias_ops)
-        list_linear.append(flops)
-        all_flops.append(flops)
+        op_size = batch_size * (weight_ops + bias_ops)
+        list_linear.append(op_size)
+        all_op_sizes.append(op_size)
         all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('Linear')
 
     def bn_hook(self, input, output):
-        flops = input[0].nelement()
-        list_bn.append(flops)
-        all_flops.append(flops)
+        op_size = input[0].nelement()
+        list_bn.append(op_size)
+        all_op_sizes.append(op_size)
         all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('BatchNorm2d')
 
     def relu_hook(self, input, output):
-        flops = input[0].nelement()
-        list_relu.append(flops)
-        all_flops.append(flops)
+        op_size = input[0].nelement()
+        list_relu.append(op_size)
+        all_op_sizes.append(op_size)
         all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('ReLU')
 
@@ -81,9 +81,9 @@ def calc_model_flops_and_size(model, input_shape):
         kernel_ops = self.kernel_size * self.kernel_size
         bias_ops = 0
         params = output_channels * (kernel_ops + bias_ops)
-        flops = batch_size * params * output_height * output_width
-        list_pooling.append(flops)
-        all_flops.append(flops)
+        op_size = batch_size * params * output_height * output_width
+        list_pooling.append(op_size)
+        all_op_sizes.append(op_size)
         all_bandwidth.append(np.prod(output[0].size()))
         all_layers.append('MaxPool2d')
 
@@ -112,6 +112,6 @@ def calc_model_flops_and_size(model, input_shape):
     all_layers.append('Input')
     input = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
     output = model(input)
-    total_flops = sum(all_flops)
-    plot_model_flops_and_size(total_flops, np.array(all_flops), np.array(all_bandwidth), all_layers)
-    return total_flops, all_flops, all_bandwidth, all_layers
+    total_op_size = sum(all_op_sizes)
+    plot_model_complexity_and_size(total_op_size, np.array(all_op_sizes), np.array(all_bandwidth), all_layers)
+    return total_op_size, all_op_sizes, all_bandwidth, all_layers
