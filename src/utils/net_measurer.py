@@ -1,15 +1,18 @@
-import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from torch.autograd import Variable
 
 
-def plot_model_complexity_and_size(total_op_size, all_op_sizes, all_bandwidth, all_layers):
-    print('Number of Operations: %.5fM' % (total_op_size / 1e6))
-    print(all_op_sizes)
-    print(all_bandwidth)
-    print(all_layers)
-    xs = list(range(len(all_layers)))
+def convert2kb(all_bandwidth):
+    return all_bandwidth / (8 * 1024)
+
+
+def convert2accumulated(all_op_sizes):
+    return np.array([sum(all_op_sizes[0:i]) for i in range(len(all_op_sizes))])
+
+
+def plot_model_complexity(xs, all_op_sizes, all_layers):
     plt.semilogy(xs[1:], all_op_sizes, label='network')
     plt.xticks(xs[1:], all_layers[1:])
     plt.xlabel('Layer')
@@ -17,17 +20,50 @@ def plot_model_complexity_and_size(total_op_size, all_op_sizes, all_bandwidth, a
     plt.legend()
     plt.show()
 
-    all_bandwidth = all_bandwidth / (8 * (1024 ** 1))
-    plt.semilogy(xs, all_bandwidth, label='network')
-    plt.semilogy(xs, [all_bandwidth[0] for x in xs], '-', label='input')
-    plt.xticks(xs, all_layers)
+
+def plot_accumulated_model_complexity(xs, accumlated_op_sizes, all_layers):
+    plt.plot(xs[1:], accumlated_op_sizes, label='network')
+    plt.xticks(xs[1:], all_layers[1:])
     plt.xlabel('Layer')
-    plt.ylabel('Size [KB]')
+    plt.ylabel('Accumulated Complexity')
     plt.legend()
     plt.show()
 
 
-def calc_model_complexity_and_size(model, input_shape):
+def plot_model_bandwidth(xs, all_bandwidth, all_layers):
+    plt.semilogy(xs, all_bandwidth, label='network')
+    plt.semilogy(xs, [all_bandwidth[0] for x in xs], '-', label='input')
+    plt.xticks(xs, all_layers)
+    plt.xlabel('Layer')
+    plt.ylabel('Bandwidth [KB]')
+    plt.legend()
+    plt.show()
+
+
+def plot_bandwidth_vs_model_complexity(all_bandwidth, all_op_sizes):
+    plt.scatter(all_bandwidth[1:], all_op_sizes, label='network')
+    plt.yscale('log')
+    plt.xlabel('Bandwidth [KB]')
+    plt.ylabel('Accumulated Complexity')
+    plt.legend()
+    plt.show()
+
+
+def plot_model_complexity_and_bandwidth(total_op_size, all_op_sizes, all_bandwidth, all_layers):
+    print('Number of Operations: %.5fM' % (total_op_size / 1e6))
+    print(all_op_sizes)
+    print(all_bandwidth)
+    print(all_layers)
+    xs = list(range(len(all_layers)))
+    all_bandwidth = convert2kb(all_bandwidth)
+    accumlated_op_sizes = convert2accumulated(all_op_sizes)
+    plot_model_complexity(xs, all_op_sizes, all_layers)
+    plot_accumulated_model_complexity(xs, accumlated_op_sizes, all_layers)
+    plot_model_bandwidth(xs, all_bandwidth, all_layers)
+    plot_bandwidth_vs_model_complexity(all_bandwidth, all_op_sizes)
+
+
+def calc_model_complexity_and_bandwidth(model, input_shape):
     multiply_adds = False
     list_conv = list()
     list_linear = list()
@@ -113,5 +149,5 @@ def calc_model_complexity_and_size(model, input_shape):
     input = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
     output = model(input)
     total_op_size = sum(all_op_sizes)
-    plot_model_complexity_and_size(total_op_size, np.array(all_op_sizes), np.array(all_bandwidth), all_layers)
+    plot_model_complexity_and_bandwidth(total_op_size, np.array(all_op_sizes), np.array(all_bandwidth), all_layers)
     return total_op_size, all_op_sizes, all_bandwidth, all_layers
