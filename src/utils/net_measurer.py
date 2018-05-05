@@ -21,8 +21,8 @@ def plot_model_complexity(xs, all_op_sizes, all_layers):
     plt.show()
 
 
-def plot_accumulated_model_complexity(xs, accumlated_op_sizes, all_layers):
-    plt.plot(xs[1:], accumlated_op_sizes, label='network')
+def plot_accumulated_model_complexity(xs, accumulated_op_sizes, all_layers):
+    plt.plot(xs[1:], accumulated_op_sizes, label='network')
     plt.xticks(xs[1:], all_layers[1:])
     plt.xlabel('Layer')
     plt.ylabel('Accumulated Complexity')
@@ -35,7 +35,7 @@ def plot_model_bandwidth(xs, all_bandwidth, all_layers):
     plt.semilogy(xs, [all_bandwidth[0] for x in xs], '-', label='input')
     plt.xticks(xs, all_layers)
     plt.xlabel('Layer')
-    plt.ylabel('Bandwidth [KB]')
+    plt.ylabel('Bandwidth [kB]')
     plt.legend()
     plt.show()
 
@@ -43,7 +43,7 @@ def plot_model_bandwidth(xs, all_bandwidth, all_layers):
 def plot_bandwidth_vs_model_complexity(all_bandwidth, all_op_sizes):
     plt.scatter(all_bandwidth[1:], all_op_sizes, label='network')
     plt.yscale('log')
-    plt.xlabel('Bandwidth [KB]')
+    plt.xlabel('Bandwidth [kB]')
     plt.ylabel('Accumulated Complexity')
     plt.legend()
     plt.show()
@@ -56,9 +56,9 @@ def plot_model_complexity_and_bandwidth(total_op_size, all_op_sizes, all_bandwid
     print(all_layers)
     xs = list(range(len(all_layers)))
     all_bandwidth = convert2kb(all_bandwidth)
-    accumlated_op_sizes = convert2accumulated(all_op_sizes)
+    accumulated_op_sizes = convert2accumulated(all_op_sizes)
     plot_model_complexity(xs, all_op_sizes, all_layers)
-    plot_accumulated_model_complexity(xs, accumlated_op_sizes, all_layers)
+    plot_accumulated_model_complexity(xs, accumulated_op_sizes, all_layers)
     plot_model_bandwidth(xs, all_bandwidth, all_layers)
     plot_bandwidth_vs_model_complexity(all_bandwidth, all_op_sizes)
 
