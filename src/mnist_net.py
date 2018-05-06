@@ -1,4 +1,5 @@
 import argparse
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,11 +9,11 @@ from utils import net_measurer
 
 
 class MyNet(nn.Module):
-    def __init__(self):
+    def __init__(self, first_conv_size=40, second_conv_size=80, last_mp_kernel_size=2):
         super(MyNet, self).__init__()
-        self.first_conv_size = 40
-        self.second_conv_size = 80
-        self.last_mp_kernel_size = 2
+        self.first_conv_size = first_conv_size
+        self.second_conv_size = second_conv_size
+        self.last_mp_kernel_size = last_mp_kernel_size
         self.feature_size = ((self.last_mp_kernel_size ** 2) ** 2) * self.second_conv_size
         self.features = nn.Sequential(
             nn.Conv2d(1, self.first_conv_size, kernel_size=5),
@@ -38,7 +39,7 @@ class MyNet(nn.Module):
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser = argparse.ArgumentParser(description=os.path.basename(__file__))
     parser.add_argument('-data', default='./data/', help='MNIST data dir path')
     parser.add_argument('-batch-size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 64)')
@@ -106,9 +107,9 @@ def test(model, test_loader, device):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        100.0 * correct / len(test_loader.dataset)))
 
 
 def run(args):
@@ -118,7 +119,7 @@ def run(args):
     model = MyNet().to(device)
     train_loader, test_loader = get_data_loaders(use_cuda, args)
     input_shape = train_loader.dataset[0][0].size()
-    net_measurer.calc_model_flops_and_size(model, list(input_shape))
+    net_measurer.calc_model_complexity_and_bandwidth(model, list(input_shape))
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, epoch, device, args)
         test(model, test_loader, device)
