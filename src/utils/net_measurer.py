@@ -4,6 +4,11 @@ import torch
 from torch.autograd import Variable
 
 
+def calc_sequential_feature_size(sequential, input_shape):
+    input_data = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
+    return np.prod(sequential(input_data).unsqueeze(0).size())
+
+
 def convert2kb(bandwidth_list):
     return np.array(bandwidth_list) / (8 * 1024)
 
