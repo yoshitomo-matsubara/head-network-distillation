@@ -17,7 +17,6 @@ def plot_bandwidth_vs_complexity(bandwidths_list, accumulated_op_counts_list, la
     for i in range(len(bandwidths_list)):
         plt.scatter(bandwidths_list[i][1:], accumulated_op_counts_list[i], label=label_list[i])
     plt.legend()
-    plt.xlim(0, 1)
     plt.xlabel('Bandwidth [kB]')
     plt.ylabel('Accumulated Complexity')
     plt.show()
