@@ -1,5 +1,6 @@
 import argparse
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,18 +10,18 @@ from utils import net_measurer
 
 
 class MyNet(nn.Module):
-    def __init__(self, first_conv_size=40, second_conv_size=80, last_mp_kernel_size=2):
+    def __init__(self, first_conv_size=65, second_conv_size=70, last_mp_kernel_size=2, input_shape=[1, 28, 28]):
         super(MyNet, self).__init__()
         self.first_conv_size = first_conv_size
         self.second_conv_size = second_conv_size
         self.last_mp_kernel_size = last_mp_kernel_size
-        self.feature_size = ((self.last_mp_kernel_size ** 2) ** 2) * self.second_conv_size
         self.features = nn.Sequential(
             nn.Conv2d(1, self.first_conv_size, kernel_size=5),
             nn.MaxPool2d(kernel_size=2),
             nn.Conv2d(self.first_conv_size, self.second_conv_size, kernel_size=5),
             nn.MaxPool2d(kernel_size=self.last_mp_kernel_size)
         )
+        self.feature_size = net_measurer.calc_sequential_feature_size(self.features, input_shape)
         self.classifier = nn.Sequential(
             nn.Linear(self.feature_size, 100),
             nn.ReLU(inplace=True),
