@@ -1,4 +1,5 @@
 .idea/
+.editorconfig
 __pycache__/
 resource/
 archive/

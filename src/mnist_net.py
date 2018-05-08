@@ -1,5 +1,6 @@
 import argparse
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,18 +10,18 @@ from utils import net_measurer
 
 
 class MyNet(nn.Module):
-    def __init__(self, first_conv_size=40, second_conv_size=80, last_mp_kernel_size=2):
+    def __init__(self, first_conv_channel=65, second_conv_channel=70, last_mp_kernel_size=2, input_shape=[1, 28, 28]):
         super(MyNet, self).__init__()
-        self.first_conv_size = first_conv_size
-        self.second_conv_size = second_conv_size
+        self.first_conv_channel = first_conv_channel
+        self.second_conv_channel = second_conv_channel
         self.last_mp_kernel_size = last_mp_kernel_size
-        self.feature_size = ((self.last_mp_kernel_size ** 2) ** 2) * self.second_conv_size
         self.features = nn.Sequential(
-            nn.Conv2d(1, self.first_conv_size, kernel_size=5),
+            nn.Conv2d(input_shape[0], self.first_conv_channel, kernel_size=5),
             nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(self.first_conv_size, self.second_conv_size, kernel_size=5),
+            nn.Conv2d(self.first_conv_channel, self.second_conv_channel, kernel_size=5),
             nn.MaxPool2d(kernel_size=self.last_mp_kernel_size)
         )
+        self.feature_size = net_measurer.calc_sequential_feature_size(self.features, input_shape)
         self.classifier = nn.Sequential(
             nn.Linear(self.feature_size, 100),
             nn.ReLU(inplace=True),
@@ -107,7 +108,7 @@ def test(model, test_loader, device):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100.0 * correct / len(test_loader.dataset)))
 
