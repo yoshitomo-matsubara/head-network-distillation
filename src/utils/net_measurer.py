@@ -17,8 +17,8 @@ def convert2accumulated(op_count_list):
     return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
 
 
-def plot_model_complexity(xs, op_count_list, layer_list):
-    plt.semilogy(xs[1:], op_count_list, label='network')
+def plot_model_complexity(xs, op_count_list, layer_list, model_name):
+    plt.semilogy(xs[1:], op_count_list, label=model_name)
     plt.xticks(xs[1:], layer_list[1:])
     plt.xlabel('Layer')
     plt.ylabel('Complexity')
@@ -26,8 +26,8 @@ def plot_model_complexity(xs, op_count_list, layer_list):
     plt.show()
 
 
-def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list):
-    plt.plot(xs[1:], accumulated_op_counts, label='network')
+def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name):
+    plt.plot(xs[1:], accumulated_op_counts, label=model_name)
     plt.xticks(xs[1:], layer_list[1:])
     plt.xlabel('Layer')
     plt.ylabel('Accumulated Complexity')
@@ -35,9 +35,9 @@ def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list):
     plt.show()
 
 
-def plot_model_bandwidth(xs, bandwidths, layer_list):
-    plt.semilogy(xs, bandwidths, label='network')
-    plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='input')
+def plot_model_bandwidth(xs, bandwidths, layer_list, model_name):
+    plt.semilogy(xs, bandwidths, label=model_name)
+    plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='Input')
     plt.xticks(xs, layer_list)
     plt.xlabel('Layer')
     plt.ylabel('Bandwidth [kB]')
@@ -45,8 +45,8 @@ def plot_model_bandwidth(xs, bandwidths, layer_list):
     plt.show()
 
 
-def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list):
-    plt.scatter(bandwidths[1:], op_count_list, label='network')
+def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name):
+    plt.scatter(bandwidths[1:], op_count_list, label=model_name)
     plt.yscale('log')
     plt.xlabel('Bandwidth [kB]')
     plt.ylabel('Accumulated Complexity')
@@ -54,16 +54,16 @@ def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list):
     plt.show()
 
 
-def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths, layer_list):
+def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths, layer_list, model_name):
     print('Number of Operations: %.5fM' % (sum(op_count_list) / 1e6))
     xs = np.arange(len(layer_list))
-    plot_model_complexity(xs, op_count_list, layer_list)
-    plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list)
-    plot_model_bandwidth(xs, bandwidths, layer_list)
-    plot_bandwidth_vs_model_complexity(bandwidths, op_count_list)
+    plot_model_complexity(xs, op_count_list, layer_list, model_name)
+    plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name)
+    plot_model_bandwidth(xs, bandwidths, layer_list, model_name)
+    plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name)
 
 
-def calc_model_complexity_and_bandwidth(model, input_shape, plot=True):
+def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_name='network'):
     multiply_adds = False
     op_count_list = list()
     bandwidth_list = list()
@@ -102,6 +102,12 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True):
         bandwidth_list.append(np.prod(output[0].size()))
         layer_list.append('ReLU')
 
+    def dropout_hook(self, input, output):
+        op_size = input[0].nelement()
+        op_count_list.append(op_size)
+        bandwidth_list.append(np.prod(output[0].size()))
+        layer_list.append('Dropout')
+
     def pooling_hook(self, input, output):
         batch_size, input_channels, input_height, input_width = input[0].size()
         output_channels, output_height, output_width = output[0].size()
@@ -124,6 +130,8 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True):
                 net.register_forward_hook(bn_hook)
             elif isinstance(net, torch.nn.ReLU):
                 net.register_forward_hook(relu_hook)
+            elif isinstance(net, torch.nn.Dropout):
+                net.register_forward_hook(dropout_hook)
             elif isinstance(net, torch.nn.MaxPool2d) or isinstance(net, torch.nn.AvgPool2d):
                 net.register_forward_hook(pooling_hook)
             else:
@@ -142,5 +150,6 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True):
     bandwidths = convert2kb(bandwidth_list)
     accumulated_op_counts = convert2accumulated(op_count_list)
     if plot:
-        plot_model_complexity_and_bandwidth(np.array(op_count_list), accumulated_op_counts, bandwidths, layer_list)
+        plot_model_complexity_and_bandwidth(np.array(op_count_list), accumulated_op_counts,
+                                            bandwidths, layer_list, model_name)
     return op_count_list, bandwidths, accumulated_op_counts
