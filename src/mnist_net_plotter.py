@@ -2,7 +2,7 @@ import argparse
 import matplotlib.pyplot as plt
 import os
 from mnist_net import MyNet
-from utils import data_util, net_measurer
+from utils import data_util, net_measure_util
 
 
 def get_argparser():
@@ -28,7 +28,7 @@ def plot(input_shape, first_param_range, second_param_range):
         for second_param in second_param_range:
             model = MyNet(first_conv_size=first_param, second_conv_size=second_param)
             op_counts, bandwidths, accumulated_op_counts =\
-                net_measurer.calc_model_complexity_and_bandwidth(model, input_shape, False)
+                net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, False)
             op_counts_list.append(op_counts)
             bandwidths_list.append(bandwidths)
             accumulated_op_counts_list.append(accumulated_op_counts)

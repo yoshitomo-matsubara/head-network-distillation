@@ -2,7 +2,7 @@ import argparse
 import os
 
 from torchvision.models import *
-from utils import data_util, net_measurer
+from utils import data_util, net_measure_util
 from model import *
 
 
@@ -27,7 +27,7 @@ def run(args):
     input_shape = data_util.convert2type_list(args.isize, ',', int)
     model_type = args.model
     model = get_model(model_type.lower())
-    net_measurer.calc_model_complexity_and_bandwidth(model, list(input_shape), model_name=model_type)
+    net_measure_util.calc_model_complexity_and_bandwidth(model, list(input_shape), model_name=model_type)
 
 
 if __name__ == '__main__':
