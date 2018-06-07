@@ -3,6 +3,7 @@ import os
 
 from torchvision.models import *
 from utils import data_util, net_measurer
+from model import *
 
 
 def get_argparser():
@@ -17,6 +18,8 @@ def get_model(model_type):
         return AlexNet()
     elif model_type == 'vgg':
         return VGG()
+    elif model_type == 'mnist':
+        return LeNet5()
     return None
 
 
