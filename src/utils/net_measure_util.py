@@ -54,6 +54,14 @@ def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name):
     plt.show()
 
 
+def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, model_name):
+    plt.plot(accumulated_op_counts, bandwidths[1:], marker='o', label=model_name)
+    plt.xlabel('Accumulated Complexity')
+    plt.ylabel('Bandwidth [kB]')
+    plt.legend()
+    plt.show()
+
+
 def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths, layer_list, model_name):
     print('Number of Operations: %.5fM' % (sum(op_count_list) / 1e6))
     xs = np.arange(len(layer_list))
@@ -61,6 +69,7 @@ def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, ba
     plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name)
     plot_model_bandwidth(xs, bandwidths, layer_list, model_name)
     plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name)
+    plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, model_name)
 
 
 def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_name='network'):
