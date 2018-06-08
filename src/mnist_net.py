@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from utils import net_measurer
+from utils import net_measure_util
 
 
 class MyNet(nn.Module):
@@ -21,7 +21,7 @@ class MyNet(nn.Module):
             nn.Conv2d(self.first_conv_channel, self.second_conv_channel, kernel_size=5),
             nn.MaxPool2d(kernel_size=self.last_mp_kernel_size)
         )
-        self.feature_size = net_measurer.calc_sequential_feature_size(self.features, input_shape)
+        self.feature_size = net_measure_util.calc_sequential_feature_size(self.features, input_shape)
         self.classifier = nn.Sequential(
             nn.Linear(self.feature_size, 100),
             nn.ReLU(inplace=True),
@@ -120,7 +120,7 @@ def run(args):
     model = MyNet().to(device)
     train_loader, test_loader = get_data_loaders(use_cuda, args)
     input_shape = train_loader.dataset[0][0].size()
-    net_measurer.calc_model_complexity_and_bandwidth(model, list(input_shape))
+    net_measure_util.calc_model_complexity_and_bandwidth(model, list(input_shape))
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, epoch, device, args)
         test(model, test_loader, device)
