@@ -13,21 +13,22 @@ def get_argparser():
     return parser
 
 
-def get_model(model_type):
+def get_model_and_input_shape(model_type, input_shape_str):
     if model_type == 'alexnet':
-        return AlexNet()
+        return AlexNet(), (3, 224, 224)
     elif model_type == 'vgg':
-        return VGG()
+        return vgg16(), (3, 224, 224)
     elif model_type == 'mnist':
-        return LeNet5()
-    return None
+        return LeNet5(), (1, 32, 32)
+
+    input_shape = list(data_util.convert2type_list(input_shape_str, ',', int))
+    return None, input_shape
 
 
 def run(args):
-    input_shape = data_util.convert2type_list(args.isize, ',', int)
     model_type = args.model
-    model = get_model(model_type.lower())
-    net_measure_util.calc_model_complexity_and_bandwidth(model, list(input_shape), model_name=model_type)
+    model, input_shape = get_model_and_input_shape(model_type.lower(), args.isize)
+    net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, model_name=model_type)
 
 
 if __name__ == '__main__':
