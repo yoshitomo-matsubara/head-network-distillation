@@ -49,7 +49,7 @@ def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name):
     plt.scatter(bandwidths[1:], op_count_list, label=model_name)
     plt.yscale('log')
     plt.xlabel('Bandwidth [kB]')
-    plt.ylabel('Accumulated Complexity')
+    plt.ylabel('Complexity')
     plt.legend()
     plt.show()
 
