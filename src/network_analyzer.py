@@ -20,6 +20,8 @@ def get_model_and_input_shape(model_type, input_shape_str):
         return vgg16(), (3, 224, 224)
     elif model_type == 'mnist':
         return LeNet5(), (1, 32, 32)
+    elif model_type == 'yolov2':
+        return YOLOv2(), (3, 448, 448)
 
     input_shape = list(data_util.convert2type_list(input_shape_str, ',', int))
     return None, input_shape
