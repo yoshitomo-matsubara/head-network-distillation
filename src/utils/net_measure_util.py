@@ -64,6 +64,7 @@ def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, ba
 
 
 def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_name='network'):
+    # Referred to https://zhuanlan.zhihu.com/p/33992733
     multiply_adds = False
     op_count_list = list()
     bandwidth_list = list()
@@ -102,6 +103,12 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_nam
         bandwidth_list.append(np.prod(output[0].size()))
         layer_list.append('ReLU')
 
+    def leaky_relu_hook(self, input, output):
+        op_size = input[0].nelement()
+        op_count_list.append(op_size)
+        bandwidth_list.append(np.prod(output[0].size()))
+        layer_list.append('LeakyReLU')
+
     def dropout_hook(self, input, output):
         op_size = input[0].nelement()
         op_count_list.append(op_size)
@@ -112,8 +119,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_nam
         batch_size, input_channels, input_height, input_width = input[0].size()
         output_channels, output_height, output_width = output[0].size()
         kernel_ops = self.kernel_size * self.kernel_size
-        bias_ops = 0
-        params = output_channels * (kernel_ops + bias_ops)
+        params = output_channels * kernel_ops
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
@@ -130,6 +136,8 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_nam
                 net.register_forward_hook(bn_hook)
             elif isinstance(net, torch.nn.ReLU):
                 net.register_forward_hook(relu_hook)
+            elif isinstance(net, torch.nn.LeakyReLU):
+                net.register_forward_hook(leaky_relu_hook)
             elif isinstance(net, torch.nn.Dropout):
                 net.register_forward_hook(dropout_hook)
             elif isinstance(net, torch.nn.MaxPool2d) or isinstance(net, torch.nn.AvgPool2d):

@@ -22,6 +22,8 @@ def get_model_and_input_shape(model_type, input_shape_str):
         return LeNet5(), (1, 32, 32)
     elif model_type == 'yolov2':
         return YOLOv2(), (3, 448, 448)
+    elif model_type == 'yolov3':
+        return YOLOv3(), (3, 896, 896)
 
     input_shape = list(data_util.convert2type_list(input_shape_str, ',', int))
     return None, input_shape
