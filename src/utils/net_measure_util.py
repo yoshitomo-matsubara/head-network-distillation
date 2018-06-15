@@ -56,6 +56,7 @@ def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name):
 
 def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, model_name):
     plt.plot(accumulated_op_counts, bandwidths[1:], marker='o', label=model_name)
+    plt.plot(accumulated_op_counts, [bandwidths[0] for x in accumulated_op_counts], '-', label='Input')
     plt.xlabel('Accumulated Complexity')
     plt.ylabel('Bandwidth [kB]')
     plt.legend()
