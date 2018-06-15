@@ -127,7 +127,7 @@ def main(args):
     # Data loading code
     train_dir = os.path.join(args.data, 'train')
     valid_dir = os.path.join(args.data, 'val')
-    train_loader, valid_loader, train_sampler = get_training_dataset(train_dir, valid_dir, best_prec1, args)
+    train_loader, valid_loader, train_sampler = get_training_dataset(train_dir, valid_dir, args)
 
     if args.evaluate:
         imagenet_util.validate(valid_loader, model, criterion, args)
