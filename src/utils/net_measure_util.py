@@ -35,45 +35,46 @@ def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, mod
     plt.show()
 
 
-def plot_model_bandwidth(xs, bandwidths, layer_list, model_name):
+def plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name):
     plt.semilogy(xs, bandwidths, label=model_name)
     plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='Input')
     plt.xticks(xs, layer_list)
     plt.xlabel('Layer')
-    plt.ylabel('Bandwidth [kB]')
+    plt.ylabel(bandwidth_label)
     plt.legend()
     plt.show()
 
 
-def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name):
+def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, bandwidth_label, model_name):
     plt.scatter(bandwidths[1:], op_count_list, label=model_name)
     plt.yscale('log')
-    plt.xlabel('Bandwidth [kB]')
+    plt.xlabel(bandwidth_label)
     plt.ylabel('Complexity')
     plt.legend()
     plt.show()
 
 
-def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, model_name):
+def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, bandwidth_label, model_name):
     plt.plot(accumulated_op_counts, bandwidths[1:], marker='o', label=model_name)
     plt.plot(accumulated_op_counts, [bandwidths[0] for x in accumulated_op_counts], '-', label='Input')
     plt.xlabel('Accumulated Complexity')
-    plt.ylabel('Bandwidth [kB]')
+    plt.ylabel(bandwidth_label)
     plt.legend()
     plt.show()
 
 
-def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths, layer_list, model_name):
+def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths,
+                                        layer_list, bandwidth_label, model_name):
     print('Number of Operations: %.5fM' % (sum(op_count_list) / 1e6))
     xs = np.arange(len(layer_list))
     plot_model_complexity(xs, op_count_list, layer_list, model_name)
     plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name)
-    plot_model_bandwidth(xs, bandwidths, layer_list, model_name)
-    plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, model_name)
-    plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, model_name)
+    plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name)
+    plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, bandwidth_label, model_name)
+    plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, bandwidth_label, model_name)
 
 
-def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_name='network'):
+def calc_model_complexity_and_bandwidth(model, input_shape, scaling=False, plot=True, model_name='network'):
     # Referred to https://zhuanlan.zhihu.com/p/33992733
     multiply_adds = False
     op_count_list = list()
@@ -166,8 +167,13 @@ def calc_model_complexity_and_bandwidth(model, input_shape, plot=True, model_nam
     input = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
     output = model(input)
     bandwidths = convert2kb(bandwidth_list)
+    bandwidth_label = 'Bandwidth [kB]'
+    if scaling:
+        bandwidths /= bandwidths[0]
+        bandwidth_label = 'Scaled Bandwidth'
+        
     accumulated_op_counts = convert2accumulated(op_count_list)
     if plot:
         plot_model_complexity_and_bandwidth(np.array(op_count_list), accumulated_op_counts,
-                                            bandwidths, layer_list, model_name)
+                                            bandwidths, layer_list, bandwidth_label, model_name)
     return op_count_list, bandwidths, accumulated_op_counts
