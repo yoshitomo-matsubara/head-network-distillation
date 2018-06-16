@@ -2,8 +2,10 @@ import argparse
 import os
 
 from torchvision.models import *
+
+from models.coco import *
+from models.mnist import *
 from utils import data_util, net_measure_util
-from model import *
 
 
 def get_argparser():
