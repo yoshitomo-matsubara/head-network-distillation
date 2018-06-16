@@ -26,7 +26,7 @@ def plot(input_shape, first_param_range, second_param_range):
     op_counts_list, bandwidths_list, accumulated_op_counts_list, label_list = list(), list(), list(), list()
     for first_param in first_param_range:
         for second_param in second_param_range:
-            model = MyNet(first_conv_size=first_param, second_conv_size=second_param)
+            model = MyNet(first_conv_channel=first_param, second_conv_channel=second_param)
             op_counts, bandwidths, accumulated_op_counts =\
                 net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, False)
             op_counts_list.append(op_counts)
