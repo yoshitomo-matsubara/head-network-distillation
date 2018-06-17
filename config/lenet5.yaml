@@ -1,0 +1,6 @@
+experiment_name: "cifar10-alexnet"
+
+model:
+    type: 'alexnet'
+    params:
+        num_classes: 10

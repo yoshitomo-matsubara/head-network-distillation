@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class LeNet5(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=10):
         super(LeNet5, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 6, kernel_size=5),
@@ -14,7 +14,7 @@ class LeNet5(nn.Module):
             nn.Linear(16 * 5 * 5, 120),
             nn.Linear(120, 84),
             nn.ReLU(inplace=True),
-            nn.Linear(84, 10),
+            nn.Linear(84, num_classes),
             nn.LogSoftmax(1)
         )
 

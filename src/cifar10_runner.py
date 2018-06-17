@@ -53,7 +53,7 @@ def get_model(device, config):
     elif model_type == 'densenet':
         model = DenseNet(**model_config['params'])
     elif model_type == 'lenet':
-        model = LeNet5()
+        model = LeNet5(**model_config['params'])
     else:
         model = None
     model = model.to(device)
