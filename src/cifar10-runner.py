@@ -66,7 +66,7 @@ def resume_from_ckpt(model, config, args):
     if args.init or not os.path.exists(ckpt_file_path):
         return config['model']['type'], 0, 0, ckpt_file_path
 
-    print('==> Resuming from checkpoint..')
+    print('Resuming from checkpoint..')
     assert os.path.isdir(args.ckpt), 'Error: no checkpoint directory found!'
     checkpoint = torch.load(ckpt_file_path)
     model.load_state_dict(checkpoint['model'])
