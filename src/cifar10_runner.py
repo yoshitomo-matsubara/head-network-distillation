@@ -15,7 +15,6 @@ from utils import file_util
 # Referred to https://github.com/kuangliu/pytorch-cifar
 def get_argparser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10')
-    parser.add_argument('-model', help='model type')
     parser.add_argument('-data', default='./resource/data/', help='CIFAR-10 data dir path')
     parser.add_argument('-config', required=True, help='yaml file path')
     parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
@@ -54,7 +53,7 @@ def get_model(device, config):
     elif model_type == 'densenet':
         model = DenseNet(**model_config['params'])
     elif model_type == 'lenet':
-        model = LeNet5()
+        model = LeNet5(**model_config['params'])
     else:
         model = None
     model = model.to(device)
