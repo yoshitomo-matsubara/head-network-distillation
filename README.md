@@ -7,11 +7,11 @@
 
 ## How to use
 ### Quantifying and evaluating a small network
-```python src/mnist_net.py```
+```python src/mnist_runner.py```
 
 
 ### Quantifying multiple small networks
-```python src/mnist_net_plotter.py```
+```python src/mnist_plotter.py```
 - You can change the input shape by giving **-input** option and its value.  
 Format of **-input**: "*channel*:*width*:*height*"  
 (default: "1,28,28" for MNIST dataset)

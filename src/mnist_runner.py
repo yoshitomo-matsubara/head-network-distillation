@@ -92,7 +92,7 @@ def train(model, train_loader, epoch, device, args):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                100.0 * batch_idx / len(train_loader), loss.item()))
 
 
 def test(model, test_loader, device):
