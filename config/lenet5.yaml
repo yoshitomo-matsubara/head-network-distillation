@@ -1,6 +1,6 @@
-experiment_name: "cifar10-lenet"
+experiment_name: "cifar10-lenet5"
 
 model:
-    type: 'lenet'
+    type: 'lenet5'
     params:
         num_classes: 10

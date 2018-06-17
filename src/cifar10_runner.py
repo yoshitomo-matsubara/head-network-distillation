@@ -1,12 +1,12 @@
 import argparse
 import os
-import yaml
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+import yaml
 
 from models.cifar10 import *
 from utils import file_util
@@ -52,7 +52,7 @@ def get_model(device, config):
         model = AlexNet(**model_config['params'])
     elif model_type == 'densenet':
         model = DenseNet(**model_config['params'])
-    elif model_type == 'lenet':
+    elif model_type == 'lenet5':
         model = LeNet5(**model_config['params'])
     else:
         model = None
@@ -65,7 +65,7 @@ def get_model(device, config):
 def resume_from_ckpt(model, config, args):
     ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
     if args.init or not os.path.exists(ckpt_file_path):
-        return config['model']['type'], 0, 0, ckpt_file_path
+        return config['model']['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     assert os.path.isdir(args.ckpt), 'Error: no checkpoint directory found!'
