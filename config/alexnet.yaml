@@ -1,0 +1,12 @@
+experiment_name: "cifar10-alexnet"
+
+model:
+    type: 'alexnet'
+    params:
+        num_classes: 10
+        # additional parameters for CIFAR-10
+        first_conv2d_ksize: 2
+        first_conv2d_stride: 1
+        first_conv2d_padding: 1
+        last_maxpool2d_ksize: 2
+        last_maxpool2d_stride: 1
