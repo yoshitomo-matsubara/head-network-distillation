@@ -54,6 +54,8 @@ def get_model(device, config):
         model = DenseNet(**model_config['params'])
     elif model_type == 'lenet5':
         model = LeNet5(**model_config['params'])
+    elif model_type.startswith('resnet'):
+        model = resnet_model(model_type, model_config['params'])
     else:
         model = None
     model = model.to(device)
