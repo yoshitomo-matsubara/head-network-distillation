@@ -1,0 +1,12 @@
+experiment_name: "cifar10-resnet"
+
+model:
+    type: 'resnet18'
+    params:
+        num_classes: 10
+        # additional parameters for CIFAR-10
+        first_conv2d_ksize: 6
+        first_conv2d_stride: 2
+        first_conv2d_padding: 3
+        last_avgpool2d_ksize: 2
+        last_avgpool2d_stride: 1
