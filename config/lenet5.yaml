@@ -1,6 +1,6 @@
-experiment_name: "cifar10-alexnet"
+experiment_name: "cifar10-lenet"
 
 model:
-    type: 'alexnet'
+    type: 'lenet'
     params:
         num_classes: 10
