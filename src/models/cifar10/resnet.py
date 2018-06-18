@@ -70,19 +70,19 @@ def resnet18(param_config):
 
 
 def resnet34(param_config):
-    return ResNet(BasicBlock, [3, 4, 6, 3] **param_config)
+    return ResNet(BasicBlock, [3, 4, 6, 3], **param_config)
 
 
 def resnet50(param_config):
-    return ResNet(Bottleneck, [3, 4, 6, 3] **param_config)
+    return ResNet(Bottleneck, [3, 4, 6, 3], **param_config)
 
 
 def resnet101(param_config):
-    return ResNet(Bottleneck, [3, 4, 23, 3] **param_config)
+    return ResNet(Bottleneck, [3, 4, 23, 3], **param_config)
 
 
 def resnet152(param_config):
-    return ResNet(Bottleneck, [3, 8, 36, 3] **param_config)
+    return ResNet(Bottleneck, [3, 8, 36, 3], **param_config)
 
 
 def resnet_model(model_type, param_config):
@@ -96,3 +96,4 @@ def resnet_model(model_type, param_config):
         return resnet101(param_config)
     elif model_type == 'resnet152':
         return resnet152(param_config)
+    return None

@@ -1,4 +1,4 @@
-experiment_name: "cifar10-resnet"
+experiment_name: "cifar10-resnet18"
 
 model:
     type: 'resnet18'
