@@ -20,27 +20,45 @@ def get_argparser():
     parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('-epoch', type=int, default=100, help='model id')
     parser.add_argument('-lr', type=float, default=0.1, help='learning rate')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-interval', type=int, default=50, help='logging training status ')
+    parser.add_argument('-ctype', help='compression type')
+    parser.add_argument('-csize', help='compression size')
+    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
+    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
 
 
-def get_data_loaders(data_dir_path):
-    transform_train = transforms.Compose([
+def get_test_transformer(compression_type, compressed_size_str, org_size=(32, 32)):
+    normal_transformer = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+    if compression_type is None or compressed_size_str is None:
+        return normal_transformer
+
+    hw = compressed_size_str.split(',')
+    compressed_size = (int(hw[0]), int(hw[1]))
+    if compression_type == 'base':
+        return transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize(compressed_size),
+            transforms.Resize(org_size),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+    return normal_transformer
+
+
+def get_data_loaders(data_dir_path, compression_type, compressed_size_str):
+    train_transformer = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    train_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=True, download=True, transform=transform_train)
+    test_transformer = get_test_transformer(compression_type, compressed_size_str)
+    train_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=True, download=True, transform=train_transformer)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=128, shuffle=True, num_workers=2)
-    test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=transform_test)
+    test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2)
     return train_loader, test_loader
 
@@ -152,13 +170,16 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    train_loader, test_loader = get_data_loaders(args.data)
+    train_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
-    for epoch in range(start_epoch, start_epoch + args.epoch):
-        train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
-        best_acc = test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+    if args.evaluate is not None:
+        for epoch in range(start_epoch, start_epoch + args.epoch):
+            train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
+            best_acc = test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+    else:
+        test(model, test_loader, criterion, start_epoch, device, best_acc, ckpt_file_path, model_type)
 
 
 if __name__ == '__main__':
