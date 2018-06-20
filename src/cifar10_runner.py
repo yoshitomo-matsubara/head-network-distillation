@@ -51,8 +51,8 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, random_se
         np.random.shuffle(indices)
 
     train_idx, valid_idx = indices[:train_end_idx], indices[train_end_idx:]
-    train_sampler = torchvision.SubsetRandomSampler(train_idx)
-    valid_sampler = torchvision.SubsetRandomSampler(valid_idx)
+    train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idx)
+    valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(valid_idx)
     pin_memory = torch.cuda.is_available()
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
                                                num_workers=2, pin_memory=pin_memory)
