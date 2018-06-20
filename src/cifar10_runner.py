@@ -174,7 +174,7 @@ def run(args):
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
-    if args.evaluate is not None:
+    if not args.evaluate:
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
