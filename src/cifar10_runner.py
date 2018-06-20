@@ -22,7 +22,7 @@ def get_argparser():
     parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('-epoch', type=int, default=100, help='model id')
     parser.add_argument('-lr', type=float, default=0.1, help='learning rate')
-    parser.add_argument('-val', type=float, default=0.1, help='validation rate')
+    parser.add_argument('-vrate', type=float, default=0.1, help='validation rate')
     parser.add_argument('-interval', type=int, default=50, help='logging training status ')
     parser.add_argument('-ctype', help='compression type')
     parser.add_argument('-csize', help='compression size')
@@ -79,12 +79,14 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, compression_type, compressed_size_str):
+def get_data_loaders(data_dir_path, compression_type, compressed_size_str, valid_rate):
     normalizer = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
-    train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128, normalizer=normalizer)
+    train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,
+                                                             normalizer=normalizer, valid_rate=valid_rate)
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str)
     test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2,
+                                              pin_memory=torch.cuda.is_available())
     return train_loader, valid_loader, test_loader
 
 
@@ -146,7 +148,7 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.dataset),
+            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
                                                            100.0 * batch_idx / len(train_loader), loss.item()))
 
 
@@ -200,7 +202,7 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    train_loader, valid_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize)
+    train_loader, valid_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
