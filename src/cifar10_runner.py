@@ -40,9 +40,9 @@ def get_test_transformer(compression_type, compressed_size_str, org_size=(32, 32
     compressed_size = (int(hw[0]), int(hw[1]))
     if compression_type == 'base':
         return transforms.Compose([
-            transforms.ToTensor(),
             transforms.Resize(compressed_size),
             transforms.Resize(org_size),
+            transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
     return normal_transformer
