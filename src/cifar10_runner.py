@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -20,6 +21,7 @@ def get_argparser():
     parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('-epoch', type=int, default=100, help='model id')
     parser.add_argument('-lr', type=float, default=0.1, help='learning rate')
+    parser.add_argument('-val', type=float, default=0.1, help='validation rate')
     parser.add_argument('-interval', type=int, default=50, help='logging training status ')
     parser.add_argument('-ctype', help='compression type')
     parser.add_argument('-csize', help='compression size')
@@ -28,11 +30,39 @@ def get_argparser():
     return parser
 
 
-def get_test_transformer(compression_type, compressed_size_str, org_size=(32, 32)):
-    normal_transformer = transforms.Compose([
+def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, random_seed=1, valid_rate=0.1, shuffle=True):
+    valid_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
+    train_transformer = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        normalizer
     ])
+
+    train_dataset = torchvision.datasets.CIFAR10(root=data_dir_path, train=True,
+                                                 download=True, transform=train_transformer)
+    valid_dataset = torchvision.datasets.CIFAR10(root=data_dir_path, train=True,
+                                                 download=True, transform=valid_transformer)
+    org_train_size = len(train_dataset)
+    indices = list(range(org_train_size))
+    train_end_idx = int(np.floor((1 - valid_rate) * org_train_size))
+    if shuffle:
+        np.random.seed(random_seed)
+        np.random.shuffle(indices)
+
+    train_idx, valid_idx = indices[:train_end_idx], indices[train_end_idx:]
+    train_sampler = torchvision.SubsetRandomSampler(train_idx)
+    valid_sampler = torchvision.SubsetRandomSampler(valid_idx)
+    pin_memory = torch.cuda.is_available()
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
+                                               num_workers=2, pin_memory=pin_memory)
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, sampler=valid_sampler,
+                                               num_workers=2, pin_memory=pin_memory)
+    return train_loader, valid_loader
+
+
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32)):
+    normal_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
     if compression_type is None or compressed_size_str is None:
         return normal_transformer
 
@@ -40,27 +70,21 @@ def get_test_transformer(compression_type, compressed_size_str, org_size=(32, 32
     compressed_size = (int(hw[0]), int(hw[1]))
     if compression_type == 'base':
         return transforms.Compose([
-            transforms.ToTensor(),
             transforms.Resize(compressed_size),
             transforms.Resize(org_size),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.ToTensor(),
+            normalizer
         ])
     return normal_transformer
 
 
 def get_data_loaders(data_dir_path, compression_type, compressed_size_str):
-    train_transformer = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-    test_transformer = get_test_transformer(compression_type, compressed_size_str)
-    train_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=True, download=True, transform=train_transformer)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=128, shuffle=True, num_workers=2)
+    normalizer = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
+    train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128, normalizer=normalizer)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str)
     test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2)
-    return train_loader, test_loader
+    return train_loader, valid_loader, test_loader
 
 
 def get_model(device, config):
@@ -137,7 +161,7 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
+def test(model, test_loader, criterion, device, data_type='Test'):
     model.eval()
     test_loss = 0
     correct = 0
@@ -153,9 +177,14 @@ def test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path,
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)))
+    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        data_type, test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)))
     acc = 100.0 * correct / total
+    return acc
+
+
+def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
+    acc = test(model, valid_loader, criterion, device, 'Validation')
     if acc > best_acc:
         save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
         best_acc = acc
@@ -170,16 +199,15 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    train_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize)
+    train_loader, valid_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
-            best_acc = test(model, test_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    else:
-        test(model, test_loader, criterion, start_epoch, device, best_acc, ckpt_file_path, model_type)
+            best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+    test(model, test_loader, criterion, start_epoch, device, best_acc, ckpt_file_path, model_type)
 
 
 if __name__ == '__main__':
