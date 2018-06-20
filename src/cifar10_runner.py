@@ -51,9 +51,9 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, random_se
         np.random.seed(random_seed)
         np.random.shuffle(indices)
 
-    train_idx, valid_idx = indices[:train_end_idx], indices[train_end_idx:]
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
+    train_indices, valid_indices = indices[:train_end_idx], indices[train_end_idx:]
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(valid_indices)
     pin_memory = torch.cuda.is_available()
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
                                                num_workers=2, pin_memory=pin_memory)
@@ -178,9 +178,9 @@ def test(model, test_loader, criterion, device, data_type='Test'):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        data_type, test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)))
     acc = 100.0 * correct / total
+    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        data_type, test_loss, correct, len(test_loader.dataset), acc))
     return acc
 
 
