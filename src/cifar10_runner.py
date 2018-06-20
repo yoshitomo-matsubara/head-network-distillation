@@ -8,6 +8,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 import yaml
+from torch.utils.data.sampler import SubsetRandomSampler
 
 from models.cifar10 import *
 from utils import file_util
@@ -51,8 +52,8 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, random_se
         np.random.shuffle(indices)
 
     train_idx, valid_idx = indices[:train_end_idx], indices[train_end_idx:]
-    train_sampler = torchvision.SubsetRandomSampler(train_idx)
-    valid_sampler = torchvision.SubsetRandomSampler(valid_idx)
+    train_sampler = SubsetRandomSampler(train_idx)
+    valid_sampler = SubsetRandomSampler(valid_idx)
     pin_memory = torch.cuda.is_available()
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
                                                num_workers=2, pin_memory=pin_memory)
