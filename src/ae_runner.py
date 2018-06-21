@@ -34,7 +34,6 @@ def get_autoencoder(cuda_available, config):
         model = None
 
     if cuda_available:
-        model = torch.nn.DataParallel(model)
         model.cuda()
     return model
 
@@ -53,15 +52,15 @@ def resume_from_ckpt(ae, config, args):
     return ae_type, best_loss, start_epoch, ckpt_file_path
 
 
-def train(model, train_loader, optimizer, epoch, cuda_available, args):
-    model.train()
+def train(ae, train_loader, optimizer, epoch, cuda_available, args):
+    ae.train()
     train_loss = 0
     for batch_idx, (data, _) in enumerate(train_loader):
         if cuda_available:
             data = data.cuda()
 
         optimizer.zero_grad()
-        loss = model.loss_function(data)
+        loss = ae.loss_function(data)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
