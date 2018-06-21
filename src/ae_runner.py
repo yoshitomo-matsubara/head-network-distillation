@@ -21,6 +21,7 @@ def get_argparser():
     parser.add_argument('-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
     parser.add_argument('-vrate', type=float, default=0.1, help='validation rate')
+    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return parser
 
 
