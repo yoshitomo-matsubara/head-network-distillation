@@ -115,7 +115,6 @@ def resume_from_ckpt(model, config, args):
         return config['model']['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
-    assert os.path.isdir(args.ckpt), 'Error: no checkpoint directory found!'
     checkpoint = torch.load(ckpt_file_path)
     model.load_state_dict(checkpoint['model'])
     model_type = checkpoint['type']
@@ -182,7 +181,7 @@ def test(model, test_loader, criterion, device, data_type='Test'):
 
     acc = 100.0 * correct / total
     print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        data_type, test_loss, correct, len(test_loader.dataset), acc))
+        data_type, test_loss, correct, total, acc))
     return acc
 
 
