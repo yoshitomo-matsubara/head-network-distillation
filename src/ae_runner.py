@@ -13,6 +13,7 @@ def get_argparser():
     parser = argparse.ArgumentParser(description='VAE CIFAR-10')
     parser.add_argument('-data', default='./resource/data/', help='CIFAR-10 data dir path')
     parser.add_argument('-config', required=True, help='yaml file path')
+    parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('-lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('-no_cuda', action='store_true', default=False, help='enables CUDA training')
