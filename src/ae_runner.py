@@ -77,7 +77,7 @@ def run(args):
         datasets.CIFAR10(data_dir_path, train=False, transform=transforms.ToTensor()),
         batch_size=args.batch_size, shuffle=False, **kwargs)
 
-    model = VAE()
+    model = VAE(args.intermediate_size, args.hidden_size)
     if args.cuda:
         model.cuda()
 
