@@ -26,7 +26,7 @@ def get_argparser():
 
 
 def get_autoencoder(cuda_available, config):
-    ae_config = config['autoencoders']
+    ae_config = config['autoencoder']
     ae_type = ae_config['type']
     if ae_type == 'vae':
         ae = VAE(**ae_config['params'])
@@ -41,11 +41,11 @@ def get_autoencoder(cuda_available, config):
 def resume_from_ckpt(ae, config, args):
     ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
     if args.init or not os.path.exists(ckpt_file_path):
-        return config['autoencoders']['type'], 1e20, 1, ckpt_file_path
+        return config['autoencoder']['type'], 1e20, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
-    ae.load_state_dict(checkpoint['autoencoders'])
+    ae.load_state_dict(checkpoint['autoencoder'])
     ae_type = checkpoint['type']
     best_loss = checkpoint['loss']
     start_epoch = checkpoint['epoch']
@@ -76,7 +76,7 @@ def save_ckpt(ae, loss, epoch, ckpt_file_path, ae_type):
     print('Saving..')
     state = {
         'type': ae_type,
-        'autoencoders': ae.state_dict(),
+        'autoencoder': ae.state_dict(),
         'loss': loss,
         'epoch': epoch,
     }
