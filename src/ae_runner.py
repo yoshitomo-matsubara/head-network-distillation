@@ -122,7 +122,7 @@ def run(args):
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):
-        train(ae, train_loader, optimizer, epoch, args)
+        train(ae, train_loader, optimizer, epoch, cuda_available, args)
         best_loss = validate(ae, valid_loader, cuda_available, epoch, best_loss, ckpt_file_path, ae_type)
     test(ae, test_loader, cuda_available)
 
