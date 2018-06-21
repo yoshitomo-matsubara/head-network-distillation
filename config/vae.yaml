@@ -1,0 +1,7 @@
+experiment_name: "cifar10-vae"
+
+autoencoder:
+    type: 'vae'
+    params:
+        hidden_size: 20
+        intermediate_size: 128

@@ -1,17 +1,13 @@
 import argparse
 import os
 
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 import yaml
-from torch.utils.data.sampler import SubsetRandomSampler
 
 from models.cifar10 import *
-from utils import file_util
+from utils import cifar10_util, file_util
 
 
 # Referred to https://github.com/kuangliu/pytorch-cifar
@@ -29,65 +25,6 @@ def get_argparser():
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
-
-
-def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, random_seed=1, valid_rate=0.1, shuffle=True):
-    valid_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
-    train_transformer = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalizer
-    ])
-
-    train_dataset = torchvision.datasets.CIFAR10(root=data_dir_path, train=True,
-                                                 download=True, transform=train_transformer)
-    valid_dataset = torchvision.datasets.CIFAR10(root=data_dir_path, train=True,
-                                                 download=True, transform=valid_transformer)
-    org_train_size = len(train_dataset)
-    indices = list(range(org_train_size))
-    train_end_idx = int(np.floor((1 - valid_rate) * org_train_size))
-    if shuffle:
-        np.random.seed(random_seed)
-        np.random.shuffle(indices)
-
-    train_indices, valid_indices = indices[:train_end_idx], indices[train_end_idx:]
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(valid_indices)
-    pin_memory = torch.cuda.is_available()
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
-                                               num_workers=2, pin_memory=pin_memory)
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, sampler=valid_sampler,
-                                               num_workers=2, pin_memory=pin_memory)
-    return train_loader, valid_loader
-
-
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32)):
-    normal_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
-    if compression_type is None or compressed_size_str is None:
-        return normal_transformer
-
-    hw = compressed_size_str.split(',')
-    compressed_size = (int(hw[0]), int(hw[1]))
-    if compression_type == 'base':
-        return transforms.Compose([
-            transforms.Resize(compressed_size),
-            transforms.Resize(org_size),
-            transforms.ToTensor(),
-            normalizer
-        ])
-    return normal_transformer
-
-
-def get_data_loaders(data_dir_path, compression_type, compressed_size_str, valid_rate):
-    normalizer = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
-    train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,
-                                                             normalizer=normalizer, valid_rate=valid_rate)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str)
-    test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2,
-                                              pin_memory=torch.cuda.is_available())
-    return train_loader, valid_loader, test_loader
 
 
 def get_model(device, config):
@@ -123,9 +60,9 @@ def resume_from_ckpt(model, config, args):
     return model_type, best_acc, start_epoch, ckpt_file_path
 
 
-def get_criterion_optimizer(model, args):
+def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum, weight_decay=weight_decay)
     return criterion, optimizer
 
 
@@ -201,7 +138,8 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    train_loader, valid_loader, test_loader = get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
+    train_loader, valid_loader, test_loader =\
+        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
