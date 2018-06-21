@@ -76,7 +76,7 @@ def save_ckpt(ae, loss, epoch, ckpt_file_path, ae_type):
     print('Saving..')
     state = {
         'type': ae_type,
-        'model': ae.state_dict(),
+        'autoencoder': ae.state_dict(),
         'loss': loss,
         'epoch': epoch,
     }
@@ -84,13 +84,13 @@ def save_ckpt(ae, loss, epoch, ckpt_file_path, ae_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, cuda_available, data_type='Test'):
-    model.eval()
+def test(ae, test_loader, cuda_available, data_type='Test'):
+    ae.eval()
     test_loss = 0
     for i, (data, _) in enumerate(test_loader):
         if cuda_available:
             data = data.cuda()
-        test_loss += model.loss_function(data).item()
+        test_loss += ae.loss_function(data).item()
 
     test_loss /= len(test_loader.sampler)
     print('{} set loss: {:.4f}'.format(data_type, test_loss))
