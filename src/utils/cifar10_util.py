@@ -6,13 +6,13 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rate, random_seed=1, shuffle=True):
-    valid_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
-    train_transformer = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalizer
-    ])
+    valid_comp_list = [transforms.ToTensor()]
+    train_comp_list = [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+    if normalizer is not None:
+        valid_comp_list.append(normalizer)
+        train_comp_list.append(normalizer)
+    train_transformer = transforms.Compose(train_comp_list)
+    valid_transformer = transforms.Compose(valid_comp_list)
 
     train_dataset = torchvision.datasets.CIFAR10(root=data_dir_path, train=True,
                                                  download=True, transform=train_transformer)
@@ -37,24 +37,26 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rat
 
 
 def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32)):
-    normal_transformer = transforms.Compose([transforms.ToTensor(), normalizer])
+    normal_list = [transforms.ToTensor()]
+    if normalizer is not None:
+        normal_list.append(normalizer)
+    normal_transformer = transforms.Compose(normal_list)
     if compression_type is None or compressed_size_str is None:
         return normal_transformer
 
     hw = compressed_size_str.split(',')
     compressed_size = (int(hw[0]), int(hw[1]))
     if compression_type == 'base':
-        return transforms.Compose([
-            transforms.Resize(compressed_size),
-            transforms.Resize(org_size),
-            transforms.ToTensor(),
-            normalizer
-        ])
+        comp_list = [transforms.Resize(compressed_size), transforms.Resize(org_size), transforms.ToTensor()]
+        if normalizer is not None:
+            comp_list.append(normalizer)
+        return transforms.Compose(comp_list)
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=None, valid_rate=0.1):
-    normalizer = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
+def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=None, valid_rate=0.1, normalized=True):
+    normalizer =\
+        transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]) if normalized else None
     train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,
                                                              normalizer=normalizer, valid_rate=valid_rate)
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str)
