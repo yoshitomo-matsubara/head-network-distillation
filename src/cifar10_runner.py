@@ -62,12 +62,15 @@ def resume_from_ckpt(model, config, args):
     return model_type, best_acc, start_epoch, ckpt_file_path
 
 
-def load_autoencoder(ae_config_file_path, args):
+def load_autoencoder(ae_config_file_path, ckpt_dir_path):
+    if ae_config_file_path is not None or ckpt_dir_path is not None:
+        return None
+
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
     ae = ae_runner.get_autoencoder(ae_config)
-    ae_runner.resume_from_ckpt(ae, ae_config, args.ckpt, False)
-
+    ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
+    return ae
 
 
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
@@ -110,7 +113,7 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, device, data_type='Test'):
+def test(model, test_loader, criterion, device, data_type='Test', ae=None):
     model.eval()
     test_loss = 0
     correct = 0
@@ -118,6 +121,9 @@ def test(model, test_loader, criterion, device, data_type='Test'):
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.to(device), targets.to(device)
+            if ae is not None:
+                inputs = ae(inputs)
+                
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -152,12 +158,13 @@ def run(args):
         cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
+    ae = load_autoencoder(args.ae, args.ckpt)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    test(model, test_loader, criterion, device)
+    test(model, test_loader, criterion, device, ae)
 
 
 if __name__ == '__main__':
