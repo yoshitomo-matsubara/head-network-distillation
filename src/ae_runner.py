@@ -1,7 +1,6 @@
 import argparse
 
 import torch.utils.data
-from torch import optim
 from torchvision import datasets, transforms
 
 from autoencoder import *
@@ -37,13 +36,12 @@ def train(model, train_loader, optimizer, epoch, args):
         optimizer.zero_grad()
         loss = model.loss_function(data)
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader),
-                loss.data[0] / len(data)))
+                100. * batch_idx / len(train_loader), loss / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(train_loader.dataset)))
 
@@ -54,7 +52,7 @@ def test(model, test_loader, args):
     for i, (data, _) in enumerate(test_loader):
         if args.cuda:
             data = data.cuda()
-        test_loss += model.loss_function(data).data[0]
+        test_loss += model.loss_function(data).item()
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
@@ -81,7 +79,7 @@ def run(args):
     if args.cuda:
         model.cuda()
 
-    optimizer = optim.RMSprop(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.RMSprop(model.parameters(), lr=1e-3)
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, optimizer, epoch, args)
         test(model, test_loader, args)
