@@ -38,9 +38,9 @@ def get_autoencoder(cuda_available, config):
     return ae
 
 
-def resume_from_ckpt(ae, config, args):
-    ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
-    if args.init or not os.path.exists(ckpt_file_path):
+def resume_from_ckpt(ae, config, ckpt_dir_path, init):
+    ckpt_file_path = os.path.join(ckpt_dir_path, config['experiment_name'])
+    if init or not os.path.exists(ckpt_file_path):
         return config['autoencoder']['type'], 1e20, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
@@ -118,7 +118,7 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         cifar10_util.get_data_loaders(data_dir_path, args.vrate, normalized=False)
     ae = get_autoencoder(cuda_available, config)
-    ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args)
+    ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args.ckpt, args.init)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):
         train(ae, train_loader, optimizer, epoch, cuda_available, args)

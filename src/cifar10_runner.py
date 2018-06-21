@@ -8,6 +8,7 @@ import yaml
 
 from models.cifar10 import *
 from utils import cifar10_util, file_util
+import ae_runner
 
 
 # Referred to https://github.com/kuangliu/pytorch-cifar
@@ -22,6 +23,7 @@ def get_argparser():
     parser.add_argument('-interval', type=int, default=50, help='logging training status ')
     parser.add_argument('-ctype', help='compression type')
     parser.add_argument('-csize', help='compression size')
+    parser.add_argument('-ae', help='autoencoder yaml file path')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
@@ -58,6 +60,14 @@ def resume_from_ckpt(model, config, args):
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
     return model_type, best_acc, start_epoch, ckpt_file_path
+
+
+def load_autoencoder(ae_config_file_path, args):
+    with open(ae_config_file_path, 'r') as fp:
+        ae_config = yaml.load(fp)
+    ae = ae_runner.get_autoencoder(ae_config)
+    ae_runner.resume_from_ckpt(ae, ae_config, args.ckpt, False)
+
 
 
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
