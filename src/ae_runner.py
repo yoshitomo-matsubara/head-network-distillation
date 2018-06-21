@@ -29,19 +29,19 @@ def get_autoencoder(cuda_available, config):
     ae_config = config['autoencoder']
     ae_type = ae_config['type']
     if ae_type == 'vae':
-        model = VAE(**ae_config['params'])
+        ae = VAE(**ae_config['params'])
     else:
-        model = None
+        ae = None
 
     if cuda_available:
-        model.cuda()
-    return model
+        ae.cuda()
+    return ae
 
 
 def resume_from_ckpt(ae, config, args):
     ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
     if args.init or not os.path.exists(ckpt_file_path):
-        return config['autoencoder']['type'], 0, 1, ckpt_file_path
+        return config['autoencoder']['type'], 1e20, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
