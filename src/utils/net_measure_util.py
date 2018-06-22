@@ -164,14 +164,14 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaling=False, plot=
     move_next_layer(model)
     bandwidth_list.append(np.prod(input_shape))
     layer_list.append('Input')
-    input = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
+    input = torch.rand(input_shape).unsqueeze(0)
     output = model(input)
     bandwidths = convert2kb(bandwidth_list)
     bandwidth_label = 'Bandwidth [kB]'
     if scaling:
         bandwidths /= bandwidths[0]
         bandwidth_label = 'Scaled Bandwidth'
-        
+
     accumulated_op_counts = convert2accumulated(op_count_list)
     if plot:
         plot_model_complexity_and_bandwidth(np.array(op_count_list), accumulated_op_counts,
