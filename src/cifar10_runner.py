@@ -6,9 +6,9 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import yaml
 
+import ae_runner
 from models.cifar10 import *
 from utils import cifar10_util, file_util
-import ae_runner
 
 
 # Referred to https://github.com/kuangliu/pytorch-cifar
@@ -113,7 +113,7 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, device, data_type='Test', ae=None):
+def test(model, test_loader, criterion, device, data_type='Test'):
     model.eval()
     test_loss = 0
     correct = 0
@@ -121,9 +121,6 @@ def test(model, test_loader, criterion, device, data_type='Test', ae=None):
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-            if ae is not None:
-                inputs = ae(inputs)
-
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -154,17 +151,17 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
+    ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
+        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
-    ae = load_autoencoder(args.ae, args.ckpt)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    test(model, test_loader, criterion, device, ae=ae)
+    test(model, test_loader, criterion, device)
 
 
 if __name__ == '__main__':
