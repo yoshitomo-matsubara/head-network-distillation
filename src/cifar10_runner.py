@@ -62,16 +62,14 @@ def resume_from_ckpt(model, config, args):
     return model_type, best_acc, start_epoch, ckpt_file_path
 
 
-def load_autoencoder(ae_config_file_path, ckpt_dir_path, device):
+def load_autoencoder(ae_config_file_path, ckpt_dir_path):
     if ae_config_file_path is None or ckpt_dir_path is None:
         return None
 
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
-    ae = ae_runner.get_autoencoder(False, ae_config)
-    if device == 'cuda':
-        ae = ae.cuda()
 
+    ae = ae_runner.get_autoencoder(False, ae_config)
     ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
     return ae
 
@@ -154,7 +152,7 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    ae = load_autoencoder(args.ae, args.ckpt, device)
+    ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae=ae)
     model = get_model(device, config)
