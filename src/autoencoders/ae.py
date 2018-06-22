@@ -20,7 +20,8 @@ class AETransformer(object):
         self.autoencoder = autoencoder
 
     def __call__(self, data):
-        return self.autoencoder.encode_and_decode(data.unsqueeze(0))
+        result = self.autoencoder.encode_and_decode(data.unsqueeze(0))
+        return result.squeeze(0)
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
