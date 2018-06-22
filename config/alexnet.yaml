@@ -1,4 +1,4 @@
-experiment_name: "cifar10-alexnet"
+experiment_name: 'cifar10-alexnet'
 
 model:
     type: 'alexnet'

@@ -1,4 +1,4 @@
-experiment_name: "cifar10-lenet5"
+experiment_name: 'cifar10-lenet5'
 
 model:
     type: 'lenet5'
