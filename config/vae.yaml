@@ -1,5 +1,9 @@
 experiment_name: 'cifar10-vae'
 
+dataset: 'cifar10'
+
+input_shape: [3, 32, 32]
+
 autoencoder:
     type: 'vae'
     params:

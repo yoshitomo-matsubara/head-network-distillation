@@ -1,5 +1,9 @@
 experiment_name: 'cifar10-alexnet'
 
+dataset: 'cifar10'
+
+input_shape: [3, 32, 32]
+
 model:
     type: 'alexnet'
     params:
