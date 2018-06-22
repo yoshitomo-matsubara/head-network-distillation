@@ -164,7 +164,7 @@ def run(args):
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    test(model, test_loader, criterion, device, ae)
+    test(model, test_loader, criterion, device, ae=ae)
 
 
 if __name__ == '__main__':
