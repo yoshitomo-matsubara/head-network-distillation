@@ -153,7 +153,7 @@ def run(args):
 
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae)
+        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae=ae)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)

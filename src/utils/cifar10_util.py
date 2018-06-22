@@ -39,10 +39,7 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rat
 
 
 def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae=None):
-    normal_list = [transforms.ToTensor()]
-    if ae is not None:
-        normal_list.append(AETransformer(ae))
-
+    normal_list = [transforms.ToTensor()] if ae is None else [AETransformer(ae), transforms.ToTensor()]
     if normalizer is not None:
         normal_list.append(normalizer)
 
@@ -66,7 +63,7 @@ def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=N
         transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]) if normalized else None
     train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,
                                                              normalizer=normalizer, valid_rate=valid_rate)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
     test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2,
                                               pin_memory=torch.cuda.is_available())
