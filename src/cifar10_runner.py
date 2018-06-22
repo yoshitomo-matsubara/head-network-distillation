@@ -6,6 +6,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import yaml
 
+import ae_runner
 from models.cifar10 import *
 from utils import cifar10_util, file_util
 
@@ -22,6 +23,7 @@ def get_argparser():
     parser.add_argument('-interval', type=int, default=50, help='logging training status ')
     parser.add_argument('-ctype', help='compression type')
     parser.add_argument('-csize', help='compression size')
+    parser.add_argument('-ae', help='autoencoder yaml file path')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
@@ -58,6 +60,18 @@ def resume_from_ckpt(model, config, args):
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
     return model_type, best_acc, start_epoch, ckpt_file_path
+
+
+def load_autoencoder(ae_config_file_path, ckpt_dir_path):
+    if ae_config_file_path is None or ckpt_dir_path is None:
+        return None
+
+    with open(ae_config_file_path, 'r') as fp:
+        ae_config = yaml.load(fp)
+
+    ae = ae_runner.get_autoencoder(False, ae_config)
+    ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
+    return ae
 
 
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
@@ -138,8 +152,9 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
+    ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate)
+        cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae=ae)
     model = get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)

@@ -4,6 +4,8 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from autoencoders.ae import *
+
 
 def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rate, random_seed=1, shuffle=True):
     valid_comp_list = [transforms.ToTensor()]
@@ -36,10 +38,14 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rat
     return train_loader, valid_loader
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32)):
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae=None):
     normal_list = [transforms.ToTensor()]
+    if ae is not None:
+        normal_list.append(AETransformer(ae))
+
     if normalizer is not None:
         normal_list.append(normalizer)
+
     normal_transformer = transforms.Compose(normal_list)
     if compression_type is None or compressed_size_str is None:
         return normal_transformer
@@ -54,12 +60,13 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=None, valid_rate=0.1, normalized=True):
+def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=None,
+                     valid_rate=0.1, normalized=True, ae=None):
     normalizer =\
         transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]) if normalized else None
     train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,
                                                              normalizer=normalizer, valid_rate=valid_rate)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
     test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2,
                                               pin_memory=torch.cuda.is_available())

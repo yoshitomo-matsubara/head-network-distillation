@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+from . import ae
 
-class VAE(nn.Module):
+
+class VAE(ae.Autoencoder):
     def __init__(self, intermediate_size, hidden_size):
         super(VAE, self).__init__()
 
@@ -59,6 +61,10 @@ class VAE(nn.Module):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar
+
+    def encode_and_decode(self, x):
+        recon_x, _, _ = self.forward(x)
+        return recon_x
 
     def loss_function(self, x):
         recon_x, mu, logvar = self.forward(x)

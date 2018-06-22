@@ -1,4 +1,4 @@
-experiment_name: "cifar10-vae"
+experiment_name: 'cifar10-vae'
 
 autoencoder:
     type: 'vae'
