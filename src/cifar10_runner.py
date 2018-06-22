@@ -69,8 +69,10 @@ def load_autoencoder(ae_config_file_path, ckpt_dir_path, device):
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
     ae = ae_runner.get_autoencoder(torch.cuda.is_available(), ae_config)
+    if device == 'cuda':
+        ae = ae.cuda()
+
     ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
-    ae = ae.to(device)
     return ae
 
 
