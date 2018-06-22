@@ -63,7 +63,7 @@ def resume_from_ckpt(model, config, args):
 
 
 def load_autoencoder(ae_config_file_path, ckpt_dir_path):
-    if ae_config_file_path is not None or ckpt_dir_path is not None:
+    if ae_config_file_path is None or ckpt_dir_path is None:
         return None
 
     with open(ae_config_file_path, 'r') as fp:
@@ -123,7 +123,7 @@ def test(model, test_loader, criterion, device, data_type='Test', ae=None):
             inputs, targets = inputs.to(device), targets.to(device)
             if ae is not None:
                 inputs = ae(inputs)
-                
+
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
