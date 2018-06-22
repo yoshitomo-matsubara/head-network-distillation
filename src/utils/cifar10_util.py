@@ -39,7 +39,10 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalizer, valid_rat
 
 
 def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae=None):
-    normal_list = [transforms.ToTensor()] if ae is None else [AETransformer(ae), transforms.ToTensor()]
+    normal_list = [transforms.ToTensor()]
+    if ae is not None:
+        normal_list.append(AETransformer(ae))
+
     if normalizer is not None:
         normal_list.append(normalizer)
 
