@@ -1,5 +1,9 @@
 experiment_name: "cifar10-resnet18"
 
+dataset: 'cifar10'
+
+input_shape: [3, 32, 32]
+
 model:
     type: 'resnet18'
     params:

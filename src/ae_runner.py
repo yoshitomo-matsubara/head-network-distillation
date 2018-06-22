@@ -25,19 +25,6 @@ def get_argparser():
     return parser
 
 
-def get_autoencoder(cuda_available, config):
-    ae_config = config['autoencoder']
-    ae_type = ae_config['type']
-    if ae_type == 'vae':
-        ae = VAE(**ae_config['params'])
-    else:
-        ae = None
-
-    if cuda_available:
-        ae.cuda()
-    return ae
-
-
 def resume_from_ckpt(ae, config, ckpt_dir_path, init):
     ckpt_file_path = os.path.join(ckpt_dir_path, config['experiment_name'])
     if init or not os.path.exists(ckpt_file_path):
@@ -117,7 +104,7 @@ def run(args):
 
     train_loader, valid_loader, test_loader =\
         cifar10_util.get_data_loaders(data_dir_path, args.vrate, normalized=False)
-    ae = get_autoencoder(cuda_available, config)
+    ae = cifar10_util.get_autoencoder(cuda_available, config)
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args.ckpt, args.init)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):

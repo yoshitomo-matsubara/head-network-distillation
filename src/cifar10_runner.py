@@ -3,11 +3,11 @@ import os
 
 import torch
 import torch.backends.cudnn as cudnn
+import torch.nn as nn
 import torch.optim as optim
 import yaml
 
 import ae_runner
-from models.cifar10 import *
 from utils import cifar10_util, file_util
 
 
@@ -27,25 +27,6 @@ def get_argparser():
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
-
-
-def get_model(device, config):
-    model_config = config['model']
-    model_type = model_config['type']
-    if model_type == 'alexnet':
-        model = AlexNet(**model_config['params'])
-    elif model_type == 'densenet':
-        model = DenseNet(**model_config['params'])
-    elif model_type == 'lenet5':
-        model = LeNet5(**model_config['params'])
-    elif model_type.startswith('resnet'):
-        model = resnet_model(model_type, model_config['params'])
-    else:
-        model = None
-    model = model.to(device)
-    if device == 'cuda':
-        model = torch.nn.DataParallel(model)
-    return model
 
 
 def resume_from_ckpt(model, config, args):
@@ -155,7 +136,7 @@ def run(args):
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         cifar10_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, ae=ae)
-    model = get_model(device, config)
+    model = cifar10_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:
