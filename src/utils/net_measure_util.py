@@ -65,7 +65,7 @@ def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwi
 
 def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, bandwidths, layer_list, bandwidth_label):
     fig, ax1 = plt.subplots()
-    ax1.plot(xs, bandwidths, '-')
+    ax1.semilogy(xs, bandwidths, '-')
     ax1.set_xticks(xs)
     ax1.set_xticklabels(layer_list)
     ax1.set_xlabel('Layer')
