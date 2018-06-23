@@ -9,8 +9,8 @@ def calc_sequential_feature_size(sequential, input_shape):
     return np.prod(sequential(input_data).unsqueeze(0).size())
 
 
-def convert2kb(bandwidth_list):
-    return np.array(bandwidth_list) / (8 * 1024)
+def convert2kb(bandwidth_list, bit=32):
+    return np.array(bandwidth_list) * bit / (8 * 1024)
 
 
 def convert2accumulated(op_count_list):
