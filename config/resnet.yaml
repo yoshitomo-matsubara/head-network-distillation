@@ -8,7 +8,7 @@ model:
     type: 'resnet18'
     params:
         num_classes: 10
-        # additional parameters for CIFAR-10
+        # additional parameters for CIFAR-10 and -100
         first_conv2d_ksize: 6
         first_conv2d_stride: 2
         first_conv2d_padding: 3

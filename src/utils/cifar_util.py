@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from autoencoders import *
-from models.cifar10 import *
+from models.cifar import *
 
 
 def get_model(device, config):
@@ -93,7 +93,7 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
 
 
 def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=None,
-                     valid_rate=0.1, normalized=True, ae=None):
+                     valid_rate=0.1, normalized=True, is_cifar100=False, ae=None):
     normalizer =\
         transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]) if normalized else None
     train_loader, valid_loader = get_train_and_valid_loaders(data_dir_path, batch_size=128,

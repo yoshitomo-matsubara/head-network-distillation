@@ -4,7 +4,7 @@ from torchvision.models.resnet import BasicBlock, Bottleneck
 
 class ResNet(nn.Module):
     """
-    PyTorch based ResNet implementation for CIFAR-10
+    PyTorch based ResNet implementation for CIFAR-10 and -100
     """
 
     def __init__(self, block, layers, num_classes=10,
