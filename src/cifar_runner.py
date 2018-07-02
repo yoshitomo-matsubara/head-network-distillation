@@ -15,7 +15,7 @@ from utils import cifar_util, file_util
 def get_argparser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR-10 and -100')
     parser.add_argument('-data', default='./resource/data/', help='CIFAR data dir path')
-    parser.add_argument('-cifar100', type=int, action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
+    parser.add_argument('-cifar100', action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
     parser.add_argument('-config', required=True, help='yaml file path')
     parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('-epoch', type=int, default=100, help='model id')
