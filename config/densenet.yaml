@@ -13,7 +13,7 @@ model:
         bn_size: 4
         drop_rate: 0
         num_classes: 10
-        # additional parameters for CIFAR-10
+        # additional parameters for CIFAR-10 and -100
         conv2d_ksize: 2
         conv2d_stride: 1
         conv2d_padding: 1

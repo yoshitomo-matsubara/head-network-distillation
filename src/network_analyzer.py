@@ -4,10 +4,10 @@ import os
 import yaml
 import torchvision
 
-from models.cifar10 import *
+from models.cifar import *
 from models.coco import *
 from models.mnist import *
-from utils import cifar10_util, data_util, net_measure_util
+from utils import cifar_util, data_util, net_measure_util
 
 
 def get_argparser():
@@ -39,8 +39,8 @@ def read_config(config_file_path):
     with open(config_file_path, 'r') as fp:
         config = yaml.load(fp)
 
-    if config['dataset'] == 'cifar10':
-        model = cifar10_util.get_model('cpu', config)
+    if config['dataset'] == 'cifar':
+        model = cifar_util.get_model('cpu', config)
         model_type = config['model']['type']
         input_shape = config['input_shape']
     else:
