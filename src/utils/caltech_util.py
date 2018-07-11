@@ -64,8 +64,8 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(root_data_dir_path, reshape_size=(180, 180), compression_type=None, compressed_size_str=None,
-                     valid_rate=0.1, test_rate=0.1, random_seed=1, normalized=True, is_caltech256=False, ae=None):
+def get_data_loaders(root_data_dir_path, compression_type=None, compressed_size_str=None, valid_rate=0.1, test_rate=0.1,
+                     random_seed=1, normalized=True, is_caltech256=False, ae=None, reshape_size=(180, 180)):
     dataset_name = '101' if not is_caltech256 else '256'
     data_dir_path = os.path.join(root_data_dir_path, dataset_name + '_ObjectCategories')
     if not os.path.exists(data_dir_path):
