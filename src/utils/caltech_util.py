@@ -96,8 +96,11 @@ def get_data_loaders(root_data_dir_path, compression_type=None, compressed_size_
         train_comp_list.append(normalizer)
 
     pin_memory = torch.cuda.is_available()
-    train_dataset = RgbImageDataset(train_file_path_lists, reshape_size, train_comp_list)
-    valid_dataset = RgbImageDataset(valid_file_path_lists, reshape_size, valid_comp_list)
+
+    train_transformer = transforms.Compose(train_comp_list)
+    valid_transformer = transforms.Compose(valid_comp_list)
+    train_dataset = RgbImageDataset(train_file_path_lists, reshape_size, train_transformer)
+    valid_dataset = RgbImageDataset(valid_file_path_lists, reshape_size, valid_transformer)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=100, num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=100, num_workers=2, pin_memory=pin_memory)
 
