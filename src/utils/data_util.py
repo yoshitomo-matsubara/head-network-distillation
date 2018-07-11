@@ -1,3 +1,4 @@
+import numpy as np
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as functional
