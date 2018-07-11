@@ -64,11 +64,12 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, reshape_size=(180, 180), compression_type=None, compressed_size_str=None,
+def get_data_loaders(root_data_dir_path, reshape_size=(180, 180), compression_type=None, compressed_size_str=None,
                      valid_rate=0.1, test_rate=0.1, random_seed=1, normalized=True, is_caltech256=False, ae=None):
-    dataset_name = 'Caltech101' if not is_caltech256 else 'Caltech256'
+    dataset_name = '101' if not is_caltech256 else '256'
+    data_dir_path = os.path.join(root_data_dir_path, dataset_name + '_ObjectCategories')
     if not os.path.exists(data_dir_path):
-        ValueError('Could not find %s dataset at %s' % dataset_name % data_dir_path)
+        ValueError('Could not find {} dataset at {}'.format('Caltech' + dataset_name, data_dir_path))
 
     sub_dir_path_list = file_util.get_dir_list(data_dir_path)
     file_path_lists = []
