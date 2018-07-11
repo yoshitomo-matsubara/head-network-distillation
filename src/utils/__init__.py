@@ -1,3 +1,4 @@
+from . import caltech_util
 from . import cifar_util
 from . import data_util
 from . import file_util

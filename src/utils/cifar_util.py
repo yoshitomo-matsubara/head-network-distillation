@@ -106,9 +106,10 @@ def get_data_loaders(data_dir_path, compression_type=None, compressed_size_str=N
         get_train_and_valid_loaders(data_dir_path, batch_size=128, normalized=normalized,
                                     valid_rate=valid_rate, is_cifar100=is_cifar100)
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
-    test_set = torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)\
-        if not is_cifar100 else torchvision.datasets.CIFAR100(root=data_dir_path, train=False,
-                                                              download=True, transform=test_transformer)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False, num_workers=2,
+    test_dataset =\
+        torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)\
+            if not is_cifar100 else torchvision.datasets.CIFAR100(root=data_dir_path, train=False,
+                                                                  download=True, transform=test_transformer)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=False, num_workers=2,
                                               pin_memory=torch.cuda.is_available())
     return train_loader, valid_loader, test_loader
