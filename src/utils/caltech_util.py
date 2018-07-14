@@ -88,7 +88,7 @@ def get_data_loaders(root_data_dir_path, compression_type=None, compressed_size_
         test_file_path_lists.append(file_path_list[valid_end_idx:])
 
     train_dataset = RgbImageDataset(train_file_path_lists, reshape_size)
-    normalizer = data_util.build_normalizer(train_dataset.data) if normalized else None
+    normalizer = data_util.build_normalizer(train_dataset.load_all_data()) if normalized else None
     valid_comp_list = [transforms.ToTensor()]
     train_comp_list = [transforms.RandomHorizontalFlip(), transforms.ToTensor()]
     if normalizer is not None:
