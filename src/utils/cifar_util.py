@@ -11,7 +11,6 @@ from utils import data_util
 def get_model(device, config):
     model_config = config['model']
     model_type = model_config['type']
-    print(model_type)
     if model_type == 'alexnet':
         model = AlexNet(**model_config['params'])
     elif model_type == 'densenet':
