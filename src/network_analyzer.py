@@ -39,7 +39,7 @@ def read_config(config_file_path):
     with open(config_file_path, 'r') as fp:
         config = yaml.load(fp)
 
-    if config['dataset'] == 'cifar':
+    if config['dataset'].startswith('cifar'):
         model = cifar_util.get_model('cpu', config)
         model_type = config['model']['type']
         input_shape = config['input_shape']
