@@ -71,10 +71,10 @@ def get_data_loaders(root_data_dir_path, compression_type=None, compressed_size_
     if not os.path.exists(data_dir_path):
         ValueError('Could not find {} dataset at {}'.format('Caltech' + dataset_name, data_dir_path))
 
-    sub_dir_path_list = file_util.get_dir_list(data_dir_path)
+    sub_dir_path_list = file_util.get_dir_list(data_dir_path, is_sorted=True)
     file_path_lists = []
     for sub_dir_path in sub_dir_path_list:
-        file_path_lists.append(file_util.get_file_list(sub_dir_path))
+        file_path_lists.append(file_util.get_file_list(sub_dir_path, is_sorted=True))
 
     train_file_path_lists, valid_file_path_lists, test_file_path_lists = [], [], []
     np.random.seed(random_seed)
@@ -101,11 +101,13 @@ def get_data_loaders(root_data_dir_path, compression_type=None, compressed_size_
     valid_transformer = transforms.Compose(valid_comp_list)
     train_dataset = RgbImageDataset(train_file_path_lists, reshape_size, train_transformer)
     valid_dataset = RgbImageDataset(valid_file_path_lists, reshape_size, valid_transformer)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=100, num_workers=2, pin_memory=pin_memory)
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=100, num_workers=2, pin_memory=pin_memory)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=100, shuffle=True,
+                                               num_workers=2, pin_memory=pin_memory)
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=100, shuffle=True,
+                                               num_workers=2, pin_memory=pin_memory)
 
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
     test_dataset = RgbImageDataset(test_file_path_lists, reshape_size, test_transformer)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=False,
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=True,
                                               num_workers=2, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
