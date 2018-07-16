@@ -1,7 +1,7 @@
 import os
 
 
-def get_file_list(dir_path, is_recursive=False):
+def get_file_list(dir_path, is_recursive=False, is_sorted=False):
     file_list = list()
     for file in os.listdir(dir_path):
         path = os.path.join(dir_path, file)
@@ -9,10 +9,10 @@ def get_file_list(dir_path, is_recursive=False):
             file_list.append(path)
         elif is_recursive:
             file_list.extend(get_file_list(path, is_recursive))
-    return file_list
+    return sorted(file_list) if is_sorted else file_list
 
 
-def get_dir_list(dir_path, is_recursive=False):
+def get_dir_list(dir_path, is_recursive=False, is_sorted=False):
     dir_list = list()
     for file in os.listdir(dir_path):
         path = os.path.join(dir_path, file)
@@ -20,7 +20,7 @@ def get_dir_list(dir_path, is_recursive=False):
             dir_list.append(path)
         elif is_recursive:
             dir_list.extend(get_dir_list(path, is_recursive))
-    return dir_list
+    return sorted(dir_list) if is_sorted else dir_list
 
 
 def make_dirs(dir_path):
