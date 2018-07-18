@@ -17,6 +17,10 @@ def convert2accumulated(op_count_list):
     return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
 
 
+def find_first_bottleneck(scaled_bandwidths):
+    return np.where(scaled_bandwidths < 1)[0][0]
+
+
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.semilogy(xs[1:], op_count_list, label=model_name)
     plt.xticks(xs[1:], layer_list[1:])
@@ -26,11 +30,11 @@ def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.show()
 
 
-def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name):
+def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, accum_complexity_label, model_name):
     plt.plot(xs[1:], accumulated_op_counts, label=model_name)
     plt.xticks(xs[1:], layer_list[1:])
     plt.xlabel('Layer')
-    plt.ylabel('Accumulated Complexity')
+    plt.ylabel(accum_complexity_label)
     plt.legend()
     plt.show()
 
@@ -54,16 +58,18 @@ def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, bandwidth_labe
     plt.show()
 
 
-def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, bandwidth_label, model_name):
+def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths,
+                                                   bandwidth_label, accum_complexity_label, model_name):
     plt.plot(accumulated_op_counts, bandwidths[1:], marker='o', label=model_name)
     plt.plot(accumulated_op_counts, [bandwidths[0] for x in accumulated_op_counts], '-', label='Input')
-    plt.xlabel('Accumulated Complexity')
+    plt.xlabel(accum_complexity_label)
     plt.ylabel(bandwidth_label)
     plt.legend()
     plt.show()
 
 
-def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, bandwidths, layer_list, bandwidth_label):
+def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, bandwidths, layer_list,
+                                                    bandwidth_label, accum_complexity_label):
     fig, ax1 = plt.subplots()
     ax1.semilogy(xs, bandwidths, '-')
     ax1.set_xticks(xs)
@@ -72,23 +78,34 @@ def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, b
     ax1.set_ylabel(bandwidth_label, color='b')
     ax2 = ax1.twinx()
     ax2.plot(xs[1:], accumulated_op_counts / np.max(accumulated_op_counts), 'r--')
-    ax2.set_ylabel('Scaled Accumulated Complexity', color='r')
+    ax2.set_ylabel(accum_complexity_label, color='r')
     plt.show()
 
 
-def plot_model_complexity_and_bandwidth(op_count_list, accumulated_op_counts, bandwidths,
-                                        layer_list, bandwidth_label, model_name):
-    print('Number of Operations: %.5fM' % (sum(op_count_list) / 1e6))
+def plot_model_complexity_and_bandwidth(op_count_list, accum_complexities, bandwidths, layer_list,
+                                        bandwidth_label, accum_complexity_label, model_name, scaled):
+    print('Number of Operations: {:.5f}M'.format(sum(op_count_list) / 1e6))
+    if scaled:
+        first_bottleneck_idx = find_first_bottleneck(bandwidths)
+        bottleneck_bandwidth_rate = bandwidths[first_bottleneck_idx] * 100
+        bottleneck_accum_complexity_rate = accum_complexities[first_bottleneck_idx] * 100
+        print(bandwidths[first_bottleneck_idx:first_bottleneck_idx+5]*100)
+        print(accum_complexities[first_bottleneck_idx:first_bottleneck_idx+5]*100)
+        print('Scaled Bandwidth at First Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
+        print('Scaled Accumulated Complexity at First Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
+
     xs = np.arange(len(layer_list))
     plot_model_complexity(xs, op_count_list, layer_list, model_name)
-    plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, model_name)
+    plot_accumulated_model_complexity(xs, accum_complexities, layer_list, accum_complexity_label, model_name)
     plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name)
     plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, bandwidth_label, model_name)
-    plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwidths, bandwidth_label, model_name)
-    plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, bandwidths, layer_list, bandwidth_label)
+    plot_accumulated_model_complexity_vs_bandwidth(accum_complexities, bandwidths,
+                                                   bandwidth_label, accum_complexity_label, model_name)
+    plot_accumulated_model_complexity_and_bandwidth(xs, accum_complexities, bandwidths, layer_list,
+                                                    bandwidth_label, accum_complexity_label)
 
 
-def calc_model_complexity_and_bandwidth(model, input_shape, scaling=False, plot=True, model_name='network'):
+def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=True, model_name='network'):
     # Referred to https://zhuanlan.zhihu.com/p/33992733
     multiply_adds = False
     op_count_list = list()
@@ -182,12 +199,15 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaling=False, plot=
     output = model(input)
     bandwidths = convert2kb(bandwidth_list)
     bandwidth_label = 'Bandwidth [kB]'
-    if scaling:
+    accum_complexities = convert2accumulated(op_count_list)
+    accum_complexity_label = 'Accumulated Complexity'
+    if scaled:
         bandwidths /= bandwidths[0]
         bandwidth_label = 'Scaled Bandwidth'
+        accum_complexities /= accum_complexities[-1]
+        accum_complexity_label = 'Scaled Accumulated Complexity'
 
-    accumulated_op_counts = convert2accumulated(op_count_list)
     if plot:
-        plot_model_complexity_and_bandwidth(np.array(op_count_list), accumulated_op_counts,
-                                            bandwidths, layer_list, bandwidth_label, model_name)
-    return op_count_list, bandwidths, accumulated_op_counts
+        plot_model_complexity_and_bandwidth(np.array(op_count_list), accum_complexities, bandwidths, layer_list,
+                                            bandwidth_label, accum_complexity_label, model_name, scaled)
+    return op_count_list, bandwidths, accum_complexities
