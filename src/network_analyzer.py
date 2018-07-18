@@ -55,7 +55,7 @@ def run(args):
         model_type = args.model
         model, input_shape = get_model_and_input_shape(model_type.lower(), args.isize)
 
-    net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, scaling=args.scale, model_name=model_type)
+    net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, scaled=args.scale, model_name=model_type)
 
 
 if __name__ == '__main__':
