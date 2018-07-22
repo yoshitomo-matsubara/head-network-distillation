@@ -17,8 +17,8 @@ def convert2accumulated(op_count_list):
     return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
 
 
-def find_first_bottleneck(scaled_bandwidths):
-    return np.where(scaled_bandwidths < 1)[0][0]
+def find_target_bottleneck(scaled_bandwidths, threshold=1.0):
+    return np.where(scaled_bandwidths < threshold)[0][0]
 
 
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
@@ -86,13 +86,13 @@ def plot_model_complexity_and_bandwidth(op_count_list, accum_complexities, bandw
                                         bandwidth_label, accum_complexity_label, model_name, scaled):
     print('Number of Operations: {:.5f}M'.format(sum(op_count_list) / 1e6))
     if scaled:
-        first_bottleneck_idx = find_first_bottleneck(bandwidths)
-        bottleneck_bandwidth_rate = bandwidths[first_bottleneck_idx] * 100
-        bottleneck_accum_complexity_rate = accum_complexities[first_bottleneck_idx] * 100
-        print(bandwidths[first_bottleneck_idx:first_bottleneck_idx+5]*100)
-        print(accum_complexities[first_bottleneck_idx:first_bottleneck_idx+5]*100)
-        print('Scaled Bandwidth at First Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
-        print('Scaled Accumulated Complexity at First Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
+        target_bottleneck_idx = find_target_bottleneck(bandwidths)
+        bottleneck_bandwidth_rate = bandwidths[target_bottleneck_idx] * 100
+        bottleneck_accum_complexity_rate = accum_complexities[target_bottleneck_idx] * 100
+        print(bandwidths[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
+        print(accum_complexities[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
+        print('Scaled Bandwidth at Target Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
+        print('Scaled Accumulated Complexity at Target Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
 
     xs = np.arange(len(layer_list))
     plot_model_complexity(xs, op_count_list, layer_list, model_name)
