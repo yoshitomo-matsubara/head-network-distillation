@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 
 def calc_sequential_feature_size(sequential, input_shape):
-    input_data = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
+    input_data = torch.rand(input_shape).unsqueeze(0)
     return np.prod(sequential(input_data).unsqueeze(0).size())
 
 

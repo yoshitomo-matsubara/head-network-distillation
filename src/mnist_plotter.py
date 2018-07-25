@@ -1,6 +1,8 @@
 import argparse
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
+
 from mnist_runner import MyNet
 from utils import data_util, net_measure_util
 
