@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.autograd import Variable
 
 
@@ -122,7 +123,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Conv2d')
+        layer_list.append(type(self).__name__)
 
     def linear_hook(self, input, output):
         batch_size = input[0].size(0) if input[0].dim() == 2 else 1
@@ -131,31 +132,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * (weight_ops + bias_ops)
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Linear')
-
-    def bn_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('BatchNorm2d')
-
-    def relu_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('ReLU')
-
-    def leaky_relu_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('LeakyReLU')
-
-    def dropout_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Dropout')
+        layer_list.append(type(self).__name__)
 
     def pooling_hook(self, input, output):
         batch_size, input_channels, input_height, input_width = input[0].size()
@@ -165,25 +142,25 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('MaxPool2d')
+        layer_list.append(type(self).__name__)
+
+    def simple_hook(self, input, output):
+        op_size = input[0].nelement()
+        op_count_list.append(op_size)
+        bandwidth_list.append(np.prod(output[0].size()))
+        layer_list.append(type(self).__name__)
 
     def move_next_layer(net):
         children = list(net.children())
         if not children:
-            if isinstance(net, torch.nn.Conv2d):
+            if isinstance(net, nn.Conv2d):
                 net.register_forward_hook(conv_hook)
-            elif isinstance(net, torch.nn.Linear):
+            elif isinstance(net, nn.Linear):
                 net.register_forward_hook(linear_hook)
-            elif isinstance(net, torch.nn.BatchNorm2d):
-                net.register_forward_hook(bn_hook)
-            elif isinstance(net, torch.nn.ReLU):
-                net.register_forward_hook(relu_hook)
-            elif isinstance(net, torch.nn.LeakyReLU):
-                net.register_forward_hook(leaky_relu_hook)
-            elif isinstance(net, torch.nn.Dropout):
-                net.register_forward_hook(dropout_hook)
-            elif isinstance(net, torch.nn.MaxPool2d) or isinstance(net, torch.nn.AvgPool2d):
+            elif isinstance(net, nn.MaxPool2d) or isinstance(net, nn.AvgPool2d):
                 net.register_forward_hook(pooling_hook)
+            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
+                net.register_forward_hook(simple_hook)
             else:
                 if plot:
                     print('Non-registered instance:', type(net))
