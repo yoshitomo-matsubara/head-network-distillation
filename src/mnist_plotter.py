@@ -9,9 +9,9 @@ from utils import data_util, net_measure_util
 
 def get_argparser():
     parser = argparse.ArgumentParser(description=os.path.basename(__file__))
-    parser.add_argument('-input', default='1,28,28', help='input shape')
-    parser.add_argument('-range1', default='5:55:15', help='channel range for 1st convolution layer')
-    parser.add_argument('-range2', default='10:80:20', help='channel range for 2nd convolution layer')
+    parser.add_argument('--input', default='1,28,28', help='input shape')
+    parser.add_argument('--range1', default='5:55:15', help='channel range for 1st convolution layer')
+    parser.add_argument('--range2', default='10:80:20', help='channel range for 2nd convolution layer')
     return parser
 
 
