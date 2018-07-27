@@ -1,3 +1,5 @@
+import sys
+import zlib
 import torch.nn as nn
 
 
@@ -5,10 +7,27 @@ class WrapperModule(nn.Module):
     def __init__(self, org_module):
         super().__init__()
         self.org_module = org_module
+        self.org_bandwidth = 0
+        self.compressed_bandwidth = 0
+        self.count = 0
 
     def forward(self, *input):
         output = self.org_module(*input)
+        np_output = output.detach().numpy()
+        compressed_output = zlib.compress(np_output, 9)
+        self.org_bandwidth += np_output.nbytes
+        self.compressed_bandwidth += sys.getsizeof(compressed_output)
+        self.count += output.size(0)
         return output
+
+    def get_compression_rate(self):
+        return self.compressed_bandwidth / self.org_bandwidth
+
+    def get_average_org_bandwidth(self):
+        return self.org_bandwidth / self.count
+
+    def get_average_compressed_bandwidth(self):
+        return self.compressed_bandwidth / self.count
 
 
 def wrap_all_child_modules(model, wrapper_module, member_name=None, member_module=None):
