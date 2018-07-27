@@ -13,7 +13,7 @@ class WrapperModule(nn.Module):
 
     def forward(self, *input):
         output = self.org_module(*input)
-        np_output = output.detach().numpy()
+        np_output = output.cpu().detach().numpy()
         compressed_output = zlib.compress(np_output, 9)
         self.org_bandwidth += np_output.nbytes
         self.compressed_bandwidth += sys.getsizeof(compressed_output)
