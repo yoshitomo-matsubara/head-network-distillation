@@ -14,17 +14,18 @@ from utils import cifar_util, file_util
 # Referred to https://github.com/kuangliu/pytorch-cifar
 def get_argparser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR-10 and -100')
-    parser.add_argument('-data', default='./resource/data/', help='CIFAR data dir path')
+    parser.add_argument('--data', default='./resource/data/', help='CIFAR data dir path')
     parser.add_argument('-cifar100', action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
-    parser.add_argument('-config', required=True, help='yaml file path')
-    parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('-epoch', type=int, default=100, help='model id')
-    parser.add_argument('-lr', type=float, default=0.1, help='learning rate')
-    parser.add_argument('-vrate', type=float, default=0.1, help='validation rate')
-    parser.add_argument('-interval', type=int, default=50, help='logging training status ')
-    parser.add_argument('-ctype', help='compression type')
-    parser.add_argument('-csize', help='compression size')
-    parser.add_argument('-ae', help='autoencoder yaml file path')
+    parser.add_argument('--config', required=True, help='yaml file path')
+    parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
+    parser.add_argument('--bsize', type=int, default=128, help='number of samples per a batch')
+    parser.add_argument('--epoch', type=int, default=100, help='number of epochs for training')
+    parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
+    parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
+    parser.add_argument('--interval', type=int, default=50, help='logging training status ')
+    parser.add_argument('--ctype', help='compression type')
+    parser.add_argument('--csize', help='compression size')
+    parser.add_argument('--ae', help='autoencoder yaml file path')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
@@ -136,7 +137,8 @@ def run(args):
 
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        cifar_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, is_cifar100=args.cifar100, ae=ae)
+        cifar_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
+                                    is_cifar100=args.cifar100, ae=ae)
     model = cifar_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)

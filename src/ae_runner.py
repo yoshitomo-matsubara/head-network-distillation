@@ -11,16 +11,17 @@ from utils import cifar_util, file_util
 # Referred to https://github.com/wanglouis49/pytorch-autoencoders
 def get_argparser():
     parser = argparse.ArgumentParser(description='VAE CIFAR-10')
-    parser.add_argument('-data', default='./resource/data/', help='CIFAR-10 data dir path')
-    parser.add_argument('-config', required=True, help='yaml file path')
-    parser.add_argument('-ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
-    parser.add_argument('-lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--data', default='./resource/data/', help='CIFAR-10 data dir path')
+    parser.add_argument('--config', required=True, help='yaml file path')
+    parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
+    parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
+    parser.add_argument('--epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
+    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('-no_cuda', action='store_true', default=False, help='enables CUDA training')
-    parser.add_argument('-seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
-    parser.add_argument('-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
+    parser.add_argument('--interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('-vrate', type=float, default=0.1, help='validation rate')
+    parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return parser
 
@@ -103,7 +104,7 @@ def run(args):
         torch.cuda.manual_seed(args.seed)
 
     train_loader, valid_loader, test_loader =\
-        cifar_util.get_data_loaders(data_dir_path, args.vrate, normalized=False)
+        cifar_util.get_data_loaders(data_dir_path, args.bsize, args.vrate, normalized=False)
     ae = cifar_util.get_autoencoder(cuda_available, config)
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args.ckpt, args.init)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)

@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import matplotlib.pyplot as plt
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -8,11 +9,11 @@ import torch.optim as optim
 import yaml
 
 import ae_runner
-from utils import caltech_util, file_util
+from utils import caltech_util, file_util, module_wrap_util
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='PyTorch Caltech101 and 256')
+    parser = argparse.ArgumentParser(description='Compression Analyzer')
     parser.add_argument('--data', default='./resource/data/', help='Caltech data dir path')
     parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
     parser.add_argument('--config', required=True, help='yaml file path')
@@ -96,25 +97,20 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, device, data_type='Test'):
+def test(model, test_loader, device, data_type='Test'):
     model.eval()
-    test_loss = 0
     correct = 0
     total = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
-
-            test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        data_type, test_loss, correct, total, acc))
+    print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
     return acc
 
 
@@ -124,6 +120,27 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
         save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
         best_acc = acc
     return best_acc
+
+
+def extract_compression_rates(parent_module, compression_rate_list, name_list):
+    for name, child_module in parent_module.named_children():
+        if list(child_module.children()):
+            extract_compression_rates(child_module, compression_rate_list)
+        else:
+            compression_rate_list.append(child_module.get_compression_rate())
+            name_list.append(type(child_module).__name__)
+
+
+def plot_compression_rates(model):
+    compression_rate_list = list()
+    name_list = list()
+    extract_compression_rates(model, compression_rate_list, name_list)
+    xs = list(range(len(compression_rate_list)))
+    plt.plot(xs, compression_rate_list)
+    plt.xticks(xs, name_list)
+    plt.xlabel('Layer')
+    plt.ylabel('Average Compression Rate')
+    plt.show()
 
 
 def run(args):
@@ -145,7 +162,9 @@ def run(args):
         for epoch in range(start_epoch, start_epoch + args.epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    test(model, test_loader, criterion, device)
+    module_wrap_util.wrap_all_child_modules(model, module_wrap_util.WrapperModule)
+    test(model, test_loader, device)
+    plot_compression_rates(model)
 
 
 if __name__ == '__main__':

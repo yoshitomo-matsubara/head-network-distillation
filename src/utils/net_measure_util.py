@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch.autograd import Variable
+import torch.nn as nn
 
 
 def calc_sequential_feature_size(sequential, input_shape):
-    input_data = Variable(torch.rand(input_shape).unsqueeze(0), requires_grad=True)
+    input_data = torch.rand(input_shape).unsqueeze(0)
     return np.prod(sequential(input_data).unsqueeze(0).size())
 
 
@@ -17,8 +17,8 @@ def convert2accumulated(op_count_list):
     return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
 
 
-def find_first_bottleneck(scaled_bandwidths):
-    return np.where(scaled_bandwidths < 1)[0][0]
+def find_target_bottleneck(scaled_bandwidths, threshold=1.0):
+    return np.where(scaled_bandwidths < threshold)[0][0]
 
 
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
@@ -86,13 +86,13 @@ def plot_model_complexity_and_bandwidth(op_count_list, accum_complexities, bandw
                                         bandwidth_label, accum_complexity_label, model_name, scaled):
     print('Number of Operations: {:.5f}M'.format(sum(op_count_list) / 1e6))
     if scaled:
-        first_bottleneck_idx = find_first_bottleneck(bandwidths)
-        bottleneck_bandwidth_rate = bandwidths[first_bottleneck_idx] * 100
-        bottleneck_accum_complexity_rate = accum_complexities[first_bottleneck_idx] * 100
-        print(bandwidths[first_bottleneck_idx:first_bottleneck_idx+5]*100)
-        print(accum_complexities[first_bottleneck_idx:first_bottleneck_idx+5]*100)
-        print('Scaled Bandwidth at First Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
-        print('Scaled Accumulated Complexity at First Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
+        target_bottleneck_idx = find_target_bottleneck(bandwidths)
+        bottleneck_bandwidth_rate = bandwidths[target_bottleneck_idx] * 100
+        bottleneck_accum_complexity_rate = accum_complexities[target_bottleneck_idx] * 100
+        print(bandwidths[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
+        print(accum_complexities[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
+        print('Scaled Bandwidth at Target Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
+        print('Scaled Accumulated Complexity at Target Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
 
     xs = np.arange(len(layer_list))
     plot_model_complexity(xs, op_count_list, layer_list, model_name)
@@ -122,7 +122,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Conv2d')
+        layer_list.append(type(self).__name__)
 
     def linear_hook(self, input, output):
         batch_size = input[0].size(0) if input[0].dim() == 2 else 1
@@ -131,31 +131,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * (weight_ops + bias_ops)
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Linear')
-
-    def bn_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('BatchNorm2d')
-
-    def relu_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('ReLU')
-
-    def leaky_relu_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('LeakyReLU')
-
-    def dropout_hook(self, input, output):
-        op_size = input[0].nelement()
-        op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('Dropout')
+        layer_list.append(type(self).__name__)
 
     def pooling_hook(self, input, output):
         batch_size, input_channels, input_height, input_width = input[0].size()
@@ -165,25 +141,25 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append('MaxPool2d')
+        layer_list.append(type(self).__name__)
+
+    def simple_hook(self, input, output):
+        op_size = input[0].nelement()
+        op_count_list.append(op_size)
+        bandwidth_list.append(np.prod(output[0].size()))
+        layer_list.append(type(self).__name__)
 
     def move_next_layer(net):
         children = list(net.children())
         if not children:
-            if isinstance(net, torch.nn.Conv2d):
+            if isinstance(net, nn.Conv2d):
                 net.register_forward_hook(conv_hook)
-            elif isinstance(net, torch.nn.Linear):
+            elif isinstance(net, nn.Linear):
                 net.register_forward_hook(linear_hook)
-            elif isinstance(net, torch.nn.BatchNorm2d):
-                net.register_forward_hook(bn_hook)
-            elif isinstance(net, torch.nn.ReLU):
-                net.register_forward_hook(relu_hook)
-            elif isinstance(net, torch.nn.LeakyReLU):
-                net.register_forward_hook(leaky_relu_hook)
-            elif isinstance(net, torch.nn.Dropout):
-                net.register_forward_hook(dropout_hook)
-            elif isinstance(net, torch.nn.MaxPool2d) or isinstance(net, torch.nn.AvgPool2d):
+            elif isinstance(net, nn.MaxPool2d) or isinstance(net, nn.AvgPool2d):
                 net.register_forward_hook(pooling_hook)
+            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
+                net.register_forward_hook(simple_hook)
             else:
                 if plot:
                     print('Non-registered instance:', type(net))
