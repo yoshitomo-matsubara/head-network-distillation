@@ -96,25 +96,20 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, device, data_type='Test'):
+def test(model, test_loader, device, data_type='Test'):
     model.eval()
-    test_loss = 0
     correct = 0
     total = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
-
-            test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        data_type, test_loss, correct, total, acc))
+    print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
     return acc
 
 
@@ -166,7 +161,7 @@ def run(args):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     module_wrap_util.wrap_all_child_modules(model, module_wrap_util.WrapperModule)
-    test(model, test_loader, criterion, device)
+    test(model, test_loader, device)
     plot_compression_rates(model)
 
 
