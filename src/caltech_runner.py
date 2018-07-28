@@ -17,7 +17,8 @@ def get_argparser():
     parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('--epoch', type=int, default=100, help='model id')
+    parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
+    parser.add_argument('--epoch', type=int, default=100, help='number of epochs for training')
     parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
     parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
     parser.add_argument('--interval', type=int, default=50, help='logging training status ')
@@ -135,7 +136,8 @@ def run(args):
 
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        caltech_util.get_data_loaders(args.data, args.ctype, args.csize, args.vrate, is_caltech256=args.caltech256, ae=ae)
+        caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
+                                      is_caltech256=args.caltech256, ae=ae)
     model = caltech_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)

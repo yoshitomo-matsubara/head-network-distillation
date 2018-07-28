@@ -4,9 +4,10 @@ import torch.nn as nn
 
 
 class WrapperModule(nn.Module):
-    def __init__(self, org_module):
+    def __init__(self, org_module, compression_level):
         super().__init__()
         self.org_module = org_module
+        self.compression_level = compression_level
         self.org_bandwidth = 0
         self.compressed_bandwidth = 0
         self.count = 0
@@ -14,7 +15,7 @@ class WrapperModule(nn.Module):
     def forward(self, *input):
         output = self.org_module(*input)
         np_output = output.clone().cpu().detach().numpy()
-        compressed_output = zlib.compress(np_output, 9)
+        compressed_output = zlib.compress(np_output, self.compression_level)
         self.org_bandwidth += np_output.nbytes
         self.compressed_bandwidth += sys.getsizeof(compressed_output)
         self.count += output.size(0)
