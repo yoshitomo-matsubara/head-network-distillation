@@ -100,7 +100,7 @@ def get_test_transformer(normalizer, batch_size, compression_type, compressed_si
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, batch_size, compression_type=None, compressed_size_str=None,
+def get_data_loaders(data_dir_path, batch_size=128, compression_type=None, compressed_size_str=None,
                      valid_rate=0.1, normalized=True, is_cifar100=False, ae=None):
     train_loader, valid_loader, normalizer =\
         get_train_and_valid_loaders(data_dir_path, batch_size=batch_size, normalized=normalized,

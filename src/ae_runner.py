@@ -14,6 +14,7 @@ def get_argparser():
     parser.add_argument('--data', default='./resource/data/', help='CIFAR-10 data dir path')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
+    parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
     parser.add_argument('--epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('-no_cuda', action='store_true', default=False, help='enables CUDA training')
@@ -103,7 +104,7 @@ def run(args):
         torch.cuda.manual_seed(args.seed)
 
     train_loader, valid_loader, test_loader =\
-        cifar_util.get_data_loaders(data_dir_path, args.vrate, normalized=False)
+        cifar_util.get_data_loaders(data_dir_path, args.bsize, args.vrate, normalized=False)
     ae = cifar_util.get_autoencoder(cuda_available, config)
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args.ckpt, args.init)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)
