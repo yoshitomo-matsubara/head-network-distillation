@@ -125,7 +125,7 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
 def extract_compression_rates(parent_module, compression_rate_list, name_list):
     for name, child_module in parent_module.named_children():
         if list(child_module.children()):
-            extract_compression_rates(child_module, compression_rate_list)
+            extract_compression_rates(child_module, compression_rate_list, name_list)
         else:
             compression_rate_list.append(child_module.get_compression_rate())
             name_list.append(type(child_module).__name__)
