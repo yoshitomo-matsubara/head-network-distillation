@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class WrapperModule(nn.Module):
-    def __init__(self, org_module, compression_level):
+    def __init__(self, org_module, compression_level=9):
         super().__init__()
         self.org_module = org_module
         self.compression_level = compression_level
