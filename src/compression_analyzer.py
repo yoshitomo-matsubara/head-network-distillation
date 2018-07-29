@@ -124,7 +124,7 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
 
 def extract_compression_rates(parent_module, compression_rate_list, name_list):
     for name, child_module in parent_module.named_children():
-        if list(child_module.children()):
+        if list(child_module.children()) and not isinstance(child_module, module_wrap_util.WrapperModule):
             extract_compression_rates(child_module, compression_rate_list, name_list)
         else:
             compression_rate_list.append(child_module.get_compression_rate())
@@ -154,7 +154,7 @@ def run(args):
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae)
+                                      is_caltech256=args.caltech256, ae=ae, reshape_size=tuple(config['input_shape'][1:3]))
     model = caltech_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
