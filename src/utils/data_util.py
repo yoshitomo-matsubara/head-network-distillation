@@ -56,8 +56,9 @@ class RgbImageDataset(data.Dataset):
             data.append(img)
 
         data = np.concatenate(data)
-        self.avg_compression_rate = np.average(self.compression_rates)
-        self.sd_compression_rate = np.std(self.compression_rates)
+        if len(self.compression_rates) > 0:
+            self.avg_compression_rate = np.average(self.compression_rates)
+            self.sd_compression_rate = np.std(self.compression_rates)
         return data.reshape(len(self.labels), self.size[0], self.size[1], 3)
 
 
