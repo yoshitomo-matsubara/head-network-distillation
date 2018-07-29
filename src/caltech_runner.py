@@ -137,7 +137,7 @@ def run(args):
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae)
+                                      is_caltech256=args.caltech256, ae=ae, reshape_size=tuple(config['input_shape'][1:3]))
     model = caltech_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
