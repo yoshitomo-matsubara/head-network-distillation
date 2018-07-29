@@ -40,21 +40,20 @@ class RgbImageDataset(data.Dataset):
         file_path, target = self.file_paths[idx], self.labels[idx]
         img = Image.open(file_path)
         img = functional.resize(img, self.size, interpolation=2)
-        compression_rate = -1
         if 1 <= self.jpeg_quality <= 95:
             img, compression_rate = self.compress_img(img)
+            self.compression_rates.append(compression_rate)
 
         if self.transform is not None:
             img = self.transform(img)
-        return img, target, compression_rate
+        return img, target
 
     def load_all_data(self):
         data = []
         self.compression_rates = []
         for i in range(len(self.labels)):
-            img, _, compression_rate = self.__getitem__(i)
+            img, _ = self.__getitem__(i)
             data.append(img)
-            self.compression_rates.append(compression_rate)
 
         data = np.concatenate(data)
         self.avg_compression_rate = np.average(self.compression_rates)
