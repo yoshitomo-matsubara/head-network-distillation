@@ -128,7 +128,7 @@ def extract_compression_rates(parent_module, compression_rate_list, name_list):
             extract_compression_rates(child_module, compression_rate_list, name_list)
         else:
             compression_rate_list.append(child_module.get_compression_rate())
-            name_list.append(type(child_module).__name__)
+            name_list.append(type(child_module.org_module).__name__)
 
 
 def plot_compression_rates(model):
