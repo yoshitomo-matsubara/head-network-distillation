@@ -62,6 +62,14 @@ class RgbImageDataset(data.Dataset):
             print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
         return data.reshape(len(self.labels), self.size[0], self.size[1], 3)
 
+    def compute_compression_rate(self):
+        self.compression_rates = []
+        for i in range(len(self.labels)):
+            _, _ = self.__getitem__(i)
+        self.avg_compression_rate = np.average(self.compression_rates)
+        self.sd_compression_rate = np.std(self.compression_rates)
+        print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
+
 
 def convert2type_list(str_var, delimiter, var_type):
     return list(map(var_type, str_var.split(delimiter)))
