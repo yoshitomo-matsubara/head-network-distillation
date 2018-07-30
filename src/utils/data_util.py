@@ -30,11 +30,15 @@ class RgbImageDataset(data.Dataset):
         return len(self.labels)
 
     def compress_img(self, img):
-        org_file_size = sys.getsizeof(img.tobytes())
-        buffer = BytesIO()
-        img.save(buffer, 'JPEG', quality=self.jpeg_quality)
-        comp_file_size = buffer.tell()
-        return Image.open(buffer), comp_file_size / org_file_size
+        img_buffer = BytesIO()
+        img.save(img_buffer, 'JPEG', quality=95)
+        org_file_size = img_buffer.tell()
+        img_buffer.close()
+        img_buffer = BytesIO()
+        img.save(img_buffer, 'JPEG', quality=self.jpeg_quality)
+        comp_file_size = img_buffer.tell()
+        recon_img = Image.open(img_buffer)
+        return recon_img, comp_file_size / org_file_size
 
     def __getitem__(self, idx):
         file_path, target = self.file_paths[idx], self.labels[idx]
