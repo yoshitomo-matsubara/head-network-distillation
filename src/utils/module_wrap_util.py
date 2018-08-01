@@ -18,7 +18,7 @@ class WrapperModule(nn.Module):
         compressed_output = zlib.compress(np_output, self.compression_level)
         self.org_bandwidth += np_output.nbytes
         self.compressed_bandwidth += sys.getsizeof(compressed_output)
-        self.count += output.size(0)
+        self.count += output.size[0]
         return output
 
     def get_compression_rate(self):
