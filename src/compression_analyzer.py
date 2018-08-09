@@ -101,8 +101,10 @@ def test(model, test_loader, device, data_type='Test'):
     model.eval()
     correct = 0
     total = 0
+    bandwidth = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
+            bandwidth += inputs.clone().cpu().detach().numpy().nbytes
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             _, predicted = outputs.max(1)
@@ -111,11 +113,11 @@ def test(model, test_loader, device, data_type='Test'):
 
     acc = 100.0 * correct / total
     print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
-    return acc
+    return acc, bandwidth / total
 
 
 def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
-    acc = test(model, valid_loader, criterion, device, 'Validation')
+    acc, _ = test(model, valid_loader, criterion, device, 'Validation')
     if acc > best_acc:
         save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
         best_acc = acc
@@ -132,17 +134,19 @@ def extract_compression_rates(parent_module, org_bandwidth_list, compressed_band
             name_list.append(type(child_module.org_module).__name__)
 
 
-def plot_compression_rates(model):
+def plot_compression_rates(model, avg_input_bandwidth):
     org_bandwidth_list = list()
     compressed_bandwidth_list = list()
     name_list = list()
     extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
     xs = list(range(len(org_bandwidth_list)))
-    plt.plot(xs, org_bandwidth_list, 'Original')
-    plt.plot(xs, compressed_bandwidth_list, 'Compressed')
+    plt.plot(xs, [avg_input_bandwidth for _ in range(len(name_list))], label='Input')
+    plt.plot(xs, org_bandwidth_list, label='Original')
+    plt.plot(xs, compressed_bandwidth_list, label='Compressed')
     plt.xticks(xs, name_list)
     plt.xlabel('Layer')
-    plt.ylabel('Average Bandwidth')
+    plt.ylabel('Average Bandwidth [Bytes]')
+    plt.legend()
     plt.show()
 
 
@@ -166,8 +170,8 @@ def run(args):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     module_wrap_util.wrap_all_child_modules(model, module_wrap_util.WrapperModule)
-    test(model, test_loader, device)
-    plot_compression_rates(model)
+    _, avg_input_bandwidth = test(model, test_loader, device)
+    plot_compression_rates(model, avg_input_bandwidth)
 
 
 if __name__ == '__main__':
