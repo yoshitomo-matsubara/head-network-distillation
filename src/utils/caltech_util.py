@@ -66,7 +66,7 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
 
 def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, compressed_size_str=None,
                      valid_rate=0.1, test_rate=0.1, random_seed=1, normalized=True, is_caltech256=False, ae=None,
-                     reshape_size=(180, 180)):
+                     reshape_size=(180, 180), compression_quality=0):
     dataset_name = '101' if not is_caltech256 else '256'
     data_dir_path = os.path.join(root_data_dir_path, dataset_name + '_ObjectCategories')
     if not os.path.exists(data_dir_path):
@@ -108,7 +108,9 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
                                                num_workers=2, pin_memory=pin_memory)
 
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
-    test_dataset = RgbImageDataset(test_file_path_lists, reshape_size, test_transformer)
+    test_dataset = RgbImageDataset(test_file_path_lists, reshape_size, test_transformer, compression_quality)
+    if 1 <= test_dataset.jpeg_quality <= 95:
+        test_dataset.compute_compression_rate()
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True,
                                               num_workers=2, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader

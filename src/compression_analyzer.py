@@ -101,8 +101,10 @@ def test(model, test_loader, device, data_type='Test'):
     model.eval()
     correct = 0
     total = 0
+    bandwidth = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
+            bandwidth += inputs.clone().cpu().detach().numpy().nbytes
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             _, predicted = outputs.max(1)
@@ -111,35 +113,40 @@ def test(model, test_loader, device, data_type='Test'):
 
     acc = 100.0 * correct / total
     print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
-    return acc
+    return acc, bandwidth / total
 
 
 def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
-    acc = test(model, valid_loader, criterion, device, 'Validation')
+    acc, _ = test(model, valid_loader, criterion, device, 'Validation')
     if acc > best_acc:
         save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
         best_acc = acc
     return best_acc
 
 
-def extract_compression_rates(parent_module, compression_rate_list, name_list):
+def extract_compression_rates(parent_module, org_bandwidth_list, compressed_bandwidth_list, name_list):
     for name, child_module in parent_module.named_children():
-        if list(child_module.children()):
-            extract_compression_rates(child_module, compression_rate_list)
+        if list(child_module.children()) and not isinstance(child_module, module_wrap_util.WrapperModule):
+            extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
         else:
-            compression_rate_list.append(child_module.get_compression_rate())
-            name_list.append(type(child_module).__name__)
+            org_bandwidth_list.append(child_module.get_average_org_bandwidth())
+            compressed_bandwidth_list.append(child_module.get_average_compressed_bandwidth())
+            name_list.append(type(child_module.org_module).__name__)
 
 
-def plot_compression_rates(model):
-    compression_rate_list = list()
+def plot_compression_rates(model, avg_input_bandwidth):
+    org_bandwidth_list = list()
+    compressed_bandwidth_list = list()
     name_list = list()
-    extract_compression_rates(model, compression_rate_list, name_list)
-    xs = list(range(len(compression_rate_list)))
-    plt.plot(xs, compression_rate_list)
+    extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
+    xs = list(range(len(org_bandwidth_list)))
+    plt.plot(xs, [avg_input_bandwidth for _ in range(len(name_list))], label='Input')
+    plt.plot(xs, org_bandwidth_list, label='Original')
+    plt.plot(xs, compressed_bandwidth_list, label='Compressed')
     plt.xticks(xs, name_list)
     plt.xlabel('Layer')
-    plt.ylabel('Average Compression Rate')
+    plt.ylabel('Average Bandwidth [Bytes]')
+    plt.legend()
     plt.show()
 
 
@@ -154,7 +161,7 @@ def run(args):
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae)
+                                      is_caltech256=args.caltech256, ae=ae, reshape_size=tuple(config['input_shape'][1:3]))
     model = caltech_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
@@ -163,8 +170,8 @@ def run(args):
             train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     module_wrap_util.wrap_all_child_modules(model, module_wrap_util.WrapperModule)
-    test(model, test_loader, device)
-    plot_compression_rates(model)
+    _, avg_input_bandwidth = test(model, test_loader, device)
+    plot_compression_rates(model, avg_input_bandwidth)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class WrapperModule(nn.Module):
-    def __init__(self, org_module, compression_level):
+    def __init__(self, org_module, compression_level=9):
         super().__init__()
         self.org_module = org_module
         self.compression_level = compression_level
@@ -18,7 +18,7 @@ class WrapperModule(nn.Module):
         compressed_output = zlib.compress(np_output, self.compression_level)
         self.org_bandwidth += np_output.nbytes
         self.compressed_bandwidth += sys.getsizeof(compressed_output)
-        self.count += output.size(0)
+        self.count += len(np_output)
         return output
 
     def get_compression_rate(self):

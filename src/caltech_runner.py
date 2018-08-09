@@ -22,6 +22,7 @@ def get_argparser():
     parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
     parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
     parser.add_argument('--interval', type=int, default=50, help='logging training status ')
+    parser.add_argument('--jquality', type=int, default=0, help='JPEG compression quality (1 - 95)')
     parser.add_argument('--ctype', help='compression type')
     parser.add_argument('--csize', help='compression size')
     parser.add_argument('--ae', help='autoencoder yaml file path')
@@ -137,7 +138,8 @@ def run(args):
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae)
+                                      is_caltech256=args.caltech256, ae=ae,
+                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=args.jquality)
     model = caltech_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
