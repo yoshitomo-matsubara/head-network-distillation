@@ -122,24 +122,27 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
     return best_acc
 
 
-def extract_compression_rates(parent_module, compression_rate_list, name_list):
+def extract_compression_rates(parent_module, org_bandwidth_list, compressed_bandwidth_list, name_list):
     for name, child_module in parent_module.named_children():
         if list(child_module.children()) and not isinstance(child_module, module_wrap_util.WrapperModule):
-            extract_compression_rates(child_module, compression_rate_list, name_list)
+            extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
         else:
-            compression_rate_list.append(child_module.get_compression_rate())
+            org_bandwidth_list.append(child_module.get_average_org_bandwidth())
+            compressed_bandwidth_list.append(child_module.get_average_compressed_bandwidth())
             name_list.append(type(child_module.org_module).__name__)
 
 
 def plot_compression_rates(model):
-    compression_rate_list = list()
+    org_bandwidth_list = list()
+    compressed_bandwidth_list = list()
     name_list = list()
-    extract_compression_rates(model, compression_rate_list, name_list)
-    xs = list(range(len(compression_rate_list)))
-    plt.plot(xs, compression_rate_list)
+    extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
+    xs = list(range(len(org_bandwidth_list)))
+    plt.plot(xs, org_bandwidth_list, 'Original')
+    plt.plot(xs, compressed_bandwidth_list, 'Compressed')
     plt.xticks(xs, name_list)
     plt.xlabel('Layer')
-    plt.ylabel('Average Compression Rate')
+    plt.ylabel('Average Bandwidth')
     plt.show()
 
 
