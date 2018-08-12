@@ -11,7 +11,7 @@ class ResNet(nn.Module):
                  first_conv2d_ksize=6, first_conv2d_stride=2, first_conv2d_padding=3,
                  last_avgpool2d_ksize=2, last_avgpool2d_stride=1):
         self.inplanes = 64
-        super(ResNet, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=first_conv2d_ksize,
                                stride=first_conv2d_stride, padding=first_conv2d_padding, bias=False)
         self.bn1 = nn.BatchNorm2d(64)

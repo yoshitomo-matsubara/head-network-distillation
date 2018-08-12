@@ -5,7 +5,7 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 
 from autoencoders import *
-from models.cifar import *
+from models.classification import *
 from utils import data_util, file_util
 from utils.data_util import RgbImageDataset
 

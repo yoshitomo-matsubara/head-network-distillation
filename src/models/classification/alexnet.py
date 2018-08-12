@@ -8,7 +8,7 @@ class AlexNet(nn.Module):
 
     def __init__(self, num_classes=10, first_conv2d_ksize=2, first_conv2d_stride=1, first_conv2d_padding=1,
                  last_maxpool2d_ksize=2, last_maxpool2d_stride=1):
-        super(AlexNet, self).__init__()
+        super().__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=first_conv2d_ksize, stride=first_conv2d_stride, padding=first_conv2d_padding),
             nn.ReLU(inplace=True),

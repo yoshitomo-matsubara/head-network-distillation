@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from autoencoders import *
-from models.cifar import *
+from models.classification import *
 from utils import data_util
 
 
