@@ -13,7 +13,7 @@ class DenseNet(nn.Module):
                  conv2d_ksize=7, conv2d_stride=2, conv2d_padding=3,
                  maxpool_2d_ksize=3, maxpool_2d_stride=2, maxpool_2d_padding=1, avg_pool2d_ksize=7):
 
-        super(DenseNet, self).__init__()
+        super().__init__()
 
         # First convolution
         self.features = nn.Sequential(OrderedDict([

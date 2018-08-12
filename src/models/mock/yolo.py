@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class YOLOv2(nn.Module):
     def __init__(self):
-        super(YOLOv2, self).__init__()
+        super().__init__()
         self.features56 = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3),
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -52,7 +52,7 @@ class YOLOv2(nn.Module):
 class YOLOv3(nn.Module):
     # Referred https://github.com/xiaochus/YOLOv3
     def __init__(self):
-        super(YOLOv3, self).__init__()
+        super().__init__()
         self.conv2d_32 = nn.Conv2d(3, 32, kernel_size=3)
         self.conv2d_64 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
         self.stacked_conv2d_64 = self.create_stacked_residual_block(64, 32, 1)

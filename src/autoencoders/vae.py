@@ -7,7 +7,7 @@ from . import ae
 
 class VAE(ae.Autoencoder):
     def __init__(self, intermediate_size, hidden_size):
-        super(VAE, self).__init__()
+        super().__init__()
 
         # Encoder
         self.conv1 = nn.Conv2d(3, 3, kernel_size=3, stride=1, padding=1)

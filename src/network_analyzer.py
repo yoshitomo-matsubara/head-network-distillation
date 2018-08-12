@@ -4,9 +4,8 @@ import os
 import yaml
 import torchvision
 
-from models.cifar import *
-from models.coco import *
-from models.mnist import *
+from models.classification import *
+from models.mock import *
 from utils import cifar_util, data_util, net_measure_util
 
 
@@ -25,7 +24,7 @@ def get_model_and_input_shape(model_type, input_shape_str):
     elif model_type == 'vgg':
         return torchvision.models.vgg16(), (3, 224, 224)
     elif model_type == 'mnist':
-        return LeNet5(), (1, 32, 32)
+        return MnistLeNet5(), (1, 32, 32)
     elif model_type == 'yolov2':
         return YOLOv2(), (3, 448, 448)
     elif model_type == 'yolov3':
@@ -39,7 +38,7 @@ def read_config(config_file_path):
     with open(config_file_path, 'r') as fp:
         config = yaml.load(fp)
 
-    if config['dataset'].startswith('cifar'):
+    if config['dataset'].startswith('classification'):
         model = cifar_util.get_model('cpu', config)
         model_type = config['model']['type']
         input_shape = config['input_shape']
