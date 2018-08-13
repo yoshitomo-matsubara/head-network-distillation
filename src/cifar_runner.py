@@ -8,7 +8,7 @@ import torch.optim as optim
 import yaml
 
 import ae_runner
-from utils import cifar_util, file_util
+from utils import cifar_util, file_util, module_util
 
 
 # Referred to https://github.com/kuangliu/pytorch-cifar
@@ -52,7 +52,7 @@ def load_autoencoder(ae_config_file_path, ckpt_dir_path):
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
 
-    ae = ae_runner.get_autoencoder(False, ae_config)
+    ae = module_util.get_autoencoder(False, ae_config)
     ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
     return ae
 
@@ -139,7 +139,7 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         cifar_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
                                     is_cifar100=args.cifar100, ae=ae)
-    model = cifar_util.get_model(device, config)
+    model = module_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:

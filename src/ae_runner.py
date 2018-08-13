@@ -5,7 +5,7 @@ import torch.utils.data
 import yaml
 
 from autoencoders import *
-from utils import cifar_util, file_util
+from utils import cifar_util, file_util, module_util
 
 
 # Referred to https://github.com/wanglouis49/pytorch-autoencoders
@@ -105,7 +105,7 @@ def run(args):
 
     train_loader, valid_loader, test_loader =\
         cifar_util.get_data_loaders(data_dir_path, args.bsize, args.vrate, normalized=False)
-    ae = cifar_util.get_autoencoder(cuda_available, config)
+    ae = module_util.get_autoencoder(cuda_available, config)
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae, config, args.ckpt, args.init)
     optimizer = torch.optim.RMSprop(ae.parameters(), lr=args.lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):

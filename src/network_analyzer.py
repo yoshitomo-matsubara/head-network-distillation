@@ -6,7 +6,7 @@ import torchvision
 
 from models.classification import *
 from models.mock import *
-from utils import cifar_util, data_util, net_measure_util
+from utils import data_util, module_util, net_measure_util
 
 
 def get_argparser():
@@ -38,12 +38,13 @@ def read_config(config_file_path):
     with open(config_file_path, 'r') as fp:
         config = yaml.load(fp)
 
-    if config['dataset'].startswith('classification'):
-        model = cifar_util.get_model('cpu', config)
-        model_type = config['model']['type']
-        input_shape = config['input_shape']
-    else:
+    dataset_name = config['dataset']
+    if not dataset_name.startswith('cifar') or not dataset_name.startswith('caltech'):
         return None, None, None
+
+    model = module_util.get_model('cpu', config)
+    model_type = config['model']['type']
+    input_shape = config['input_shape']
     return model, model_type, input_shape
 
 
@@ -53,7 +54,6 @@ def run(args):
     else:
         model_type = args.model
         model, input_shape = get_model_and_input_shape(model_type.lower(), args.isize)
-
     net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, scaled=args.scale, model_name=model_type)
 
 
