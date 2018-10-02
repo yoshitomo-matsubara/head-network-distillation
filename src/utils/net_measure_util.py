@@ -23,7 +23,7 @@ def find_target_bottleneck(scaled_bandwidths, threshold=1.0):
 
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.semilogy(xs[1:], op_count_list, label=model_name)
-    plt.xticks(xs[1:], layer_list[1:])
+    plt.xticks(xs[1:], layer_list[1:], rotation=90)
     plt.xlabel('Layer')
     plt.ylabel('Complexity')
     plt.xticks(rotation=90)
@@ -34,10 +34,9 @@ def plot_model_complexity(xs, op_count_list, layer_list, model_name):
 
 def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, accum_complexity_label, model_name):
     plt.plot(xs[1:], accumulated_op_counts, label=model_name)
-    plt.xticks(xs[1:], layer_list[1:])
+    plt.xticks(xs[1:], layer_list[1:], rotation=90)
     plt.xlabel('Layer')
     plt.ylabel(accum_complexity_label)
-    plt.xticks(rotation=90)
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -46,10 +45,9 @@ def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, acc
 def plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name):
     plt.semilogy(xs, bandwidths, label=model_name)
     plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='Input')
-    plt.xticks(xs, layer_list)
+    plt.xticks(xs, layer_list, rotation=90)
     plt.xlabel('Layer')
     plt.ylabel(bandwidth_label)
-    plt.xticks(rotation=90)
     plt.legend()
     plt.tight_layout()
     plt.show()
