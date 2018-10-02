@@ -26,7 +26,6 @@ def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.xticks(xs[1:], layer_list[1:], rotation=90)
     plt.xlabel('Layer')
     plt.ylabel('Complexity')
-    plt.xticks(rotation=90)
     plt.legend()
     plt.tight_layout()
     plt.show()
