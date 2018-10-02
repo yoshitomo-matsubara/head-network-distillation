@@ -39,7 +39,7 @@ def read_config(config_file_path):
         config = yaml.load(fp)
 
     dataset_name = config['dataset']
-    if not dataset_name.startswith('cifar') or not dataset_name.startswith('caltech'):
+    if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
         return None, None, None
 
     model = module_util.get_model('cpu', config)
