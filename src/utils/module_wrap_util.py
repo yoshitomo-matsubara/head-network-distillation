@@ -42,9 +42,8 @@ class RunTimeWrapper(CompressionWrapper):
 
     def forward(self, *input):
         output = self.org_module(*input)
-        timestamp = time.time()
+        self.timestamp_list.append(time.time())
         if not self.is_compressed:
-            self.timestamp_list.append(timestamp)
             return output
 
         np_output = output.clone().cpu().detach().numpy()
