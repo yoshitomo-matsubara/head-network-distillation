@@ -76,4 +76,4 @@ def wrap_all_child_modules(model, wrapper_module, member_name=None, member_modul
 
     parent = model if member_module is None else member_module
     for name, child_module in named_children:
-        wrap_all_child_modules(parent, wrapper_module, name, child_module)
+        wrap_all_child_modules(parent, wrapper_module, name, child_module, wrapped_list)
