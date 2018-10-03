@@ -30,7 +30,7 @@ def get_argparser():
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
-    parser.add_argument('--comp_layer', default=-1, help='index of layer to compress its input (starts from 1)')
+    parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input (starts from 1)')
     return parser
 
 
