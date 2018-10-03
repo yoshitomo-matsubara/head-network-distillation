@@ -171,9 +171,9 @@ def extract_running_times(wrapped_modules):
     time_mat = np.zeros((num_samples, len(wrapped_modules)))
     comp_time_mat = np.zeros_like(time_mat)
     for i, wrapped_module in enumerate(wrapped_modules[1:]):
-        time_mat[:, i] = np.array(wrapped_module.get_timestamps()) - start_times
+        time_mat[:, i] = (np.array(wrapped_module.get_timestamps()) - start_times).reshape(1, start_times.size)
         if wrapped_module.is_compressed:
-            comp_time_mat[:, i] = np.array(wrapped_module.get_compression_time_list())
+            comp_time_mat[:, i] = np.array(wrapped_module.get_compression_time_list()).reshape(1, start_times.size)
 
     return time_mat, comp_time_mat
 
