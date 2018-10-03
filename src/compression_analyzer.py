@@ -244,7 +244,7 @@ def run(args):
     analysis_mode = args.mode
     if analysis_mode == 'comp_rate':
         analyze_compression_rate(model, test_loader, device)
-    elif analysis_mode == 'comp_time':
+    elif analysis_mode == 'run_time':
         analyze_running_time(model, args.comp_layer, test_loader, device)
     else:
         raise ValueError('mode argument `{}` is not expected'.format(analysis_mode))
