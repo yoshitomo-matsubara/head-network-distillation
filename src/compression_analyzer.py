@@ -30,7 +30,8 @@ def get_argparser():
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
-    parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input (starts from 1)')
+    parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
+                                                                   ' (starts from 1, no compression if 0 is given)')
     return parser
 
 
@@ -216,7 +217,7 @@ def analyze_running_time(model, comp_layer_idx, test_loader, device):
     if comp_layer_idx < 1:
         for wrapped_module in wrapped_modules:
             wrapped_module.is_compressed = True
-    elif comp_layer_idx <= len(wrapped_modules):
+    elif 0 < comp_layer_idx <= len(wrapped_modules):
         wrapped_modules[comp_layer_idx - 1].is_compressed = True
 
     _, avg_input_bandwidth = test(model, test_loader, device)
