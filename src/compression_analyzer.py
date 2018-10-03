@@ -167,7 +167,7 @@ def analyze_compression_rate(model, test_loader, device):
 
 def extract_running_times(wrapped_modules):
     num_samples = len(wrapped_modules[0].get_timestamps())
-    start_times = np.array([wrapped_module.start_timestamp for wrapped_module in wrapped_modules])
+    start_times = np.array(wrapped_modules[0].start_timestamp_list)
     time_mat = np.zeros((num_samples, len(wrapped_modules)))
     comp_time_mat = np.zeros_like(time_mat)
     for i, wrapped_module in enumerate(wrapped_modules):

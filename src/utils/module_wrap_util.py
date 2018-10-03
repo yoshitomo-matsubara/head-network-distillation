@@ -38,13 +38,13 @@ class RunTimeWrapper(CompressionWrapper):
         super().__init__(org_module, compression_level)
         self.is_first = False
         self.is_compressed = False
-        self.start_timestamp = None
+        self.start_timestamp_list = list()
         self.timestamp_list = list()
         self.comp_timestamp_list = list()
 
     def forward(self, *input):
         if self.is_first:
-            self.start_timestamp = time.time()
+            self.start_timestamp_list.append(time.time())
 
         output = self.org_module(*input)
         self.timestamp_list.append(time.time())
