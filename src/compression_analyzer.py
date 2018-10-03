@@ -167,16 +167,15 @@ def analyze_compression_rate(model, test_loader, device):
 
 def extract_running_times(wrapped_modules):
     num_samples = len(wrapped_modules[0].get_timestamps())
-    start_times = np.array(wrapped_modules[0].get_timestamps())
+    start_times = np.array([wrapped_module.start_timestamp for wrapped_module in wrapped_modules])
     time_mat = np.zeros((num_samples, len(wrapped_modules)))
     comp_time_mat = np.zeros_like(time_mat)
-    for i, wrapped_module in enumerate(wrapped_modules[1:]):
+    for i, wrapped_module in enumerate(wrapped_modules):
         target_times = np.array(wrapped_module.get_compression_timestamps() if wrapped_module.is_compressed
                                 else wrapped_module.get_timestamps())
         time_mat[:, i] = (target_times - start_times).reshape(1, start_times.size)
         if wrapped_module.is_compressed:
             comp_time_mat[:, i] = np.array(wrapped_module.get_compression_time_list()).reshape(1, start_times.size)
-
     return time_mat, comp_time_mat
 
 
@@ -213,6 +212,7 @@ def plot_running_time(wrapped_modules):
 def analyze_running_time(model, comp_layer_idx, test_loader, device):
     wrapped_modules = list()
     module_wrap_util.wrap_all_child_modules(model, module_wrap_util.RunTimeWrapper, wrapped_list=wrapped_modules)
+    wrapped_modules[0].is_first = True
     if comp_layer_idx < 1:
         for wrapped_module in wrapped_modules:
             wrapped_module.is_compressed = True
