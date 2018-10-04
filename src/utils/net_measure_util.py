@@ -23,29 +23,32 @@ def find_target_bottleneck(scaled_bandwidths, threshold=1.0):
 
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.semilogy(xs[1:], op_count_list, label=model_name)
-    plt.xticks(xs[1:], layer_list[1:])
+    plt.xticks(xs[1:], layer_list[1:], rotation=90)
     plt.xlabel('Layer')
     plt.ylabel('Complexity')
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
 def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, accum_complexity_label, model_name):
     plt.plot(xs[1:], accumulated_op_counts, label=model_name)
-    plt.xticks(xs[1:], layer_list[1:])
+    plt.xticks(xs[1:], layer_list[1:], rotation=90)
     plt.xlabel('Layer')
     plt.ylabel(accum_complexity_label)
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
 def plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name):
     plt.semilogy(xs, bandwidths, label=model_name)
     plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='Input')
-    plt.xticks(xs, layer_list)
+    plt.xticks(xs, layer_list, rotation=90)
     plt.xlabel('Layer')
     plt.ylabel(bandwidth_label)
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
@@ -76,9 +79,14 @@ def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, b
     ax1.set_xticklabels(layer_list)
     ax1.set_xlabel('Layer')
     ax1.set_ylabel(bandwidth_label, color='b')
+    for tick in ax1.get_xticklabels():
+        tick.set_rotation(90)
+
     ax2 = ax1.twinx()
     ax2.plot(xs[1:], accumulated_op_counts / np.max(accumulated_op_counts), 'r--')
     ax2.set_ylabel(accum_complexity_label, color='r')
+
+    plt.tight_layout()
     plt.show()
 
 
@@ -122,7 +130,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append(type(self).__name__)
+        layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
     def linear_hook(self, input, output):
         batch_size = input[0].size(0) if input[0].dim() == 2 else 1
@@ -131,7 +139,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * (weight_ops + bias_ops)
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append(type(self).__name__)
+        layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
     def pooling_hook(self, input, output):
         batch_size, input_channels, input_height, input_width = input[0].size()
@@ -141,13 +149,13 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append(type(self).__name__)
+        layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
     def simple_hook(self, input, output):
         op_size = input[0].nelement()
         op_count_list.append(op_size)
         bandwidth_list.append(np.prod(output[0].size()))
-        layer_list.append(type(self).__name__)
+        layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
     def move_next_layer(net):
         children = list(net.children())
@@ -156,7 +164,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
                 net.register_forward_hook(conv_hook)
             elif isinstance(net, nn.Linear):
                 net.register_forward_hook(linear_hook)
-            elif isinstance(net, nn.MaxPool2d) or isinstance(net, nn.AvgPool2d):
+            elif isinstance(net, (nn.MaxPool2d, nn.AvgPool2d)):
                 net.register_forward_hook(pooling_hook)
             elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
                 net.register_forward_hook(simple_hook)
@@ -170,7 +178,7 @@ def calc_model_complexity_and_bandwidth(model, input_shape, scaled=False, plot=T
 
     move_next_layer(model)
     bandwidth_list.append(np.prod(input_shape))
-    layer_list.append('Input')
+    layer_list.append('Input: 0')
     input = torch.rand(input_shape).unsqueeze(0)
     output = model(input)
     bandwidths = convert2kb(bandwidth_list)

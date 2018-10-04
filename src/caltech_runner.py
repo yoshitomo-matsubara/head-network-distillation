@@ -8,7 +8,7 @@ import torch.optim as optim
 import yaml
 
 import ae_runner
-from utils import caltech_util, file_util
+from utils import caltech_util, file_util, module_util
 
 
 def get_argparser():
@@ -52,7 +52,7 @@ def load_autoencoder(ae_config_file_path, ckpt_dir_path):
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
 
-    ae = ae_runner.get_autoencoder(False, ae_config)
+    ae = module_util.get_autoencoder(False, ae_config)
     ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
     return ae
 
@@ -140,7 +140,7 @@ def run(args):
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
                                       is_caltech256=args.caltech256, ae=ae,
                                       reshape_size=tuple(config['input_shape'][1:3]), compression_quality=args.jquality)
-    model = caltech_util.get_model(device, config)
+    model = module_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)
     if not args.evaluate:
