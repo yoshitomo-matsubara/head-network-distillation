@@ -214,7 +214,7 @@ def analyze_running_time(model, comp_layer_idx, test_loader, device):
     wrapped_modules = list()
     module_wrap_util.wrap_all_child_modules(model, module_wrap_util.RunTimeWrapper, wrapped_list=wrapped_modules)
     wrapped_modules[0].is_first = True
-    if comp_layer_idx < 1:
+    if comp_layer_idx < 0:
         for wrapped_module in wrapped_modules:
             wrapped_module.is_compressed = True
     elif 0 < comp_layer_idx <= len(wrapped_modules):
