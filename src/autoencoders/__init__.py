@@ -1,2 +1,2 @@
+from .base import *
 from .ae import *
-from .vae import *
