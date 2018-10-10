@@ -5,8 +5,8 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 
 from autoencoders import *
+from structure.dataset import RgbImageDataset
 from utils import data_util, file_util
-from utils.data_util import RgbImageDataset
 
 
 def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(180, 180), ae=None):
