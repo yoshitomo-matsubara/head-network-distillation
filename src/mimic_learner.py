@@ -122,12 +122,11 @@ def run(args):
     start_epoch = resume_from_ckpt(student_model_config['ckpt'], student_model, )
     train_config = student_config['train']
 
-    # Should be modified from here
+    dataset_config = student_config['dataset']
     train_loader, _, _ =\
-        caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=None,
-                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=args.jquality)
-    # to here
+        caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0,
+                                      is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
+                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
 
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)
