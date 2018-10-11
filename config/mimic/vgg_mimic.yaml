@@ -14,7 +14,7 @@ teacher_model:
 
 student_model:
     type: 'vgg16_mimic'
-    ckpt: './resource/ckpt/student/vgg_mimic.ckpt'
+    ckpt: './resource/ckpt/student/vgg16_mimic.ckpt'
 
 train:
     epoch: 50
