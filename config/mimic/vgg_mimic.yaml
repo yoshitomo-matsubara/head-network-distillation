@@ -1,0 +1,30 @@
+experiment_name: 'caltech101-student-vgg'
+
+dataset:
+    name: 'caltech101'
+    train: './resource/mimic/caltech101/'
+    test: './resource/caltech101/test/'
+
+input_shape: [3, 240, 240]
+
+teacher_model:
+    config: './config/vgg-cal.yaml'
+    start_idx: 0
+    end_idx: 9
+
+student_model:
+    type: 'vgg_mimic'
+    ckpt: './resource/ckpt/student/vgg_mimic.ckpt'
+
+train:
+    epoch: 50
+    bsize: 100
+    interval: 50
+    optimizer:
+        type: 'sgd'
+        params:
+            learn_late: 0.01
+    loss:
+        type: 'mse'
+        params:
+            reduction: 'sum'

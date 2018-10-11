@@ -12,112 +12,99 @@ from models.mimic.vgg_mimic import *
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='Mimic Learner')
-    parser.add_argument('--data', default='./resource/data/', help='Caltech data dir path')
-    parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
-    parser.add_argument('--config', required=True, help='yaml file path')
-    parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
-    parser.add_argument('--epoch', type=int, default=100, help='number of epochs for training')
-    parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
-    parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
-    parser.add_argument('--interval', type=int, default=50, help='logging training status ')
-    parser.add_argument('--jquality', type=int, default=0, help='JPEG compression quality (1 - 95)')
-    parser.add_argument('--ctype', help='compression type')
-    parser.add_argument('--csize', help='compression size')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    argparser = argparse.ArgumentParser(description='Mimic Learner')
+    argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return parser
 
 
-def resume_from_ckpt(model, config, args):
-    ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
-    if args.init or not os.path.exists(ckpt_file_path):
-        return config['model']['type'], 0, 1, ckpt_file_path
+def resume_from_ckpt(ckpt_file_path, model):
+    if not os.path.exists(ckpt_file_path):
+        return 1
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     model.load_state_dict(checkpoint['model'])
-    model_type = checkpoint['type']
-    best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
-    return model_type, best_acc, start_epoch, ckpt_file_path
+    return start_epoch
 
 
-def get_student_model(teacher_model_type, teacher_model):
-    if teacher_model_type == 'vgg':
+def extract_teacher_model(model, teacher_model_config):
+    modules = list()
+    module_util.extract_all_child_modules(model, modules)
+    start_idx = teacher_model_config['start_idx']
+    end_idx = teacher_model_config['end_idx']
+    return nn.Sequential(*modules[start_idx:end_idx + 1])
+
+
+def get_teacher_model(teacher_model_config, device):
+    with open(teacher_model_config['config'], 'r') as fp:
+        config = yaml.load(fp)
+
+    model = module_util.get_model(device, config)
+    model_config = config['model']
+    resume_from_ckpt(model_config['ckpt'], model, config)
+    return extract_teacher_model(model, teacher_model_config), model_config['type']
+
+
+def get_student_model(teacher_model_type, teacher_model, student_model_config):
+    student_model_type = student_model_config['type']
+    if teacher_model_type == 'vgg' and student_model_type == 'vgg_mimic':
         return VggMimic()
-    ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
+    raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
-def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum, weight_decay=weight_decay)
-    return criterion, optimizer
+def get_criterion(criterion_config):
+    criterion_type = criterion_config['type']
+    params_config = criterion_config['params']
+    if criterion_type == 'mse':
+        return nn.MSELoss(**params_config)
+    raise ValueError('criterion_type `{}` is not expected'.format(criterion_type))
 
 
-def train(model, train_loader, optimizer, criterion, epoch, device, interval):
+def get_optimizer(optimizer_config, model):
+    optimizer_type = optimizer_config['type']
+    params_config = optimizer_config['params']
+    if optimizer_type == 'sgd':
+        return optim.SGD(model.parameters(), **params_config)
+    elif optimizer_type == 'adam':
+        return optim.Adam(model.parameters(), **params_config)
+    elif optimizer_type == 'adagrad':
+        return optim.Adagrad(model.parameters(), **params_config)
+    raise ValueError('optimizer_type `{}` is not expected'.format(optimizer_type))
+
+
+def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
     print('\nEpoch: %d' % epoch)
-    model.train()
+    student_model.train()
+    teacher_model.eval()
     train_loss = 0
-    correct = 0
     total = 0
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        student_outputs = student_model(inputs)
+        teacher_outputs = teacher_model(inputs)
+        loss = criterion(student_outputs, teacher_outputs)
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
-        _, predicted = outputs.max(1)
         total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
             print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
                                                            100.0 * batch_idx / len(train_loader), loss.item()))
 
 
-def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
+def save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type):
     print('Saving..')
     state = {
-        'type': model_type,
-        'model': model.state_dict(),
-        'acc': acc,
-        'epoch': epoch,
+        'type': teacher_model_type,
+        'model': student_model.state_dict(),
+        'epoch': epoch + 1,
+        'student': True
     }
     file_util.make_parent_dirs(ckpt_file_path)
     torch.save(state, ckpt_file_path)
-
-
-def test(model, test_loader, criterion, device, data_type='Test'):
-    model.eval()
-    test_loss = 0
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(test_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-    acc = 100.0 * correct / total
-    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        data_type, test_loss, correct, total, acc))
-    return acc
-
-
-def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
-    acc = test(model, valid_loader, criterion, device, 'Validation')
-    if acc > best_acc:
-        save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
-        best_acc = acc
-    return best_acc
 
 
 def run(args):
@@ -126,21 +113,29 @@ def run(args):
         cudnn.benchmark = True
 
     with open(args.config, 'r') as fp:
-        config = yaml.load(fp)
+        student_config = yaml.load(fp)
 
-    teacher_model = module_util.get_model(device, config)
-    teacher_model_type, _, _, ckpt_file_path = resume_from_ckpt(teacher_model, config, args)
-    student_model = get_student_model(teacher_model_type, teacher_model)
-    train_loader, valid_loader, test_loader =\
+    teacher_model_config = student_config['teacher_model']
+    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
+    student_model_config = student_config['student_model']
+    student_model = get_student_model(teacher_model_type, teacher_model, student_model_config)
+    start_epoch = resume_from_ckpt(student_model_config['ckpt'], student_model, )
+    train_config = student_config['train']
+
+    # Should be modified from here
+    train_loader, _, _ =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
                                       is_caltech256=args.caltech256, ae=None,
-                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=args.jquality)
-    criterion, optimizer = get_criterion_optimizer(student_model, args)
-    if not args.evaluate:
-        for epoch in range(args.epoch):
-            train(teacher_model, train_loader, optimizer, criterion, epoch, device, args.interval)
-            best_acc = validate(teacher_model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-    test(teacher_model, test_loader, criterion, device)
+                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=args.jquality)
+    # to here
+
+    criterion = get_criterion(train_config['criterion'])
+    optimizer = get_optimizer(train_config['optimizer'], student_model)
+    interval = train_config['interval']
+    ckpt_file_path = student_model_config['ckpt']
+    for epoch in range(start_epoch, train_config['epoch'] + 1):
+        train(teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
+        save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type)
 
 
 if __name__ == '__main__':
