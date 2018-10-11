@@ -43,13 +43,13 @@ def get_teacher_model(teacher_model_config, device):
 
     model = module_util.get_model(device, config)
     model_config = config['model']
-    resume_from_ckpt(model_config['ckpt'], model, config)
+    resume_from_ckpt(model_config['ckpt'], model)
     return extract_teacher_model(model, teacher_model_config), model_config['type']
 
 
 def get_student_model(teacher_model_type, teacher_model, student_model_config):
     student_model_type = student_model_config['type']
-    if teacher_model_type == 'vgg' and student_model_type == 'vgg_mimic':
+    if teacher_model_type == 'vgg' and student_model_type == 'vgg16_mimic':
         return VggMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 

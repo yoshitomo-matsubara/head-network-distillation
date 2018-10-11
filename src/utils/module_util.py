@@ -1,3 +1,5 @@
+import torchvision
+
 from autoencoders import *
 from models.classification import *
 
@@ -13,6 +15,8 @@ def get_model(device, config):
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):
         model = resnet_model(model_type, model_config['params'])
+    elif model_type == 'vgg16':
+        model = torchvision.models.vgg16()
     else:
         ValueError('model_type `{}` is not expected'.format(model_type))
 

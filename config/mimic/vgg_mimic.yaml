@@ -1,4 +1,4 @@
-experiment_name: 'caltech101-student-vgg'
+experiment_name: 'caltech101-student-vgg16'
 
 dataset:
     name: 'caltech101'
@@ -8,12 +8,12 @@ dataset:
 input_shape: [3, 240, 240]
 
 teacher_model:
-    config: './config/vgg-cal.yaml'
+    config: './config/vgg16.yaml'
     start_idx: 0
     end_idx: 9
 
 student_model:
-    type: 'vgg_mimic'
+    type: 'vgg16_mimic'
     ckpt: './resource/ckpt/student/vgg_mimic.ckpt'
 
 train:
