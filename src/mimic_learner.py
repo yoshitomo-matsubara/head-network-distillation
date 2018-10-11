@@ -15,7 +15,7 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Learner')
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    return parser
+    return argparser
 
 
 def resume_from_ckpt(ckpt_file_path, model):
