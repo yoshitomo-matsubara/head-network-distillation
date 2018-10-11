@@ -76,7 +76,7 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
     test_dataset = RgbImageDataset(test_file_path_lists, reshape_size, test_transformer, compression_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
-        
+
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True,
                                               num_workers=2, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
