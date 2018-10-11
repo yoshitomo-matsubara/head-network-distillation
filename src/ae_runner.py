@@ -5,7 +5,8 @@ import torch.utils.data
 import yaml
 
 from autoencoders import *
-from utils import cifar_util, file_util, module_util
+from utils import file_util, module_util
+from utils.dataset import cifar_util
 
 
 # Referred to https://github.com/wanglouis49/pytorch-autoencoders

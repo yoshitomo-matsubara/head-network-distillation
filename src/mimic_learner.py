@@ -3,11 +3,11 @@ import os
 
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
 import torch.optim as optim
 import yaml
 
-from utils import caltech_util, file_util, module_util
+from utils import file_util, module_util
+from utils.dataset import caltech_util
 from models.mimic.vgg_mimic import *
 
 

@@ -8,7 +8,8 @@ import torch.optim as optim
 import yaml
 
 import ae_runner
-from utils import caltech_util, file_util, module_util
+from utils import file_util, module_util
+from utils.dataset import caltech_util
 
 
 def get_argparser():

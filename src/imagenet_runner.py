@@ -12,7 +12,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 
-from utils import imagenet_util
+from utils.dataset import imagenet_util
 
 
 def setup_model(args):
