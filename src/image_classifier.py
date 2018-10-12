@@ -97,8 +97,12 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                           100.0 * batch_idx / len(train_loader), loss.item()))
+            progress = 100.0 * batch_idx / len(train_loader)
+            train_accuracy = correct / total
+            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(batch_idx * len(inputs),
+                                                                                      len(train_loader.sampler),
+                                                                                      progress, loss.item(),
+                                                                                      train_accuracy))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -123,7 +127,6 @@ def test(model, test_loader, criterion, device, data_type='Test'):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-
             test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
