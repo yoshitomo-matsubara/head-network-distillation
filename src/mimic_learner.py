@@ -49,8 +49,8 @@ def get_teacher_model(teacher_model_config, device):
 
 def get_student_model(teacher_model_type, teacher_model, student_model_config):
     student_model_type = student_model_config['type']
-    if teacher_model_type == 'vgg' and student_model_type == 'vgg16_mimic':
-        return VggMimic()
+    if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
+        return Vgg16HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 

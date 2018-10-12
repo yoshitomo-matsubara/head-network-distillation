@@ -10,15 +10,15 @@ input_shape: [3, 240, 240]
 teacher_model:
     config: './config/vgg16.yaml'
     start_idx: 0
-    end_idx: 9
+    end_idx: 8
 
 student_model:
-    type: 'vgg16_mimic'
-    ckpt: './resource/ckpt/student/vgg16_mimic.ckpt'
+    type: 'vgg16_head_mimic'
+    ckpt: './resource/ckpt/student/vgg16_head_mimic.ckpt'
 
 train:
     epoch: 50
-    batch_size: 100
+    batch_size: 20
     interval: 50
     optimizer:
         type: 'sgd'

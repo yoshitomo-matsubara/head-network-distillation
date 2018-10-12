@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 
-class VggMimic(nn.Module):
+class Vgg16HeadMimic(nn.Module):
     # designed for input image size [3, 240, 240]
     def __init__(self):
         super().__init__()
@@ -10,8 +10,7 @@ class VggMimic(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.ReLU(inplace=True)
         )
         self.initialize_weights()
 
