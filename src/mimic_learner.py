@@ -121,13 +121,11 @@ def run(args):
     student_model = get_student_model(teacher_model_type, teacher_model, student_model_config)
     start_epoch = resume_from_ckpt(student_model_config['ckpt'], student_model, )
     train_config = student_config['train']
-
     dataset_config = student_config['dataset']
     train_loader, _, _ =\
         caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0,
                                       is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
-
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)
     interval = train_config['interval']
