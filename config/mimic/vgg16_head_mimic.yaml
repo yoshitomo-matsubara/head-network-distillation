@@ -21,7 +21,7 @@ train:
     batch_size: 20
     interval: 50
     optimizer:
-        type: 'sgd'
+        type: 'adam'
         params:
             learn_late: 0.01
     loss:
