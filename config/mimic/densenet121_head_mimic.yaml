@@ -24,7 +24,7 @@ train:
         type: 'sgd'
         params:
             learn_late: 0.01
-    loss:
+    criterion:
         type: 'mse'
         params:
             reduction: 'sum'
