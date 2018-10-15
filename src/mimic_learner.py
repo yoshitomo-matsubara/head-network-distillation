@@ -163,7 +163,7 @@ def run(args):
         avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
         if avg_valid_loss < best_avg_loss:
             best_avg_loss = avg_valid_loss
-            save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type)
+            save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type)
 
 
 if __name__ == '__main__':
