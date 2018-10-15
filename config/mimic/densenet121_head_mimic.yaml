@@ -23,7 +23,7 @@ train:
     optimizer:
         type: 'sgd'
         params:
-            learn_late: 0.01
+            lr: 0.01
     criterion:
         type: 'mse'
         params:
