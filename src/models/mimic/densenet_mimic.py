@@ -18,7 +18,8 @@ class DenseNet121HeadMimic(nn.Module):
             nn.Conv2d(64, 128, kernel_size=2, stride=2, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 256, kernel_size=1, stride=1, bias=False)
+            nn.Conv2d(128, 256, kernel_size=1, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
         )
         self.initialize_weights()
 
