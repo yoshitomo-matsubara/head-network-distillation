@@ -1,0 +1,8 @@
+experiment_name: 'caltech101-vgg16'
+
+dataset: 'caltech101'
+
+input_shape: [3, 240, 240]
+
+model:
+    type: 'vgg16'

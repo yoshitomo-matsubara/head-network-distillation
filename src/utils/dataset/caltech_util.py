@@ -5,8 +5,8 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 
 from autoencoders import *
+from structure.dataset import RgbImageDataset
 from utils import data_util, file_util
-from utils.data_util import RgbImageDataset
 
 
 def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(180, 180), ae=None):
@@ -64,7 +64,6 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
         train_comp_list.append(normalizer)
 
     pin_memory = torch.cuda.is_available()
-
     train_transformer = transforms.Compose(train_comp_list)
     valid_transformer = transforms.Compose(valid_comp_list)
     train_dataset = RgbImageDataset(train_file_path_lists, reshape_size, train_transformer)
@@ -73,11 +72,11 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
                                                num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=2, pin_memory=pin_memory)
-
     test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
     test_dataset = RgbImageDataset(test_file_path_lists, reshape_size, test_transformer, compression_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
+
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True,
                                               num_workers=2, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader

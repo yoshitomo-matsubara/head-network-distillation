@@ -8,16 +8,19 @@ import torch.optim as optim
 import yaml
 
 import ae_runner
-from utils import caltech_util, file_util, module_util
+from utils import file_util, module_util
+from utils.dataset import caltech_util, cifar_util
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='PyTorch Caltech101 and 256')
-    parser.add_argument('--data', default='./resource/data/', help='Caltech data dir path')
+    parser = argparse.ArgumentParser(description='PyTorch image classifier')
+    parser.add_argument('--data', default='./resource/data/', help='data dir path')
+    parser.add_argument('--dataset', default='caltech', help='dataset type')
+    parser.add_argument('-cifar100', action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
     parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
+    parser.add_argument('--bsize', type=int, default=128, help='number of samples per a batch')
     parser.add_argument('--epoch', type=int, default=100, help='number of epochs for training')
     parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
     parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
@@ -57,6 +60,19 @@ def load_autoencoder(ae_config_file_path, ckpt_dir_path):
     return ae
 
 
+def get_data_loaders(args, ae, config):
+    dataset_type = args.dataset
+    if dataset_type == 'caltech':
+        return caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
+                                             is_caltech256=args.caltech256, ae=ae,
+                                             reshape_size=tuple(config['input_shape'][1:3]),
+                                             compression_quality=args.jquality)
+    elif dataset_type == 'cifar':
+        return cifar_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
+                                           is_cifar100=args.cifar100, ae=ae)
+    raise ValueError('dataset_type `{}` is not expected'.format(dataset_type))
+
+
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum, weight_decay=weight_decay)
@@ -81,8 +97,12 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                           100.0 * batch_idx / len(train_loader), loss.item()))
+            progress = 100.0 * batch_idx / len(train_loader)
+            train_accuracy = correct / total
+            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(batch_idx * len(inputs),
+                                                                                      len(train_loader.sampler),
+                                                                                      progress, loss.item(),
+                                                                                      train_accuracy))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -107,7 +127,6 @@ def test(model, test_loader, criterion, device, data_type='Test'):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-
             test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
@@ -136,10 +155,7 @@ def run(args):
         config = yaml.load(fp)
 
     ae = load_autoencoder(args.ae, args.ckpt)
-    train_loader, valid_loader, test_loader =\
-        caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae,
-                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=args.jquality)
+    train_loader, valid_loader, test_loader = get_data_loaders(args, ae, config)
     model = module_util.get_model(device, config)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
     criterion, optimizer = get_criterion_optimizer(model, args)

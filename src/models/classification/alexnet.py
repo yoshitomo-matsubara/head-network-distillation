@@ -2,10 +2,6 @@ import torch.nn as nn
 
 
 class AlexNet(nn.Module):
-    """
-    PyTorch based AlexNet implementation for CIFAR-10 and -100
-    """
-
     def __init__(self, num_classes=10, first_conv2d_ksize=2, first_conv2d_stride=1, first_conv2d_padding=1,
                  last_maxpool2d_ksize=2, last_maxpool2d_stride=1):
         super().__init__()
