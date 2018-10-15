@@ -32,7 +32,7 @@ def resume_from_ckpt(ckpt_file_path, model):
 
 def extract_teacher_model(model, teacher_model_config):
     modules = list()
-    module_util.extract_all_child_modules(model, modules)
+    module_util.extract_all_child_modules(model, modules, teacher_model_config['extract_designed_module'])
     start_idx = teacher_model_config['start_idx']
     end_idx = teacher_model_config['end_idx']
     return nn.Sequential(*modules[start_idx:end_idx + 1])

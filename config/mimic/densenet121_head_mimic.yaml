@@ -9,8 +9,9 @@ input_shape: [3, 240, 240]
 
 teacher_model:
     config: './config/densenet-cal.yaml'
+    extract_designed_module: False
     start_idx: 0
-    end_idx: 118
+    end_idx: 7
 
 student_model:
     type: 'densenet121_head_mimic'

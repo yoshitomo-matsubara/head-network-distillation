@@ -39,11 +39,12 @@ def get_autoencoder(cuda_available, config):
     return ae
 
 
-def extract_all_child_modules(parent_module, module_list):
-    child_models = list(parent_module.children())
-    if not child_models:
+def extract_all_child_modules(parent_module, module_list, extract_designed_module=True):
+    child_modules = list(parent_module.children())
+    if not child_modules or (not extract_designed_module and len(module_list) > 0 and
+                             type(parent_module) != nn.Sequential):
         module_list.append(parent_module)
         return
 
-    for child_module in child_models:
-        extract_all_child_modules(child_module, module_list)
+    for child_module in child_modules:
+        extract_all_child_modules(child_module, module_list, extract_designed_module)
