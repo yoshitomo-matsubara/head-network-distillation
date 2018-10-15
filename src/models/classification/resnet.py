@@ -3,10 +3,6 @@ from torchvision.models.resnet import BasicBlock, Bottleneck
 
 
 class ResNet(nn.Module):
-    """
-    PyTorch based ResNet implementation for CIFAR-10 and -100
-    """
-
     def __init__(self, block, layers, num_classes=10,
                  first_conv2d_ksize=6, first_conv2d_stride=2, first_conv2d_padding=3,
                  last_avgpool2d_ksize=2, last_avgpool2d_stride=1):
