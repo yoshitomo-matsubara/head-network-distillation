@@ -41,7 +41,7 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     module_util.extract_all_child_modules(org_model, org_modules, teacher_model_config['extract_designed_module'])
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
-    mimic_modules.extend(*org_modules[end_idx:])
+    mimic_modules.extend(org_modules[end_idx:])
     mimic_model_config = student_config['mimic_model']
     mimic_type = mimic_model_config['type']
     if mimic_type == 'densenet121mimic':
