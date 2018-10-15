@@ -17,6 +17,9 @@ student_model:
     type: 'densenet121_head_mimic'
     ckpt: './resource/ckpt/mimic/densenet121_head_mimic.ckpt'
 
+mimic_model:
+    type: 'densenet121mimic'
+
 train:
     epoch: 50
     batch_size: 20
@@ -31,4 +34,5 @@ train:
             reduction: 'sum'
 
 test:
+    mimic_type: 'densenet121mimic'
     batch_size: 1

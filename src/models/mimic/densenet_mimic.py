@@ -38,3 +38,16 @@ class DenseNet121HeadMimic(nn.Module):
 
     def forward(self, sample_batch):
         return self.module_seq(sample_batch)
+
+
+class DenseNet121Mimic(nn.Module):
+    def __init__(self, modules):
+        super().__init__()
+        self.features = nn.Sequential(*modules[:-1])
+        self.classifier = modules[-1]
+
+    def forward(self, sample_batch):
+        features = self.features(sample_batch)
+        z = nn.functional.relu(features, inplace=True)
+        z = nn.functional.avg_pool2d(z, kernel_size=7, stride=1).view(features.size(0), -1)
+        return self.classifier(z)
