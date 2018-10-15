@@ -134,7 +134,7 @@ def run(args):
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
     for epoch in range(start_epoch, train_config['epoch'] + 1):
-        train(teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
+        train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
         save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type)
 
 
