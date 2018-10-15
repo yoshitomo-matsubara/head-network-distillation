@@ -46,4 +46,4 @@ def extract_all_child_modules(parent_module, module_list):
         return
 
     for child_module in child_models:
-        extract_all_child_modules(child_module, parent_module)
+        extract_all_child_modules(child_module, module_list)
