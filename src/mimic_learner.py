@@ -19,14 +19,18 @@ def get_argparser():
     return argparser
 
 
-def resume_from_ckpt(ckpt_file_path, model):
+def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     if not os.path.exists(ckpt_file_path):
+        if is_student:
+            return 1, 1e60
         return 1
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     model.load_state_dict(checkpoint['model'])
     start_epoch = checkpoint['epoch']
+    if is_student:
+        return start_epoch, checkpoint['best_avg_loss']
     return start_epoch
 
 
@@ -98,12 +102,32 @@ def train(student_model, teacher_model, train_loader, optimizer, criterion, epoc
                                                            100.0 * batch_idx / len(train_loader), loss.item()))
 
 
-def save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type):
+def validate(student_model, teacher_model, valid_loader, criterion, device):
+    student_model.eval()
+    teacher_model.eval()
+    valid_loss = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(valid_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            student_outputs = student_model(inputs)
+            teacher_outputs = teacher_model(inputs)
+            loss = criterion(student_outputs, teacher_outputs)
+            valid_loss += loss.item()
+            total += targets.size(0)
+
+    avg_valid_loss = valid_loss / total
+    print('Validation Loss: {:.6f}\tAvg Loss: {:.6f}'.format(valid_loss, avg_valid_loss))
+    return avg_valid_loss
+
+
+def save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type):
     print('Saving..')
     state = {
         'type': teacher_model_type,
         'model': student_model.state_dict(),
         'epoch': epoch + 1,
+        'best_avg_loss': best_avg_loss,
         'student': True
     }
     file_util.make_parent_dirs(ckpt_file_path)
@@ -123,11 +147,11 @@ def run(args):
     student_model_config = student_config['student_model']
     student_model = get_student_model(teacher_model_type, teacher_model, student_model_config)
     student_model = student_model.to(device)
-    start_epoch = resume_from_ckpt(student_model_config['ckpt'], student_model, )
+    start_epoch, best_avg_loss = resume_from_ckpt(student_model_config['ckpt'], student_model, is_student=True)
     train_config = student_config['train']
     dataset_config = student_config['dataset']
-    train_loader, _, _ =\
-        caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0,
+    train_loader, valid_loader, _ =\
+        caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0.1,
                                       is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
     criterion = get_criterion(train_config['criterion'])
@@ -136,7 +160,10 @@ def run(args):
     ckpt_file_path = student_model_config['ckpt']
     for epoch in range(start_epoch, train_config['epoch'] + 1):
         train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
-        save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type)
+        avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
+        if avg_valid_loss < best_avg_loss:
+            best_avg_loss = avg_valid_loss
+            save_ckpt(student_model, epoch, ckpt_file_path, teacher_model_type)
 
 
 if __name__ == '__main__':
