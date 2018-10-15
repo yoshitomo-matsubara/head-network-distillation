@@ -11,7 +11,7 @@ teacher_model:
     config: './config/densenet-cal.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 7
+    end_idx: 8
 
 student_model:
     type: 'densenet121_head_mimic'
@@ -29,3 +29,6 @@ train:
         type: 'mse'
         params:
             reduction: 'sum'
+
+test:
+    batch_size: 1
