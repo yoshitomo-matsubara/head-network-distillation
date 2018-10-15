@@ -8,6 +8,7 @@ import yaml
 
 from utils import file_util, module_util
 from utils.dataset import caltech_util
+from models.mimic.densenet_mimic import *
 from models.mimic.vgg_mimic import *
 
 
@@ -51,6 +52,8 @@ def get_student_model(teacher_model_type, teacher_model, student_model_config):
     student_model_type = student_model_config['type']
     if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
+    elif teacher_model_type == 'densenet' and student_model_type == 'densenet121_head_mimic':
+        return DenseNet121HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
