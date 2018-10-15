@@ -4,10 +4,10 @@ import torch
 import torch.backends.cudnn as cudnn
 import yaml
 
+import mimic_learner
 from models.mimic.densenet_mimic import *
 from utils import file_util, module_util
 from utils.dataset import caltech_util
-from . import mimic_learner
 
 
 def get_argparser():
@@ -108,7 +108,7 @@ def run(args):
 
     teacher_model_config = student_config['teacher_model']
     org_model, teacher_model_type = get_org_model(teacher_model_config, device)
-    mimic_model = get_mimic_model(student_config, org_model, teacher_model_config, device)
+    mimic_model = get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device)
     test_config = student_config['test']
     dataset_config = student_config['dataset']
     _, _, test_loader =\
