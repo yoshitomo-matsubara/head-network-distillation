@@ -122,6 +122,7 @@ def run(args):
     teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
     student_model_config = student_config['student_model']
     student_model = get_student_model(teacher_model_type, teacher_model, student_model_config)
+    student_model = student_model.to(device)
     start_epoch = resume_from_ckpt(student_model_config['ckpt'], student_model, )
     train_config = student_config['train']
     dataset_config = student_config['dataset']
