@@ -98,8 +98,9 @@ def train(student_model, teacher_model, train_loader, optimizer, criterion, epoc
         train_loss += loss.item()
         total += targets.size(0)
         if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                           100.0 * batch_idx / len(train_loader), loss.item()))
+            print('[{}/{} ({:.0f}%)]\tAvg Loss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
+                                                               100.0 * batch_idx / len(train_loader),
+                                                               loss.item() / targets.size(0)))
 
 
 def validate(student_model, teacher_model, valid_loader, criterion, device):
