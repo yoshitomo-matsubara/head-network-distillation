@@ -2,8 +2,8 @@ experiment_name: 'caltech101-student-densenet121'
 
 dataset:
     name: 'caltech101'
-    train: './resource/'
-    test: './resource/caltech101/test/'
+    train: './resource/data/'
+    test: './resource/data/caltech101/test/'
 
 input_shape: [3, 240, 240]
 
