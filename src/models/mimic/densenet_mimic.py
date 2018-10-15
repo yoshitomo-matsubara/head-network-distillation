@@ -48,6 +48,4 @@ class DenseNet121Mimic(nn.Module):
 
     def forward(self, sample_batch):
         features = self.features(sample_batch)
-        z = nn.functional.relu(features, inplace=True)
-        z = nn.functional.avg_pool2d(z, kernel_size=7, stride=1).view(features.size(0), -1)
-        return self.classifier(z)
+        return self.classifier(features.view(features.size(0), -1))
