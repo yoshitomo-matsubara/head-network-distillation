@@ -15,7 +15,7 @@ teacher_model:
 
 student_model:
     type: 'densenet121_head_mimic'
-    ckpt: './resource/ckpt/student/densenet121_head_mimic.ckpt'
+    ckpt: './resource/ckpt/mimic/densenet121_head_mimic.ckpt'
 
 train:
     epoch: 50
