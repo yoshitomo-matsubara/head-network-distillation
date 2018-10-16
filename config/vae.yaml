@@ -22,11 +22,3 @@ train:
         type: 'RMSprop'
         params:
             lr: 0.01
-
-test:
-    batch_size: 1
-    jquality: 0
-    compression:
-        type: None
-        size: None
-    ae: None
