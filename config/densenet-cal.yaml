@@ -1,33 +1,33 @@
-experiment_name: 'cifar10-densenet121'
+experiment_name: 'caltech101-densenet169'
 
 dataset:
-    name: 'cifar10'
-    data: './resource/data/'
+    name: 'caltech101'
+    data: './resource/data/caltech101/'
 
-input_shape: [3, 32, 32]
+input_shape: [3, 240, 240]
 
 model:
     type: 'densenet'
-    ckpt: './resource/ckpt/densenet121.ckpt'
+    ckpt: './resource/ckpt/densenet169.ckpt'
     params:
-        growth_rate: 12
-        block_config: [6, 12, 24, 16]
+        growth_rate: 32
+        block_config: [6, 12, 32, 32]
         num_init_features: 64
         bn_size: 4
         drop_rate: 0
-        num_classes: 10
-        # additional parameters for CIFAR-10 and -100
-        conv2d_ksize: 2
-        conv2d_stride: 1
-        conv2d_padding: 1
-        maxpool_2d_ksize: 2
+        num_classes: 101
+        # additional parameters for Caltech101 and 256
+        conv2d_ksize: 7
+        conv2d_stride: 2
+        conv2d_padding: 3
+        maxpool_2d_ksize: 3
         maxpool_2d_stride: 2
         maxpool_2d_padding: 1
-        avg_pool2d_ksize: 2
+        avg_pool2d_ksize: 7
 
 train:
     epoch: 50
-    batch_size: 100
+    batch_size: 20
     interval: 50
     optimizer:
         type: 'adam'
