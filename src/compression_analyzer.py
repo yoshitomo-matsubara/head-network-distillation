@@ -1,5 +1,4 @@
 import argparse
-import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +10,7 @@ import yaml
 
 import ae_runner
 from myutils.common import file_util
+from myutils.pytorch import func_util
 from utils import misc_util, module_util, module_wrap_util
 from utils.dataset import general_util
 
@@ -27,10 +27,10 @@ def get_argparser():
     return parser
 
 
-def resume_from_ckpt(model, config, args):
-    ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
-    if args.init or not os.path.exists(ckpt_file_path):
-        return config['model']['type'], 0, 1, ckpt_file_path
+def resume_from_ckpt(model, model_config, init):
+    ckpt_file_path = model_config['ckpt']
+    if init or not file_util.check_if_exists(ckpt_file_path):
+        return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
@@ -41,16 +41,16 @@ def resume_from_ckpt(model, config, args):
     return model_type, best_acc, start_epoch, ckpt_file_path
 
 
-def load_autoencoder(ae_config_file_path, ckpt_dir_path, device):
-    if ae_config_file_path is None or ckpt_dir_path is None:
+def load_autoencoder(ae_config_file_path, device):
+    if not file_util.check_if_exists(ae_config_file_path):
         return None
 
     with open(ae_config_file_path, 'r') as fp:
         ae_config = yaml.load(fp)
 
-    ae = module_util.get_autoencoder(ae_config, device)
-    ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
-    return ae
+    ae_model = module_util.get_autoencoder(ae_config, device)
+    ae_runner.resume_from_ckpt(ae_model, ae_config, False)
+    return ae_model
 
 
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
@@ -224,21 +224,32 @@ def run(args):
     with open(args.config, 'r') as fp:
         config = yaml.load(fp)
 
-    ae = load_autoencoder(args.ae, args.ckpt, device)
+    dataset_config = config['dataset']
+    train_config = config['train']
+    compress_config = train_config['compression']
+    test_config = config['test']
+    ae_model = load_autoencoder(test_config['autoencoder'], device)
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, ae=ae,
-                                      reshape_size=tuple(config['input_shape'][1:3]))
+        general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
+                                      compress_config['type'], compress_config['size'], ae_model=ae_model,
+                                      reshape_size=tuple(config['input_shape'][1:3]),
+                                      compression_quality=test_config['jquality'])
 
-    if args.pkl is None:
+    pikle_file_path = args.pkl
+    if not file_util.check_if_exists(pikle_file_path):
         model = module_util.get_model(config, device)
-        model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
-        criterion, optimizer = get_criterion_optimizer(model, args)
+        model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
+        criterion_config = config['criterion']
+        criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+        optim_config = config['optimizer']
+        optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         if not args.evaluate:
-            for epoch in range(start_epoch, start_epoch + args.epoch):
-                train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
+            interval = train_config['interval']
+            for epoch in range(start_epoch, start_epoch + train_config['epoch']):
+                train(model, train_loader, optimizer, criterion, epoch, device, interval)
                 best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     else:
-        model = file_util.load_pickle(args.pkl).to(device)
+        model = file_util.load_pickle(pikle_file_path).to(device)
 
     analysis_mode = args.mode
     if analysis_mode == 'comp_rate':
