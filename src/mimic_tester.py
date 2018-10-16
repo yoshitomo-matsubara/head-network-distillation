@@ -7,7 +7,7 @@ import yaml
 import mimic_learner
 from models.mimic.densenet_mimic import *
 from utils import file_util, module_util
-from utils.dataset import caltech_util
+from utils.dataset import general_util
 
 
 def get_argparser():
@@ -112,8 +112,7 @@ def run(args):
     test_config = student_config['test']
     dataset_config = student_config['dataset']
     _, _, test_loader =\
-        caltech_util.get_data_loaders(dataset_config['train'], batch_size=test_config['batch_size'], valid_rate=0.1,
-                                      is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
+        general_util.get_data_loaders(dataset_config['train'], batch_size=test_config['batch_size'], ae=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
     test(mimic_model, org_model, test_loader, device)
     file_util.save_pickle(mimic_model, student_config['mimic_model']['ckpt'])

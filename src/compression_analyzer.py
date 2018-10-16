@@ -11,13 +11,12 @@ import yaml
 
 import ae_runner
 from utils import file_util, misc_util, module_util, module_wrap_util
-from utils.dataset import caltech_util
+from utils.dataset import general_util
 
 
 def get_argparser():
     parser = argparse.ArgumentParser(description='Compression Analyzer')
-    parser.add_argument('--data', default='./resource/data/', help='Caltech data dir path')
-    parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
+    parser.add_argument('--data', default='./resource/data/', help='data dir path')
     parser.add_argument('--pkl', help='model pickle file path')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
@@ -236,8 +235,8 @@ def run(args):
 
     ae = load_autoencoder(args.ae, args.ckpt)
     train_loader, valid_loader, test_loader =\
-        caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                      is_caltech256=args.caltech256, ae=ae, reshape_size=tuple(config['input_shape'][1:3]))
+        general_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, ae=ae,
+                                      reshape_size=tuple(config['input_shape'][1:3]))
 
     if args.pkl is None:
         model = module_util.get_model(device, config)

@@ -7,7 +7,7 @@ import torch.optim as optim
 import yaml
 
 from utils import file_util, module_util
-from utils.dataset import caltech_util
+from utils.dataset import general_util
 from models.mimic.densenet_mimic import *
 from models.mimic.vgg_mimic import *
 
@@ -152,8 +152,7 @@ def run(args):
     train_config = student_config['train']
     dataset_config = student_config['dataset']
     train_loader, valid_loader, _ =\
-        caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0.1,
-                                      is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
+        general_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], ae=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)

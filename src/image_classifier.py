@@ -9,7 +9,7 @@ import yaml
 
 import ae_runner
 from utils import file_util, module_util
-from utils.dataset import caltech_util, cifar_util
+from utils.dataset import general_util, cifar_util
 
 
 def get_argparser():
@@ -17,7 +17,6 @@ def get_argparser():
     parser.add_argument('--data', default='./resource/data/', help='data dir path')
     parser.add_argument('--dataset', default='caltech', help='dataset type')
     parser.add_argument('-cifar100', action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
-    parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('--bsize', type=int, default=128, help='number of samples per a batch')
@@ -63,8 +62,7 @@ def load_autoencoder(ae_config_file_path, ckpt_dir_path):
 def get_data_loaders(args, ae, config):
     dataset_type = args.dataset
     if dataset_type == 'caltech':
-        return caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                             is_caltech256=args.caltech256, ae=ae,
+        return general_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, ae=ae,
                                              reshape_size=tuple(config['input_shape'][1:3]),
                                              compression_quality=args.jquality)
     elif dataset_type == 'cifar':

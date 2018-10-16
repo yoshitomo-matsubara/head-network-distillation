@@ -8,7 +8,7 @@ from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(180, 180), ae=None):
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(240, 240), ae=None):
     normal_list = [transforms.ToTensor()]
     if ae is not None:
         normal_list.append(AETransformer(ae))
