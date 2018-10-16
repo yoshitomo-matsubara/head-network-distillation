@@ -8,10 +8,10 @@ from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(240, 240), ae=None):
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(240, 240), ae_model=None):
     normal_list = [transforms.ToTensor()]
-    if ae is not None:
-        normal_list.append(AETransformer(ae))
+    if ae_model is not None:
+        normal_list.append(AETransformer(ae_model))
 
     if normalizer is not None:
         normal_list.append(normalizer)
@@ -31,7 +31,7 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
 
 
 def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, compressed_size_str=None,
-                     normalized=True, autoencoder=None, reshape_size=(240, 240), compression_quality=0):
+                     normalized=True, ae_model=None, reshape_size=(240, 240), compression_quality=0):
     if not os.path.exists(root_data_dir_path):
         ValueError('Could not find dataset at {}'.format(root_data_dir_path))
 
@@ -55,7 +55,7 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
                                                num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=2, pin_memory=pin_memory)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=autoencoder)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae_model=ae_model)
     test_dataset = AdvRgbImageDataset(test_file_path, reshape_size, test_transformer, compression_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()

@@ -44,4 +44,4 @@ test:
     compression:
         type: None
         size: None
-    ae: None
+    autoencoder: None

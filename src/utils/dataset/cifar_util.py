@@ -45,10 +45,10 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalized, valid_rat
     return train_loader, valid_loader, normalizer
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae=None):
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae_model=None):
     normal_list = [transforms.ToTensor()]
-    if ae is not None:
-        normal_list.append(AETransformer(ae))
+    if ae_model is not None:
+        normal_list.append(AETransformer(ae_model))
 
     if normalizer is not None:
         normal_list.append(normalizer)
@@ -68,11 +68,11 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
 
 
 def get_data_loaders(data_dir_path, batch_size=128, compression_type=None, compressed_size_str=None,
-                     valid_rate=0.1, normalized=True, is_cifar100=False, ae=None):
+                     valid_rate=0.1, normalized=True, is_cifar100=False, ae_model=None):
     train_loader, valid_loader, normalizer =\
         get_train_and_valid_loaders(data_dir_path, batch_size=batch_size, normalized=normalized,
                                     valid_rate=valid_rate, is_cifar100=is_cifar100)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae=ae)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae_model=ae_model)
     test_dataset =\
         torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)\
             if not is_cifar100 else torchvision.datasets.CIFAR100(root=data_dir_path, train=False,
