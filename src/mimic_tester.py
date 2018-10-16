@@ -112,7 +112,7 @@ def run(args):
     test_config = student_config['test']
     dataset_config = student_config['dataset']
     _, _, test_loader =\
-        general_util.get_data_loaders(dataset_config['train'], batch_size=test_config['batch_size'], ae=None,
+        general_util.get_data_loaders(dataset_config['data'], batch_size=test_config['batch_size'], autoencoder=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
     test(mimic_model, org_model, test_loader, device)
     file_util.save_pickle(mimic_model, student_config['mimic_model']['ckpt'])
