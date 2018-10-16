@@ -20,7 +20,7 @@ def get_argparser():
 
 def resume_from_ckpt(ae_model, ae_config, init):
     ckpt_file_path = ae_config['ckpt']
-    if init or not os.path.exists(ckpt_file_path):
+    if init or not file_util.check_if_exists(ckpt_file_path):
         return ae_config['type'], 1e60, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')

@@ -21,9 +21,9 @@ def get_argparser():
     return parser
 
 
-def resume_from_ckpt(model, model_config, args):
+def resume_from_ckpt(model, model_config, init):
     ckpt_file_path = model_config['ckpt']
-    if args.init or not os.path.exists(ckpt_file_path):
+    if init or not file_util.check_if_exists(ckpt_file_path):
         return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
@@ -136,7 +136,7 @@ def run(args):
 
     train_loader, valid_loader, test_loader = get_data_loaders(config)
     model = module_util.get_model(config, device)
-    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
+    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args.init)
     criterion_config = config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = config['optimizer']
