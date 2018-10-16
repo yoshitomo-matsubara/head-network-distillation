@@ -49,7 +49,8 @@ def run(args):
     output_dir_path = args.output
     if dataset_type == 'caltech':
         convert_caltech_dataset(input_dir_path, valid_rate, test_rate, output_dir_path)
-    raise ValueError('dataset_type `{}` is not expected'.format(dataset_type))
+    else:
+        raise ValueError('dataset_type `{}` is not expected'.format(dataset_type))
 
 
 if __name__ == '__main__':
