@@ -6,10 +6,11 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import yaml
 
-from utils import file_util, module_util
-from utils.dataset import general_util
 from models.mimic.densenet_mimic import *
 from models.mimic.vgg_mimic import *
+from myutils.common import file_util
+from utils import module_util
+from utils.dataset import general_util
 
 
 def get_argparser():

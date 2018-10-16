@@ -7,8 +7,9 @@ import torch.nn as nn
 import torch.optim as optim
 import yaml
 
+from myutils.common import file_util
 from myutils.pytorch import func_util
-from utils import file_util, module_util
+from utils import module_util
 from utils.dataset import general_util, cifar_util
 
 
