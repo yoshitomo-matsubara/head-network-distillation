@@ -1,10 +1,10 @@
 import torchvision
 
-from autoencoders import *
+from autoencoders.ae import *
 from models.classification import *
 
 
-def get_model(device, config):
+def get_model(config, device):
     model_config = config['model']
     model_type = model_config['type']
     if model_type == 'alexnet':
@@ -26,17 +26,16 @@ def get_model(device, config):
     return model
 
 
-def get_autoencoder(cuda_available, config):
+def get_autoencoder(config, device):
     ae_config = config['autoencoder']
     ae_type = ae_config['type']
     if ae_type == 'vae':
-        ae = VAE(**ae_config['params'])
+        ae_model = VAE(**ae_config['params'])
     else:
         ValueError('ae_type `{}` is not expected'.format(ae_type))
 
-    if cuda_available:
-        ae.cuda()
-    return ae
+    ae_model = ae_model.to(device)
+    return ae_model
 
 
 def extract_all_child_modules(parent_module, module_list, extract_designed_module=True):

@@ -30,7 +30,7 @@ def get_org_model(teacher_model_config, device):
     with open(teacher_model_config['config'], 'r') as fp:
         config = yaml.load(fp)
 
-    model = module_util.get_model(device, config)
+    model = module_util.get_model(config, device)
     model_config = config['model']
     mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
     return model, model_config['type']

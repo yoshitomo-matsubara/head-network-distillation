@@ -1,11 +1,32 @@
 experiment_name: 'cifar10-vae'
 
-dataset: 'cifar10'
+dataset:
+    name: 'cifar10'
+    data: './resource/data/'
+
 
 input_shape: [3, 32, 32]
 
 autoencoder:
     type: 'vae'
+    ckpt: './resource/ckpt/vae.ckpt'
     params:
         hidden_size: 20
         intermediate_size: 128
+
+train:
+    epoch: 50
+    batch_size: 100
+    interval: 50
+    optimizer:
+        type: 'RMSprop'
+        params:
+            lr: 0.01
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type: None
+        size: None
+    ae: None
