@@ -19,6 +19,7 @@ student_model:
 
 mimic_model:
     type: 'densenet169mimic'
+    ckpt: './resource/model/mimic/densenet169_mimic.pkl'
 
 train:
     epoch: 50

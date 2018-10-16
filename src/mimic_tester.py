@@ -116,6 +116,7 @@ def run(args):
                                       is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
                                       reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
     test(mimic_model, org_model, test_loader, device)
+    file_util.save_pickle(mimic_model, student_config['mimic_model']['ckpt'])
 
 
 if __name__ == '__main__':
