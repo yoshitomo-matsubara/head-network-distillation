@@ -37,7 +37,7 @@ def make_parent_dirs(file_path):
 def save_pickle(obj, output_file_path):
     make_parent_dirs(output_file_path)
     with open(output_file_path, 'wb') as fp:
-        pickle.dump(obj, output_file_path)
+        pickle.dump(obj, fp)
 
 
 def load_pickle(input_file_path):
