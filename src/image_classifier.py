@@ -39,7 +39,7 @@ def get_data_loaders(config):
     dataset_config = config['dataset']
     train_config = config['train']
     test_config = config['test']
-    compress_config = test_config['compress']
+    compress_config = test_config['compression']
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech'):
         return general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
