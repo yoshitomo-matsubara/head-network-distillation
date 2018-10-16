@@ -1,4 +1,5 @@
 import os
+import pickle
 
 
 def get_file_list(dir_path, is_recursive=False, is_sorted=False):
@@ -31,3 +32,14 @@ def make_dirs(dir_path):
 def make_parent_dirs(file_path):
     dir_path = os.path.dirname(file_path)
     make_dirs(dir_path)
+
+
+def save_pickle(obj, output_file_path):
+    make_parent_dirs(output_file_path)
+    with open(output_file_path, 'wb') as fp:
+        pickle.dump(obj, output_file_path)
+
+
+def load_pickle(input_file_path):
+    with open(input_file_path, 'rb') as fp:
+        return pickle.load(fp)
