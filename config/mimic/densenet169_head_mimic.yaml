@@ -1,4 +1,4 @@
-experiment_name: 'caltech101-student-densenet121'
+experiment_name: 'caltech101-student-densenet169'
 
 dataset:
     name: 'caltech101'
@@ -14,11 +14,11 @@ teacher_model:
     end_idx: 8
 
 student_model:
-    type: 'densenet121_head_mimic'
-    ckpt: './resource/ckpt/mimic/densenet121_head_mimic.ckpt'
+    type: 'densenet169_head_mimic'
+    ckpt: './resource/ckpt/mimic/densenet169_head_mimic.ckpt'
 
 mimic_model:
-    type: 'densenet121mimic'
+    type: 'densenet169mimic'
 
 train:
     epoch: 50
@@ -34,5 +34,5 @@ train:
             reduction: 'sum'
 
 test:
-    mimic_type: 'densenet121mimic'
+    mimic_type: 'densenet169mimic'
     batch_size: 1

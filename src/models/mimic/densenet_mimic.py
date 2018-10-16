@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 
-class DenseNet121HeadMimic(nn.Module):
+class DenseNet169HeadMimic(nn.Module):
     # designed for input image size [3, 240, 240]
     def __init__(self):
         super().__init__()
@@ -40,7 +40,7 @@ class DenseNet121HeadMimic(nn.Module):
         return self.module_seq(sample_batch)
 
 
-class DenseNet121Mimic(nn.Module):
+class DenseNet169Mimic(nn.Module):
     def __init__(self, modules):
         super().__init__()
         self.features = nn.Sequential(*modules[:-1])

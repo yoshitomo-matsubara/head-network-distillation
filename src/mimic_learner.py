@@ -56,8 +56,8 @@ def get_student_model(teacher_model_type, student_model_config):
     student_model_type = student_model_config['type']
     if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
-    elif teacher_model_type == 'densenet' and student_model_type == 'densenet121_head_mimic':
-        return DenseNet121HeadMimic()
+    elif teacher_model_type == 'densenet' and student_model_type == 'densenet169_head_mimic':
+        return DenseNet169HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 

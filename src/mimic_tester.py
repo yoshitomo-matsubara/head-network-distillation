@@ -44,8 +44,8 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     mimic_modules.extend(org_modules[end_idx:])
     mimic_model_config = student_config['mimic_model']
     mimic_type = mimic_model_config['type']
-    if mimic_type == 'densenet121mimic':
-        return DenseNet121Mimic(mimic_modules)
+    if mimic_type == 'densenet169mimic':
+        return DenseNet169Mimic(mimic_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 
@@ -77,7 +77,7 @@ def test(mimic_model, org_model, test_loader, device):
             org_test_loss += sub_test_loss
 
     mimic_acc = 100.0 * mimic_correct_count / total
-    print('[Mimic]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    print('[Mimic]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         mimic_test_loss / total, mimic_correct_count, total, mimic_acc))
     org_acc = 100.0 * org_correct_count / total
     print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
