@@ -18,6 +18,7 @@ def get_argparser():
     parser = argparse.ArgumentParser(description='Compression Analyzer')
     parser.add_argument('--data', default='./resource/data/', help='Caltech data dir path')
     parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
+    parser.add_argument('--pkl', help='model pickle file path')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
     parser.add_argument('--bsize', type=int, default=100, help='number of samples per a batch')
@@ -237,13 +238,17 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
                                       is_caltech256=args.caltech256, ae=ae, reshape_size=tuple(config['input_shape'][1:3]))
-    model = module_util.get_model(device, config)
-    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
-    criterion, optimizer = get_criterion_optimizer(model, args)
-    if not args.evaluate:
-        for epoch in range(start_epoch, start_epoch + args.epoch):
-            train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
-            best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+
+    if args.pkl is None:
+        model = module_util.get_model(device, config)
+        model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
+        criterion, optimizer = get_criterion_optimizer(model, args)
+        if not args.evaluate:
+            for epoch in range(start_epoch, start_epoch + args.epoch):
+                train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
+                best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+    else:
+        model = file_util.load_pickle(args.pkl).to(device)
 
     analysis_mode = args.mode
     if analysis_mode == 'comp_rate':
