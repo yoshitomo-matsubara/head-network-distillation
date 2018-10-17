@@ -136,12 +136,12 @@ def run(args):
     train_loader, valid_loader, test_loader = get_data_loaders(config)
     model = module_util.get_model(config, device)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
-    criterion_config = config['criterion']
+    train_config = config['train']
+    criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
-    optim_config = config['optimizer']
-    optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
     if not args.evaluate:
-        train_config = config['train']
+        optim_config = train_config['optimizer']
+        optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
         for epoch in range(start_epoch, start_epoch + train_config['epoch']):
             train(model, train_loader, optimizer, criterion, epoch, device, interval)
