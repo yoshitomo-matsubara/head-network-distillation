@@ -30,11 +30,11 @@ def write_converted_dataset(data_list, output_file_path, delimiter='\t', rgb_onl
 
 
 def convert_caltech_dataset(input_dir_path, val_rate, test_rate, output_dir_path):
-    sub_dir_path_list = file_util.get_dir_list(input_dir_path, is_sorted=True)
+    sub_dir_path_list = file_util.get_dir_path_list(input_dir_path, is_sorted=True)
     dataset_dict = {'train': [], 'valid': [], 'test': []}
     for sub_dir_path in sub_dir_path_list:
         label_name = os.path.basename(sub_dir_path)
-        image_file_paths = file_util.get_file_list(sub_dir_path, is_sorted=True)
+        image_file_paths = file_util.get_file_path_list(sub_dir_path, is_sorted=True)
         random.shuffle(image_file_paths)
         train_end_idx = int(len(image_file_paths) * (1 - val_rate - test_rate))
         valid_end_idx = train_end_idx + int(len(image_file_paths) * val_rate)
