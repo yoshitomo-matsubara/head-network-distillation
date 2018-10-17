@@ -1,7 +1,7 @@
 import argparse
 import os
 import random
-
+from PIL import Image
 from myutils.common import file_util
 
 
@@ -15,11 +15,15 @@ def get_argparser():
     return parser
 
 
-def write_converted_dataset(data_list, output_file_path, delimiter='\t'):
+def write_converted_dataset(data_list, output_file_path, delimiter='\t', rgb_only=True):
     file_util.make_parent_dirs(output_file_path)
     with open(output_file_path, 'w') as fp:
         for label_name, image_file_paths in data_list:
             for image_file_path in image_file_paths:
+                if rgb_only:
+                    img = Image.open(image_file_path)
+                    if img.mode != 'RGB':
+                        continue
                 fp.write('{}{}{}\n'.format(image_file_path, delimiter, label_name))
 
 
