@@ -1,7 +1,9 @@
 import argparse
 import os
 import random
+
 from PIL import Image
+
 from myutils.common import file_util
 
 
