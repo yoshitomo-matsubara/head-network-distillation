@@ -1,8 +1,11 @@
 experiment_name: 'caltech101-vgg16'
 
-dataset: 'caltech101'
+dataset:
+    name: 'caltech101'
+    data: './resource/data/'
 
 input_shape: [3, 240, 240]
 
 model:
     type: 'vgg16'
+    ckpt: './resource/ckpt/vgg16.ckpt'

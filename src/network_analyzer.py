@@ -38,7 +38,7 @@ def read_config(config_file_path):
     with open(config_file_path, 'r') as fp:
         config = yaml.load(fp)
 
-    dataset_name = config['dataset']
+    dataset_name = config['dataset']['name']
     if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
         return None, None, None
 

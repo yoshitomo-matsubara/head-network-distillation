@@ -1,11 +1,14 @@
 experiment_name: 'cifar10-alexnet'
 
-dataset: 'cifar10'
+dataset:
+    name: 'cifar10'
+    data: './resource/data/'
 
 input_shape: [3, 32, 32]
 
 model:
     type: 'alexnet'
+    ckpt: './resource/ckpt/alexnet.ckpt'
     params:
         num_classes: 10
         # additional parameters for CIFAR-10 and -100

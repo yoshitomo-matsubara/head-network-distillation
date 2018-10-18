@@ -4,7 +4,6 @@ dataset:
     name: 'cifar10'
     data: './resource/data/'
 
-
 input_shape: [3, 32, 32]
 
 autoencoder:

@@ -1,10 +1,13 @@
 experiment_name: 'cifar10-lenet5'
 
-dataset: 'cifar10'
+dataset:
+    name: 'cifar10'
+    data: './resource/data/'
 
 input_shape: [3, 32, 32]
 
 model:
     type: 'lenet5'
+    ckpt: './resource/ckpt/lenet5.ckpt'
     params:
         num_classes: 10
