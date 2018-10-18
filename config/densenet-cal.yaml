@@ -38,7 +38,7 @@ train:
     criterion:
         type: 'CrossEntropyLoss'
         params:
-            reduction: 'sum'
+            reduction: 'elementwise_mean'
 
 test:
     batch_size: 1
