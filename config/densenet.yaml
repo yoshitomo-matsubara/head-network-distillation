@@ -30,9 +30,11 @@ train:
     batch_size: 100
     interval: 50
     optimizer:
-        type: 'adam'
+        type: 'sgd'
         params:
             lr: 0.01
+            momentum: 0.9
+            weight_decay: 5e-4
     criterion:
         type: 'CrossEntropyLoss'
         params:
