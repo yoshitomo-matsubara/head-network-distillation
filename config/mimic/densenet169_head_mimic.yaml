@@ -2,7 +2,7 @@ dataset:
     name: &dataset_name 'caltech101'
     data: './resource/data/caltech101/'
 
-input_shape: [3, 240, 240]
+input_shape: [3, 224, 224]
 
 teacher_model:
     config: './config/densenet169.yaml'
@@ -12,12 +12,13 @@ teacher_model:
 
 student_model:
     type: &smodel_type 'densenet169_head_mimic'
-    experiment: &distil_experiment !join [*dataset_name, '-', *smodel_type]
+    version: &ver 2
+    experiment: &distil_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distil_experiment, '.ckpt']
 
 mimic_model:
     type: &mmodel_type 'densenet169mimic'
-    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type]
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
 train:
