@@ -27,8 +27,8 @@ train:
     optimizer:
         type: 'adam'
         params:
-            learn_late: 0.01
-    loss:
+            lr: 0.01
+    criterion:
         type: 'mse'
         params:
             reduction: 'sum'
