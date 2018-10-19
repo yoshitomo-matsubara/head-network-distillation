@@ -6,10 +6,9 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
-import yaml
 
 import ae_runner
-from myutils.common import file_util
+from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import misc_util, module_util, module_wrap_util
 from utils.dataset import general_util
@@ -45,9 +44,7 @@ def load_autoencoder(ae_config_file_path, device):
     if not file_util.check_if_exists(ae_config_file_path):
         return None
 
-    with open(ae_config_file_path, 'r') as fp:
-        ae_config = yaml.load(fp)
-
+    ae_config = yaml_util.load_yaml_file(ae_config_file_path)
     ae_model = module_util.get_autoencoder(ae_config, device)
     ae_runner.resume_from_ckpt(ae_model, ae_config, False)
     return ae_model
@@ -221,9 +218,7 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']
     train_config = config['train']
     compress_config = train_config['compression']

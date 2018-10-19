@@ -9,7 +9,7 @@ def get_model(config, device):
     model_type = model_config['type']
     if model_type == 'alexnet':
         model = AlexNet(**model_config['params'])
-    elif model_type == 'densenet':
+    elif model_type.startswith('densenet'):
         model = DenseNet(**model_config['params'])
     elif model_type == 'lenet5':
         model = LeNet5(**model_config['params'])

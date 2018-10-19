@@ -1,14 +1,13 @@
-experiment_name: 'cifar10-densenet121'
-
 dataset:
-    name: 'cifar10'
+    name: &dataset_name 'cifar10'
     data: './resource/data/'
 
 input_shape: [3, 32, 32]
 
 model:
-    type: 'densenet'
-    ckpt: './resource/ckpt/densenet121.ckpt'
+    type: &model_type 'densenet121'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         growth_rate: 12
         block_config: [6, 12, 24, 16]

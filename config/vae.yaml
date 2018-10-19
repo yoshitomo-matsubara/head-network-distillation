@@ -1,14 +1,13 @@
-experiment_name: 'cifar10-vae'
-
 dataset:
-    name: 'cifar10'
+    name: &dataset_name 'cifar10'
     data: './resource/data/'
 
 input_shape: [3, 32, 32]
 
 autoencoder:
-    type: 'vae'
-    ckpt: './resource/ckpt/vae.ckpt'
+    type: &model_type 'vae'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         hidden_size: 20
         intermediate_size: 128

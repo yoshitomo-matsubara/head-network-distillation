@@ -4,9 +4,8 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
-import yaml
 
-from myutils.common import file_util
+from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
 from utils.dataset import general_util, cifar_util
@@ -130,9 +129,7 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config)
     model = module_util.get_model(config, device)
     model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)

@@ -1,10 +1,9 @@
 import argparse
 
 import torch.utils.data
-import yaml
 
 import image_classifier
-from myutils.common import file_util
+from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
 
@@ -82,9 +81,7 @@ def validate(ae_model, valid_loader, device, epoch, best_loss, ckpt_file_path, a
 
 def run(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    with open(args.config, 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = image_classifier.get_data_loaders(config)
     ae_model = module_util.get_autoencoder(device, config)
     ae_type, best_loss, start_epoch, ckpt_file_path = resume_from_ckpt(ae_model, config['autoencoder'], args.init)

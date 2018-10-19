@@ -1,14 +1,13 @@
-experiment_name: 'caltech101-densenet169'
-
 dataset:
-    name: 'caltech101'
+    name: &dataset_name 'caltech101'
     data: './resource/data/caltech101/'
 
 input_shape: [3, 240, 240]
 
 model:
-    type: 'densenet'
-    ckpt: './resource/ckpt/densenet169.ckpt'
+    type: &model_type 'densenet169'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         growth_rate: 32
         block_config: [6, 12, 32, 32]

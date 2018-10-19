@@ -2,11 +2,10 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
-import yaml
 
 import mimic_learner
 from models.mimic.densenet_mimic import *
-from myutils.common import file_util
+from myutils.common import file_util, yaml_util
 from utils import module_util
 from utils.dataset import general_util
 
@@ -27,9 +26,7 @@ def load_student_model(student_config, teacher_model_type, device):
 
 
 def get_org_model(teacher_model_config, device):
-    with open(teacher_model_config['config'], 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(teacher_model_config['config'])
     model = module_util.get_model(config, device)
     model_config = config['model']
     mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
@@ -104,9 +101,7 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        student_config = yaml.load(fp)
-
+    student_config = yaml_util.load_yaml_file(args.config)
     teacher_model_config = student_config['teacher_model']
     org_model, teacher_model_type = get_org_model(teacher_model_config, device)
     mimic_model = get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device)

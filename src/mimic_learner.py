@@ -4,11 +4,10 @@ import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-import yaml
 
 from models.mimic.densenet_mimic import *
 from models.mimic.vgg_mimic import *
-from myutils.common import file_util
+from myutils.common import file_util, yaml_util
 from utils import module_util
 from utils.dataset import general_util
 
@@ -44,9 +43,7 @@ def extract_teacher_model(model, teacher_model_config):
 
 
 def get_teacher_model(teacher_model_config, device):
-    with open(teacher_model_config['config'], 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(teacher_model_config['config'])
     model = module_util.get_model(config, device)
     model_config = config['model']
     resume_from_ckpt(model_config['ckpt'], model)
@@ -141,9 +138,7 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        student_config = yaml.load(fp)
-
+    student_config = yaml_util.load_yaml_file(args.config)
     teacher_model_config = student_config['teacher_model']
     teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
     student_model_config = student_config['student_model']

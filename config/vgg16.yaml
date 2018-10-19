@@ -1,11 +1,10 @@
-experiment_name: 'caltech101-vgg16'
-
 dataset:
-    name: 'caltech101'
-    data: './resource/data/'
+    name: &dataset_name 'caltech101'
+    data: './resource/data/caltech101/'
 
 input_shape: [3, 240, 240]
 
 model:
-    type: 'vgg16'
-    ckpt: './resource/ckpt/vgg16.ckpt'
+    type: &model_type 'vgg16'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']

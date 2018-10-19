@@ -1,11 +1,11 @@
 import argparse
 import os
 
-import yaml
 import torchvision
 
 from models.classification import *
 from models.mock import *
+from myutils.common import yaml_util
 from utils import data_util, module_util, net_measure_util
 
 
@@ -35,9 +35,7 @@ def get_model_and_input_shape(model_type, input_shape_str):
 
 
 def read_config(config_file_path):
-    with open(config_file_path, 'r') as fp:
-        config = yaml.load(fp)
-
+    config = yaml_util.load_yaml_file(config_file_path)
     dataset_name = config['dataset']['name']
     if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
         return None, None, None
