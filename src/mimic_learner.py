@@ -45,7 +45,7 @@ def extract_teacher_model(model, teacher_model_config):
 def get_teacher_model(teacher_model_config, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
     model = module_util.get_model(teacher_config, device)
-    model_config = config['model']
+    model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
     return extract_teacher_model(model, teacher_model_config), model_config['type']
 

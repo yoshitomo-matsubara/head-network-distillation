@@ -12,7 +12,6 @@ class DenseNet169HeadMimic(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
         self.module_seq = nn.Sequential(
-            self.extractor,
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=2, stride=2, bias=False),
@@ -37,7 +36,8 @@ class DenseNet169HeadMimic(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, sample_batch):
-        return self.module_seq(sample_batch)
+        zs = self.extractor(sample_batch)
+        return self.module_seq(zs)
 
 
 class DenseNet169Mimic(nn.Module):
