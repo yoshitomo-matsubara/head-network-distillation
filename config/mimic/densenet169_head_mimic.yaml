@@ -1,24 +1,24 @@
-experiment_name: 'caltech101-student-densenet169'
-
 dataset:
-    name: 'caltech101'
+    name: &dataset_name 'caltech101'
     data: './resource/data/caltech101/'
 
 input_shape: [3, 240, 240]
 
 teacher_model:
-    config: './config/densenet-cal.yaml'
+    config: './config/densenet169.yaml'
     extract_designed_module: False
     start_idx: 0
     end_idx: 8
 
 student_model:
-    type: 'densenet169_head_mimic'
-    ckpt: './resource/ckpt/mimic/densenet169_head_mimic.ckpt'
+    type: &smodel_type 'densenet169_head_mimic'
+    experiment: &distil_experiment !join [*dataset_name, '-', *smodel_type]
+    ckpt: !join ['./resource/ckpt/mimic/', *distil_experiment, '.ckpt']
 
 mimic_model:
-    type: 'densenet169mimic'
-    ckpt: './resource/model/mimic/densenet169_mimic.pkl'
+    type: &mmodel_type 'densenet169mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type]
+    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
 train:
     epoch: 50
@@ -34,5 +34,4 @@ train:
             reduction: 'sum'
 
 test:
-    mimic_type: 'densenet169mimic'
     batch_size: 1

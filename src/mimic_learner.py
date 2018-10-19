@@ -43,8 +43,8 @@ def extract_teacher_model(model, teacher_model_config):
 
 
 def get_teacher_model(teacher_model_config, device):
-    config = yaml_util.load_yaml_file(teacher_model_config['config'])
-    model = module_util.get_model(config, device)
+    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    model = module_util.get_model(teacher_config, device)
     model_config = config['model']
     resume_from_ckpt(model_config['ckpt'], model)
     return extract_teacher_model(model, teacher_model_config), model_config['type']
@@ -138,18 +138,18 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    student_config = yaml_util.load_yaml_file(args.config)
-    teacher_model_config = student_config['teacher_model']
+    config = yaml_util.load_yaml_file(args.config)
+    teacher_model_config = config['teacher_model']
     teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
-    student_model_config = student_config['student_model']
+    student_model_config = config['student_model']
     student_model = get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = resume_from_ckpt(student_model_config['ckpt'], student_model, is_student=True)
-    train_config = student_config['train']
-    dataset_config = student_config['dataset']
+    train_config = config['train']
+    dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
-        general_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], ae=None,
-                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
+        general_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], ae_model=None,
+                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)
     interval = train_config['interval']

@@ -26,9 +26,9 @@ def load_student_model(student_config, teacher_model_type, device):
 
 
 def get_org_model(teacher_model_config, device):
-    config = yaml_util.load_yaml_file(teacher_model_config['config'])
-    model = module_util.get_model(config, device)
-    model_config = config['model']
+    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    model = module_util.get_model(teacher_config, device)
+    model_config = teacher_config['model']
     mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
     return model, model_config['type']
 
@@ -101,17 +101,17 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    student_config = yaml_util.load_yaml_file(args.config)
-    teacher_model_config = student_config['teacher_model']
+    config = yaml_util.load_yaml_file(args.config)
+    teacher_model_config = config['teacher_model']
     org_model, teacher_model_type = get_org_model(teacher_model_config, device)
-    mimic_model = get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device)
-    test_config = student_config['test']
-    dataset_config = student_config['dataset']
+    mimic_model = get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
+    test_config = config['test']
+    dataset_config = config['dataset']
     _, _, test_loader =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=test_config['batch_size'], ae_model=None,
-                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
+                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
     test(mimic_model, org_model, test_loader, device)
-    file_util.save_pickle(mimic_model, student_config['mimic_model']['ckpt'])
+    file_util.save_pickle(mimic_model, config['mimic_model']['ckpt'])
 
 
 if __name__ == '__main__':
