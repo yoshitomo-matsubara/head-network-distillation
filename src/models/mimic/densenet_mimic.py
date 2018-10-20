@@ -5,8 +5,8 @@ def mimic_version1():
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
-        nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False),
-        nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+        nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
+        nn.AvgPool2d(kernel_size=2, stride=2, padding=1)
     )
 
 
