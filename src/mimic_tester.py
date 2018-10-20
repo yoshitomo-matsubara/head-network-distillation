@@ -48,11 +48,11 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
 
 
 def predict(inputs, targets, model):
-        preds = model(inputs)
-        loss = nn.functional.cross_entropy(preds, targets)
-        _, pred_labels = preds.max(1)
-        correct_count = pred_labels.eq(targets).sum().item()
-        return correct_count, loss.item()
+    preds = model(inputs)
+    loss = nn.functional.cross_entropy(preds, targets)
+    _, pred_labels = preds.max(1)
+    correct_count = pred_labels.eq(targets).sum().item()
+    return correct_count, loss.item()
 
 
 def test(mimic_model, org_model, test_loader, device):
