@@ -148,7 +148,7 @@ def run(args):
     train_config = config['train']
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
-        general_util.get_data_loaders(dataset_config['name'], batch_size=train_config['batch_size'], ae_model=None,
+        general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
                                       reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)
