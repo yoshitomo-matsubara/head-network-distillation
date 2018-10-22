@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class Vgg16HeadMimic(nn.Module):
-    # designed for input image size [3, 240, 240]
+    # designed for input image size [3, 224, 224]
     def __init__(self):
         super().__init__()
         self.module_seq = nn.Sequential(

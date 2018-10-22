@@ -8,7 +8,7 @@ from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(240, 240), ae_model=None):
+def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(224, 224), ae_model=None):
     normal_list = [transforms.ToTensor()]
     if ae_model is not None:
         normal_list.append(AETransformer(ae_model))
@@ -31,7 +31,7 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
 
 
 def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, compressed_size_str=None,
-                     normalized=True, ae_model=None, reshape_size=(240, 240), compression_quality=0):
+                     normalized=True, ae_model=None, reshape_size=(224, 224), compression_quality=0):
     if not os.path.exists(root_data_dir_path):
         ValueError('Could not find dataset at {}'.format(root_data_dir_path))
 

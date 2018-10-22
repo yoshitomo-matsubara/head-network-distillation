@@ -2,7 +2,7 @@ dataset:
     name: &dataset_name 'caltech101'
     data: './resource/data/caltech101/'
 
-input_shape: [3, 240, 240]
+input_shape: [3, 224, 224]
 
 model:
     type: &model_type 'vgg16'
