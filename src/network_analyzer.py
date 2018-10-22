@@ -3,6 +3,7 @@ import os
 
 import torchvision
 
+import mimic_tester
 from models.classification import *
 from models.mock import *
 from myutils.common import file_util, yaml_util
@@ -16,6 +17,7 @@ def get_argparser():
     parser.add_argument('--config', help='yaml file path')
     parser.add_argument('--pkl', help='pickle file path')
     parser.add_argument('-scale', action='store_true', help='bandwidth scaling option')
+    parser.add_argument('-mimic', action='store_true', help='mimic model option')
     return parser
 
 
@@ -46,8 +48,16 @@ def read_config(config_file_path):
 
 
 def run(args):
-    if args.config is not None:
-        model, model_type, input_shape = read_config(args.config)
+    config_file_path = args.config
+    if args.mimic and file_util.check_if_exists(config_file_path):
+        config = yaml_util.load_yaml_file(args.config)
+        teacher_model_config = config['teacher_model']
+        org_model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, 'cpu')
+        model = mimic_tester.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
+        model_type = config['mimic_model']['type']
+        input_shape = config['input_shape']
+    elif file_util.check_if_exists(config_file_path):
+        model, model_type, input_shape = read_config(config_file_path)
     else:
         pickle_file_path = args.pkl
         model_type = args.model
