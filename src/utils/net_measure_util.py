@@ -85,7 +85,6 @@ def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, b
     ax2 = ax1.twinx()
     ax2.plot(xs[1:], accumulated_op_counts, 'r--')
     ax2.set_ylabel(accum_complexity_label, color='r')
-
     plt.tight_layout()
     plt.show()
 
