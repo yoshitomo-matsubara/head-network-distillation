@@ -40,11 +40,11 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
     test_file_path = os.path.join(root_data_dir_path, 'test.txt')
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size)
     normalizer = data_util.build_normalizer(train_dataset.load_all_data()) if normalized else None
-    valid_comp_list = [transforms.ToTensor()]
     train_comp_list = [transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+    valid_comp_list = [transforms.ToTensor()]
     if normalizer is not None:
-        valid_comp_list.append(normalizer)
         train_comp_list.append(normalizer)
+        valid_comp_list.append(normalizer)
 
     pin_memory = torch.cuda.is_available()
     train_transformer = transforms.Compose(train_comp_list)
