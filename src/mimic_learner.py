@@ -4,12 +4,12 @@ import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-import yaml
 
-from utils import file_util, module_util
-from utils.dataset import caltech_util
 from models.mimic.densenet_mimic import *
 from models.mimic.vgg_mimic import *
+from myutils.common import file_util, yaml_util
+from utils import module_util
+from utils.dataset import general_util
 
 
 def get_argparser():
@@ -21,6 +21,7 @@ def get_argparser():
 
 def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     if not os.path.exists(ckpt_file_path):
+        print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
         if is_student:
             return 1, 1e60
         return 1
@@ -39,25 +40,23 @@ def extract_teacher_model(model, teacher_model_config):
     module_util.extract_all_child_modules(model, modules, teacher_model_config['extract_designed_module'])
     start_idx = teacher_model_config['start_idx']
     end_idx = teacher_model_config['end_idx']
-    return nn.Sequential(*modules[start_idx:end_idx + 1])
+    return nn.Sequential(*modules[start_idx:end_idx])
 
 
 def get_teacher_model(teacher_model_config, device):
-    with open(teacher_model_config['config'], 'r') as fp:
-        config = yaml.load(fp)
-
-    model = module_util.get_model(device, config)
-    model_config = config['model']
+    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    model = module_util.get_model(teacher_config, device)
+    model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
     return extract_teacher_model(model, teacher_model_config), model_config['type']
 
 
-def get_student_model(teacher_model_type, teacher_model, student_model_config):
+def get_student_model(teacher_model_type, student_model_config):
     student_model_type = student_model_config['type']
     if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
-    elif teacher_model_type == 'densenet' and student_model_type == 'densenet121_head_mimic':
-        return DenseNet121HeadMimic()
+    elif teacher_model_type.startswith('densenet') and student_model_type == 'densenet169_head_mimic':
+        return DenseNet169HeadMimic(student_model_config['version'])
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
@@ -140,21 +139,18 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        student_config = yaml.load(fp)
-
-    teacher_model_config = student_config['teacher_model']
+    config = yaml_util.load_yaml_file(args.config)
+    teacher_model_config = config['teacher_model']
     teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
-    student_model_config = student_config['student_model']
-    student_model = get_student_model(teacher_model_type, teacher_model, student_model_config)
+    student_model_config = config['student_model']
+    student_model = get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = resume_from_ckpt(student_model_config['ckpt'], student_model, is_student=True)
-    train_config = student_config['train']
-    dataset_config = student_config['dataset']
+    train_config = config['train']
+    dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
-        caltech_util.get_data_loaders(dataset_config['train'], batch_size=train_config['batch_size'], valid_rate=0.1,
-                                      is_caltech256=dataset_config['name'] == 'caltech256', ae=None,
-                                      reshape_size=tuple(student_config['input_shape'][1:3]), compression_quality=-1)
+        general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
+                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
     criterion = get_criterion(train_config['criterion'])
     optimizer = get_optimizer(train_config['optimizer'], student_model)
     interval = train_config['interval']

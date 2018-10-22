@@ -1,43 +1,28 @@
 import argparse
-import os
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
-import yaml
 
-import ae_runner
-from utils import file_util, module_util
-from utils.dataset import caltech_util, cifar_util
+from myutils.common import file_util, yaml_util
+from myutils.pytorch import func_util
+from utils import module_util
+from utils.dataset import general_util, cifar_util
 
 
 def get_argparser():
     parser = argparse.ArgumentParser(description='PyTorch image classifier')
-    parser.add_argument('--data', default='./resource/data/', help='data dir path')
-    parser.add_argument('--dataset', default='caltech', help='dataset type')
-    parser.add_argument('-cifar100', action='store_true', help='option to use CIFAR-100 instead of CIFAR-10')
-    parser.add_argument('-caltech256', action='store_true', help='option to use Caltech101 instead of Caltech256')
     parser.add_argument('--config', required=True, help='yaml file path')
-    parser.add_argument('--ckpt', default='./resource/ckpt/', help='checkpoint dir path')
-    parser.add_argument('--bsize', type=int, default=128, help='number of samples per a batch')
-    parser.add_argument('--epoch', type=int, default=100, help='number of epochs for training')
-    parser.add_argument('--lr', type=float, default=0.1, help='learning rate')
-    parser.add_argument('--vrate', type=float, default=0.1, help='validation rate')
-    parser.add_argument('--interval', type=int, default=50, help='logging training status ')
-    parser.add_argument('--jquality', type=int, default=0, help='JPEG compression quality (1 - 95)')
-    parser.add_argument('--ctype', help='compression type')
-    parser.add_argument('--csize', help='compression size')
-    parser.add_argument('--ae', help='autoencoder yaml file path')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return parser
 
 
-def resume_from_ckpt(model, config, args):
-    ckpt_file_path = os.path.join(args.ckpt, config['experiment_name'])
-    if args.init or not os.path.exists(ckpt_file_path):
-        return config['model']['type'], 0, 1, ckpt_file_path
+def resume_from_ckpt(model, model_config, init):
+    ckpt_file_path = model_config['ckpt']
+    if init or not file_util.check_if_exists(ckpt_file_path):
+        return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
@@ -48,29 +33,22 @@ def resume_from_ckpt(model, config, args):
     return model_type, best_acc, start_epoch, ckpt_file_path
 
 
-def load_autoencoder(ae_config_file_path, ckpt_dir_path):
-    if ae_config_file_path is None or ckpt_dir_path is None:
-        return None
-
-    with open(ae_config_file_path, 'r') as fp:
-        ae_config = yaml.load(fp)
-
-    ae = module_util.get_autoencoder(False, ae_config)
-    ae_runner.resume_from_ckpt(ae, ae_config, ckpt_dir_path, False)
-    return ae
-
-
-def get_data_loaders(args, ae, config):
-    dataset_type = args.dataset
-    if dataset_type == 'caltech':
-        return caltech_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                             is_caltech256=args.caltech256, ae=ae,
+def get_data_loaders(config):
+    dataset_config = config['dataset']
+    train_config = config['train']
+    test_config = config['test']
+    compress_config = test_config['compression']
+    dataset_name = dataset_config['name']
+    if dataset_name.startswith('caltech'):
+        return general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
+                                             compress_config['type'], compress_config['size'], ae_model=None,
                                              reshape_size=tuple(config['input_shape'][1:3]),
-                                             compression_quality=args.jquality)
-    elif dataset_type == 'cifar':
-        return cifar_util.get_data_loaders(args.data, args.bsize, args.ctype, args.csize, args.vrate,
-                                           is_cifar100=args.cifar100, ae=ae)
-    raise ValueError('dataset_type `{}` is not expected'.format(dataset_type))
+                                             compression_quality=test_config['jquality'])
+    elif dataset_name.startswith('cifar'):
+        return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
+                                           compress_config['type'], compress_config['size'], train_config['valid_rate'],
+                                           is_cifar100=dataset_name == 'cifar100', ae_model=None)
+    raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
 def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
@@ -151,17 +129,19 @@ def run(args):
     if device == 'cuda':
         cudnn.benchmark = True
 
-    with open(args.config, 'r') as fp:
-        config = yaml.load(fp)
-
-    ae = load_autoencoder(args.ae, args.ckpt)
-    train_loader, valid_loader, test_loader = get_data_loaders(args, ae, config)
-    model = module_util.get_model(device, config)
-    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config, args)
-    criterion, optimizer = get_criterion_optimizer(model, args)
+    config = yaml_util.load_yaml_file(args.config)
+    train_loader, valid_loader, test_loader = get_data_loaders(config)
+    model = module_util.get_model(config, device)
+    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
+    train_config = config['train']
+    criterion_config = train_config['criterion']
+    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
-        for epoch in range(start_epoch, start_epoch + args.epoch):
-            train(model, train_loader, optimizer, criterion, epoch, device, args.interval)
+        optim_config = train_config['optimizer']
+        optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
+        interval = train_config['interval']
+        for epoch in range(start_epoch, start_epoch + train_config['epoch']):
+            train(model, train_loader, optimizer, criterion, epoch, device, interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     test(model, test_loader, criterion, device)
 

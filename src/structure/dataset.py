@@ -1,31 +1,19 @@
 from io import BytesIO
 
 import numpy as np
-import torch.utils.data as data
 import torchvision.transforms.functional as functional
 from PIL import Image
 
+from myutils.pytorch.vision.dataset import RgbImageDataset
 
-class RgbImageDataset(data.Dataset):
-    def __init__(self, file_path_lists, size, transform=None, jpeg_quality=0):
-        self.transform = transform
+
+class AdvRgbImageDataset(RgbImageDataset):
+    def __init__(self, file_path, size, transform=None, jpeg_quality=0):
+        super().__init__(file_path, size, transform=transform, delimiter='\t')
         self.jpeg_quality = jpeg_quality
-        self.size = size
-        self.file_paths = []
-        self.labels = []
         self.compression_rates = []
         self.avg_compression_rate = 0
         self.sd_compression_rate = 0
-        for class_label, file_path_list in enumerate(file_path_lists):
-            for file_path in file_path_list:
-                img = Image.open(file_path)
-                if img.mode != 'RGB':
-                    continue
-                self.file_paths.append(file_path)
-                self.labels.append(class_label)
-
-    def __len__(self):
-        return len(self.labels)
 
     def compress_img(self, img):
         img_buffer = BytesIO()
