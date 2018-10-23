@@ -15,8 +15,8 @@ def get_model(config, device):
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):
         model = resnet_model(model_type, model_config['params'])
-    elif model_type == 'vgg16':
-        model = torchvision.models.vgg16()
+    elif model_type in torchvision.models.__dict__:
+        model = torchvision.models.__dict__[model_type](**model_config['params'])
     else:
         ValueError('model_type `{}` is not expected'.format(model_type))
 
