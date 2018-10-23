@@ -45,7 +45,7 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalized, valid_rat
     return train_loader, valid_loader, normalizer
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(32, 32), ae_model=None):
+def get_test_transformer(normalizer, compression_type, compressed_size, org_size=(32, 32), ae_model=None):
     normal_list = [transforms.ToTensor()]
     if ae_model is not None:
         normal_list.append(AETransformer(ae_model))
@@ -54,11 +54,9 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
         normal_list.append(normalizer)
 
     normal_transformer = transforms.Compose(normal_list)
-    if compression_type is None or compressed_size_str is None:
+    if compression_type is None or compressed_size is None:
         return normal_transformer
 
-    hw = compressed_size_str.split(',')
-    compressed_size = (int(hw[0]), int(hw[1]))
     if compression_type == 'base':
         comp_list = [transforms.Resize(compressed_size), transforms.Resize(org_size), transforms.ToTensor()]
         if normalizer is not None:
@@ -67,12 +65,12 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(data_dir_path, batch_size=128, compression_type=None, compressed_size_str=None,
+def get_data_loaders(data_dir_path, batch_size=128, compression_type=None, compressed_size=None,
                      valid_rate=0.1, normalized=True, is_cifar100=False, ae_model=None):
     train_loader, valid_loader, normalizer =\
         get_train_and_valid_loaders(data_dir_path, batch_size=batch_size, normalized=normalized,
                                     valid_rate=valid_rate, is_cifar100=is_cifar100)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae_model=ae_model)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size, ae_model=ae_model)
     test_dataset =\
         torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)\
             if not is_cifar100 else torchvision.datasets.CIFAR100(root=data_dir_path, train=False,

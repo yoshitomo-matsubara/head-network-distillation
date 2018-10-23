@@ -8,7 +8,7 @@ from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size_str, org_size=(224, 224), ae_model=None):
+def get_test_transformer(normalizer, compression_type, compressed_size, org_size, ae_model=None):
     normal_list = [transforms.ToTensor()]
     if ae_model is not None:
         normal_list.append(AETransformer(ae_model))
@@ -17,11 +17,9 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
         normal_list.append(normalizer)
 
     normal_transformer = transforms.Compose(normal_list)
-    if compression_type is None or compressed_size_str is None:
+    if compression_type is None or compressed_size is None:
         return normal_transformer
 
-    hw = compressed_size_str.split(',')
-    compressed_size = (int(hw[0]), int(hw[1]))
     if compression_type == 'base':
         comp_list = [transforms.Resize(compressed_size), transforms.Resize(org_size), transforms.ToTensor()]
         if normalizer is not None:
@@ -30,8 +28,8 @@ def get_test_transformer(normalizer, compression_type, compressed_size_str, org_
     return normal_transformer
 
 
-def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, compressed_size_str=None,
-                     normalized=True, ae_model=None, reshape_size=(224, 224), compression_quality=0):
+def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
+                     ae_model=None, rough_size=(256, 256), reshape_size=(224, 224), compression_quality=0):
     if not os.path.exists(root_data_dir_path):
         ValueError('Could not find dataset at {}'.format(root_data_dir_path))
 
@@ -40,7 +38,8 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
     test_file_path = os.path.join(root_data_dir_path, 'test.txt')
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size)
     normalizer = data_util.build_normalizer(train_dataset.load_all_data()) if normalized else None
-    train_comp_list = [transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+    train_comp_list = [transforms.Resize(rough_size), transforms.RandomCrop(reshape_size)] if rough_size > 0 else list()
+    train_comp_list.extend([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
     valid_comp_list = [transforms.ToTensor()]
     if normalizer is not None:
         train_comp_list.append(normalizer)
@@ -55,7 +54,7 @@ def get_data_loaders(root_data_dir_path, batch_size=100, compression_type=None, 
                                                num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=2, pin_memory=pin_memory)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size_str, ae_model=ae_model)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size, reshape_size, ae_model)
     test_dataset = AdvRgbImageDataset(test_file_path, reshape_size, test_transformer, compression_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
