@@ -1,6 +1,10 @@
 dataset:
     name: &dataset_name 'caltech101'
-    data: './resource/data/caltech101/'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
 
 input_shape: [3, 224, 224]
 
