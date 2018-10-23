@@ -8,3 +8,27 @@ model:
     type: &model_type 'vgg16'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+
+train:
+    epoch: 50
+    batch_size: 20
+    rough_size: [256, 256]
+    interval: 50
+    optimizer:
+        type: 'sgd'
+        params:
+            lr: 0.01
+            momentum: 0.9
+            weight_decay: 0.0005
+    criterion:
+        type: 'CrossEntropyLoss'
+        params:
+            reduction: 'elementwise_mean'
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:
+    autoencoder:
