@@ -19,7 +19,7 @@ model:
         bn_size: 4
         drop_rate: 0
         num_classes: 101
-        # additional parameters for Caltech101 and 256
+        # Default parameters for input size(3, 224, 224)
         conv2d_ksize: 7
         conv2d_stride: 2
         conv2d_padding: 3
