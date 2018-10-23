@@ -22,16 +22,14 @@ def get_argparser():
 
 
 def get_model(model_type):
-    if model_type == 'alexnet':
-        return torchvision.models.AlexNet()
-    elif model_type == 'vgg':
-        return torchvision.models.vgg16()
-    elif model_type == 'mnist':
+    if model_type == 'mnist':
         return MnistLeNet5()
     elif model_type == 'yolov2':
         return YOLOv2()
     elif model_type == 'yolov3':
         return YOLOv3()
+    elif model_type in torchvision.models.__dict__:
+        return torchvision.models.__dict__[model_type]()
     raise ValueError('model_type `{}` is not expected'.format(model_type))
 
 
