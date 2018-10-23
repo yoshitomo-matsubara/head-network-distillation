@@ -12,11 +12,11 @@ from utils.dataset import general_util, cifar_util
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='PyTorch image classifier')
-    parser.add_argument('--config', required=True, help='yaml file path')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
-    return parser
+    argparser = argparse.ArgumentParser(description='PyTorch image classifier')
+    argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
+    argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    return argparser
 
 
 def resume_from_ckpt(model, model_config, init):
