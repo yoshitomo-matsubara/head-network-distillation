@@ -155,7 +155,7 @@ def run(args):
     optimizer = get_optimizer(train_config['optimizer'], student_model)
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
-    for epoch in range(start_epoch, train_config['epoch'] + 1):
+    for epoch in range(start_epoch, start_epoch + train_config['epoch']):
         train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
         avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
         if avg_valid_loss < best_avg_loss:
