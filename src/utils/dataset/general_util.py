@@ -29,13 +29,14 @@ def get_test_transformer(normalizer, compression_type, compressed_size, org_size
 
 
 def get_data_loaders(data_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     ae_model=None, rough_size=(256, 256), reshape_size=(224, 224), compression_quality=0):
+                     ae_model=None, rough_size=None, reshape_size=(224, 224), compression_quality=0):
     train_file_path = data_config['train']
     valid_file_path = data_config['valid']
     test_file_path = data_config['test']
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size)
     normalizer = data_util.build_normalizer(train_dataset.load_all_data()) if normalized else None
-    train_comp_list = [transforms.Resize(rough_size), transforms.RandomCrop(reshape_size)] if rough_size > 0 else list()
+    train_comp_list = [transforms.Resize(rough_size), transforms.RandomCrop(reshape_size)]\
+        if rough_size is not None else list()
     train_comp_list.extend([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
     valid_comp_list = [transforms.ToTensor()]
     if normalizer is not None:
