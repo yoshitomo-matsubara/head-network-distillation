@@ -42,6 +42,7 @@ def get_data_loaders(config):
     if dataset_name.startswith('caltech'):
         return general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                              compress_config['type'], compress_config['size'], ae_model=None,
+                                             rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
                                              compression_quality=test_config['jquality'])
     elif dataset_name.startswith('cifar'):
