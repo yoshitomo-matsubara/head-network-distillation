@@ -3,9 +3,9 @@ from torchvision.models.resnet import BasicBlock, Bottleneck
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=10,
-                 first_conv2d_ksize=6, first_conv2d_stride=2, first_conv2d_padding=3,
-                 last_avgpool2d_ksize=2, last_avgpool2d_stride=1):
+    def __init__(self, block, layers, num_classes=101,
+                 first_conv2d_ksize=7, first_conv2d_stride=2, first_conv2d_padding=3,
+                 last_avgpool2d_ksize=7, last_avgpool2d_stride=1):
         self.inplanes = 64
         super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=first_conv2d_ksize,
