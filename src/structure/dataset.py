@@ -29,6 +29,9 @@ class AdvRgbImageDataset(RgbImageDataset):
     def __getitem__(self, idx):
         file_path, target = self.file_paths[idx], self.labels[idx]
         img = Image.open(file_path)
+        if img.mode == 'L':
+            img = img.convert('RGB')
+
         img = functional.resize(img, self.size, interpolation=2)
         if 1 <= self.jpeg_quality <= 95:
             img, compression_rate = self.compress_img(img)
