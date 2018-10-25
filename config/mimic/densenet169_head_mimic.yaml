@@ -12,7 +12,7 @@ teacher_model:
     config: './config/densenet169.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 8
+    end_idx: 8 # 6, 8, 10 for vers. 1, 2, 3
 
 student_model:
     type: &smodel_type 'densenet169_head_mimic'
