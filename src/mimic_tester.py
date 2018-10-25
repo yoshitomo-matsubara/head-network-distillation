@@ -46,7 +46,7 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     if mimic_type == 'densenet169mimic':
         return DenseNet169Mimic(mimic_modules)
     elif mimic_type == 'resnet152mimic':
-        return ResNet152HeadMimic(mimic_modules)
+        return ResNet152Mimic(mimic_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 
