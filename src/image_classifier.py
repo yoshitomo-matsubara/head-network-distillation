@@ -2,8 +2,6 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.optim as optim
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
@@ -14,6 +12,7 @@ from utils.dataset import general_util, cifar_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='PyTorch image classifier')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return argparser
@@ -133,6 +132,8 @@ def run(args):
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
         optim_config = train_config['optimizer']
+        if args.lr is not None:
+            optim_config['params']['lr'] = args.lr
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
         for epoch in range(start_epoch, start_epoch + train_config['epoch']):

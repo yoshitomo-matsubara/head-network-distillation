@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.optim as optim
 
 import ae_runner
 from myutils.common import file_util, yaml_util
