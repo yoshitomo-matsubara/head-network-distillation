@@ -50,12 +50,6 @@ def load_autoencoder(ae_config_file_path, device):
     return ae_model
 
 
-def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum, weight_decay=weight_decay)
-    return criterion, optimizer
-
-
 def train(model, train_loader, optimizer, criterion, epoch, device, interval):
     print('\nEpoch: %d' % epoch)
     model.train()
