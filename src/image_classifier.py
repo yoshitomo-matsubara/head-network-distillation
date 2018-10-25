@@ -134,6 +134,7 @@ def run(args):
         optim_config = train_config['optimizer']
         if args.lr is not None:
             optim_config['params']['lr'] = args.lr
+            
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
         for epoch in range(start_epoch, start_epoch + train_config['epoch']):
