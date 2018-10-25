@@ -1,0 +1,45 @@
+dataset:
+    name: &dataset_name 'caltech101'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
+
+input_shape: [3, 224, 224]
+
+model:
+    type: &model_type 'alexnet'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    params:
+        num_classes: 101
+        # Default parameters for input size(3, 224, 224)
+        first_conv2d_ksize: 11
+        first_conv2d_stride: 4
+        first_conv2d_padding: 2
+        last_maxpool2d_ksize: 3
+        last_maxpool2d_stride: 2
+
+train:
+    epoch: 50
+    batch_size: 100
+    interval: 50
+    optimizer:
+        type: 'sgd'
+        params:
+            lr: 0.01
+            momentum: 0.9
+            weight_decay: 0.0005
+    criterion:
+        type: 'CrossEntropyLoss'
+        params:
+            reduction: 'elementwise_mean'
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type: None
+        size: None
+    autoencoder: None
