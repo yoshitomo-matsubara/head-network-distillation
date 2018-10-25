@@ -6,6 +6,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 
 from models.mimic.densenet_mimic import *
+from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
 from myutils.common import file_util, yaml_util
 from utils import module_util
@@ -53,10 +54,12 @@ def get_teacher_model(teacher_model_config, device):
 
 def get_student_model(teacher_model_type, student_model_config):
     student_model_type = student_model_config['type']
-    if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
-        return Vgg16HeadMimic()
-    elif teacher_model_type.startswith('densenet') and student_model_type == 'densenet169_head_mimic':
+    if teacher_model_type.startswith('densenet') and student_model_type == 'densenet169_head_mimic':
         return DenseNet169HeadMimic(student_model_config['version'])
+    elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
+        return ResNet152HeadMimic(student_model_config['version'])
+    elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
+        return Vgg16HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
