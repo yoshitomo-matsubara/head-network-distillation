@@ -22,11 +22,12 @@ def get_argparser():
 
 
 def get_model(model_type):
-    if model_type == 'mnist':
+    lower_model_type = model_type.lower()
+    if lower_model_type == 'mnist':
         return MnistLeNet5()
-    elif model_type == 'yolov2':
+    elif lower_model_type == 'yolov2':
         return YOLOv2()
-    elif model_type == 'yolov3':
+    elif lower_model_type == 'yolov3':
         return YOLOv3()
     elif model_type in torchvision.models.__dict__:
         return torchvision.models.__dict__[model_type]()
@@ -61,7 +62,7 @@ def run(args):
         model_type = args.model
         input_shape = list(data_util.convert2type_list(args.isize, ',', int))
         model = file_util.load_pickle(pickle_file_path) if file_util.check_if_exists(pickle_file_path)\
-            else get_model(model_type.lower())
+            else get_model(model_type)
     net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, scaled=args.scale, model_name=model_type)
 
 
