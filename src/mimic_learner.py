@@ -16,6 +16,7 @@ from utils.dataset import general_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Learner')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
