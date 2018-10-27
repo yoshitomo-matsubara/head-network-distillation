@@ -178,7 +178,7 @@ def compute_layerwise_complexity_and_bandwidth(model, model_name, input_shape, s
 
     move_next_layer(model)
     bandwidth_list.append(np.prod(input_shape))
-    layer_list.append('Input: 0')
+    layer_list.append('Input')
     rand_input = torch.rand(input_shape).unsqueeze(0)
     model(rand_input)
     bandwidths, accum_complexities, bandwidth_label, accum_complexity_label =\
