@@ -31,11 +31,11 @@ train:
     rough_size: [256, 256]
     interval: 50
     optimizer:
-        type: 'adam'
+        type: 'Adam'
         params:
             lr: 0.01
     criterion:
-        type: 'mse'
+        type: 'MSELoss'
         params:
             reduction: 'sum'
 
