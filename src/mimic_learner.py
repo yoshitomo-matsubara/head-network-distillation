@@ -3,12 +3,12 @@ import os
 
 import torch
 import torch.backends.cudnn as cudnn
-import torch.optim as optim
 
 from models.mimic.densenet_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
 from myutils.common import file_util, yaml_util
+from myutils.pytorch import func_util
 from utils import module_util
 from utils.dataset import general_util
 
@@ -61,26 +61,6 @@ def get_student_model(teacher_model_type, student_model_config):
     elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
-
-
-def get_criterion(criterion_config):
-    criterion_type = criterion_config['type']
-    params_config = criterion_config['params']
-    if criterion_type == 'mse':
-        return nn.MSELoss(**params_config)
-    raise ValueError('criterion_type `{}` is not expected'.format(criterion_type))
-
-
-def get_optimizer(optimizer_config, model):
-    optimizer_type = optimizer_config['type']
-    params_config = optimizer_config['params']
-    if optimizer_type == 'sgd':
-        return optim.SGD(model.parameters(), **params_config)
-    elif optimizer_type == 'adam':
-        return optim.Adam(model.parameters(), **params_config)
-    elif optimizer_type == 'adagrad':
-        return optim.Adagrad(model.parameters(), **params_config)
-    raise ValueError('optimizer_type `{}` is not expected'.format(optimizer_type))
 
 
 def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -154,8 +134,13 @@ def run(args):
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
                                       reshape_size=config['input_shape'][1:3], compression_quality=-1)
-    criterion = get_criterion(train_config['criterion'])
-    optimizer = get_optimizer(train_config['optimizer'], student_model)
+    criterion_config = train_config['criterion']
+    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+    optim_config = train_config['optimizer']
+    if args.lr is not None:
+        optim_config['params']['lr'] = args.lr
+
+    optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
     for epoch in range(start_epoch, start_epoch + train_config['epoch']):
