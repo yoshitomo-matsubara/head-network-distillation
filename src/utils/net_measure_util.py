@@ -19,8 +19,17 @@ def convert2accumulated(op_count_list):
     return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
 
 
-def find_target_bottleneck(scaled_bandwidths, threshold=1.0):
-    return np.where(scaled_bandwidths < threshold)[0][0]
+def format_metrics(bandwidth_list, op_count_list, scaled):
+    bandwidths = convert2kb(bandwidth_list)
+    bandwidth_label = 'Bandwidth [kB]'
+    accum_complexities = convert2accumulated(op_count_list)
+    accum_complexity_label = 'Accumulated Complexity'
+    if scaled:
+        bandwidths /= bandwidths[0]
+        bandwidth_label = 'Scaled Bandwidth'
+        accum_complexities /= accum_complexities[-1]
+        accum_complexity_label = 'Scaled Accumulated Complexity'
+    return bandwidths, accum_complexities, bandwidth_label, accum_complexity_label
 
 
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
@@ -92,17 +101,8 @@ def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, b
 
 
 def plot_model_complexity_and_bandwidth(op_count_list, accum_complexities, bandwidths, layer_list,
-                                        bandwidth_label, accum_complexity_label, model_name, scaled):
+                                        bandwidth_label, accum_complexity_label, model_name):
     print('Number of Operations: {:.5f}M'.format(sum(op_count_list) / 1e6))
-    if scaled:
-        target_bottleneck_idx = find_target_bottleneck(bandwidths)
-        bottleneck_bandwidth_rate = bandwidths[target_bottleneck_idx] * 100
-        bottleneck_accum_complexity_rate = accum_complexities[target_bottleneck_idx] * 100
-        print(bandwidths[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
-        print(accum_complexities[target_bottleneck_idx:target_bottleneck_idx + 5] * 100)
-        print('Scaled Bandwidth at Target Bottleneck: {:.5f}%'.format(bottleneck_bandwidth_rate))
-        print('Scaled Accumulated Complexity at Target Bottleneck: {:.5f}%'.format(bottleneck_accum_complexity_rate))
-
     xs = np.arange(len(layer_list))
     plot_model_complexity(xs, op_count_list, layer_list, model_name)
     plot_accumulated_model_complexity(xs, accum_complexities, layer_list, accum_complexity_label, model_name)
@@ -121,41 +121,41 @@ def compute_layerwise_complexity_and_bandwidth(model, model_name, input_shape, s
     bandwidth_list = list()
     layer_list = list()
 
-    def conv_hook(self, input, output):
-        batch_size, input_channels, input_height, input_width = input[0].size()
-        output_channels, output_height, output_width = output[0].size()
+    def conv_hook(self, input_batch, output_batch):
+        batch_size, input_channels, input_height, input_width = input_batch[0].size()
+        output_channels, output_height, output_width = output_batch[0].size()
         kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)\
                      * (2 if multiply_adds else 1)
         bias_ops = 1 if self.bias is not None else 0
         params = output_channels * (kernel_ops + bias_ops)
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
+        bandwidth_list.append(np.prod(output_batch[0].size()))
         layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
-    def linear_hook(self, input, output):
-        batch_size = input[0].size(0) if input[0].dim() == 2 else 1
+    def linear_hook(self, input_batch, output_batch):
+        batch_size = input_batch[0].size(0) if input_batch[0].dim() == 2 else 1
         weight_ops = self.weight.nelement() * (2 if multiply_adds else 1)
         bias_ops = self.bias.nelement()
         op_size = batch_size * (weight_ops + bias_ops)
         op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
+        bandwidth_list.append(np.prod(output_batch[0].size()))
         layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
-    def pooling_hook(self, input, output):
-        batch_size, input_channels, input_height, input_width = input[0].size()
-        output_channels, output_height, output_width = output[0].size()
+    def pooling_hook(self, input_batch, output_batch):
+        batch_size, input_channels, input_height, input_width = input_batch[0].size()
+        output_channels, output_height, output_width = output_batch[0].size()
         kernel_ops = self.kernel_size * self.kernel_size
         params = output_channels * kernel_ops
         op_size = batch_size * params * output_height * output_width
         op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
+        bandwidth_list.append(np.prod(output_batch[0].size()))
         layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
-    def simple_hook(self, input, output):
-        op_size = input[0].nelement()
+    def simple_hook(self, input_batch, output_batch):
+        op_size = input_batch[0].nelement()
         op_count_list.append(op_size)
-        bandwidth_list.append(np.prod(output[0].size()))
+        bandwidth_list.append(np.prod(output_batch[0].size()))
         layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
 
     def move_next_layer(net):
@@ -179,21 +179,13 @@ def compute_layerwise_complexity_and_bandwidth(model, model_name, input_shape, s
     move_next_layer(model)
     bandwidth_list.append(np.prod(input_shape))
     layer_list.append('Input: 0')
-    input = torch.rand(input_shape).unsqueeze(0)
-    output = model(input)
-    bandwidths = convert2kb(bandwidth_list)
-    bandwidth_label = 'Bandwidth [kB]'
-    accum_complexities = convert2accumulated(op_count_list)
-    accum_complexity_label = 'Accumulated Complexity'
-    if scaled:
-        bandwidths /= bandwidths[0]
-        bandwidth_label = 'Scaled Bandwidth'
-        accum_complexities /= accum_complexities[-1]
-        accum_complexity_label = 'Scaled Accumulated Complexity'
-
+    rand_input = torch.rand(input_shape).unsqueeze(0)
+    model(rand_input)
+    bandwidths, accum_complexities, bandwidth_label, accum_complexity_label =\
+        format_metrics(bandwidth_list, op_count_list, scaled)
     if plot:
         plot_model_complexity_and_bandwidth(np.array(op_count_list), accum_complexities, bandwidths, layer_list,
-                                            bandwidth_label, accum_complexity_label, model_name, scaled)
+                                            bandwidth_label, accum_complexity_label, model_name)
     return op_count_list, bandwidths, accum_complexities
 
 
@@ -214,17 +206,9 @@ def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scale
         op_count_list.append(sum(sub_op_counts))
         bandwidth_list.append(np.prod(output_sizes[i][1:]))
 
-    bandwidths = convert2kb(bandwidth_list)
-    bandwidth_label = 'Bandwidth [kB]'
-    accum_complexities = convert2accumulated(op_count_list)
-    accum_complexity_label = 'Accumulated Complexity'
-    if scaled:
-        bandwidths /= bandwidths[0]
-        bandwidth_label = 'Scaled Bandwidth'
-        accum_complexities /= accum_complexities[-1]
-        accum_complexity_label = 'Scaled Accumulated Complexity'
-
+    bandwidths, accum_complexities, bandwidth_label, accum_complexity_label =\
+        format_metrics(bandwidth_list, op_count_list, scaled)
     if plot:
         plot_model_complexity_and_bandwidth(np.array(op_count_list), accum_complexities, bandwidths, layer_list,
-                                            bandwidth_label, accum_complexity_label, model_name, scaled)
+                                            bandwidth_label, accum_complexity_label, model_name)
     return op_count_list, bandwidths, accum_complexities
