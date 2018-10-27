@@ -17,6 +17,7 @@ def get_argparser():
     parser.add_argument('--config', help='yaml file path')
     parser.add_argument('--pkl', help='pickle file path')
     parser.add_argument('-scale', action='store_true', help='bandwidth scaling option')
+    parser.add_argument('-submodule', action='store_true', help='submodule extraction option')
     parser.add_argument('-mimic', action='store_true', help='mimic model option')
     return parser
 
@@ -46,6 +47,13 @@ def read_config(config_file_path):
     return model, model_type, input_shape
 
 
+def analyze(model, input_shape, model_type, scaled, submoduled):
+    if submoduled:
+        net_measure_util.compute_model_complexity_and_bandwidth(model, model_type, input_shape, scaled=scaled)
+    else:
+        net_measure_util.compute_layerwise_complexity_and_bandwidth(model, model_type, input_shape, scaled=scaled)
+
+
 def run(args):
     config_file_path = args.config
     if args.mimic and file_util.check_if_exists(config_file_path):
@@ -63,7 +71,7 @@ def run(args):
         input_shape = list(data_util.convert2type_list(args.isize, ',', int))
         model = file_util.load_pickle(pickle_file_path) if file_util.check_if_exists(pickle_file_path)\
             else get_model(model_type)
-    net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, scaled=args.scale, model_name=model_type)
+    analyze(model, input_shape, model_type, args.scale, args.submodule)
 
 
 if __name__ == '__main__':

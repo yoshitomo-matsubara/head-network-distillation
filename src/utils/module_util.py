@@ -47,3 +47,41 @@ def extract_all_child_modules(parent_module, module_list, extract_designed_modul
 
     for child_module in child_modules:
         extract_all_child_modules(child_module, module_list, extract_designed_module)
+
+
+def extract_decomposable_modules(parent_module, z, module_list, output_size_list, first=True):
+    child_modules = list(parent_module.children())
+    if not child_modules:
+        module_list.append(parent_module)
+        try:
+            z = parent_module(z)
+            output_size_list.append([*z.size()])
+            return z, True
+        except (RuntimeError, ValueError):
+            try:
+                z = parent_module(z.view(z.size(0), -1))
+                output_size_list.append([*z.size()])
+                return z, True
+            except RuntimeError:
+                ValueError('Error\t', type(parent_module).__name__)
+        return z, False
+
+    try:
+        expected_z = parent_module(z)
+    except (RuntimeError, ValueError):
+        return z, False
+
+    submodule_list = list()
+    sub_output_size_list = list()
+    for child_module in child_modules:
+        z, flag = extract_decomposable_modules(child_module, z, submodule_list, sub_output_size_list, first=False)
+
+    if flag and expected_z.size() == z.size() and expected_z.isclose(z).all().item() == 1:
+        module_list.extend(submodule_list)
+        output_size_list.extend(sub_output_size_list)
+        return expected_z, True
+
+    if not first:
+        module_list.append(parent_module)
+        output_size_list.append([*expected_z.size()])
+    return expected_z, True
