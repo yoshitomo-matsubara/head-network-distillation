@@ -25,14 +25,14 @@ mimic_model:
     ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
 train:
-    epoch: 50
+    epoch: 100
     batch_size: 20
     rough_size: [256, 256]
     interval: 50
     optimizer:
         type: 'Adam'
         params:
-            lr: 0.01
+            lr: 0.001
     criterion:
         type: 'MSELoss'
         params:
