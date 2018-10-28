@@ -193,7 +193,7 @@ def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scale
     submodules = list()
     output_sizes = list()
     module_util.extract_decomposable_modules(model, torch.rand(input_shape).unsqueeze(0), submodules, output_sizes)
-    layer_list = ['Input: 0']
+    layer_list = ['Input']
     op_count_list = list()
     bandwidth_list = [np.prod(input_shape)]
     for i, submodule in enumerate(submodules):
