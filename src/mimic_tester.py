@@ -43,10 +43,10 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     mimic_modules.extend(org_modules[end_idx:])
     mimic_model_config = student_config['mimic_model']
     mimic_type = mimic_model_config['type']
-    if mimic_type == 'densenet169mimic':
-        return DenseNet169Mimic(mimic_modules)
-    elif mimic_type == 'resnet152mimic':
-        return ResNet152Mimic(mimic_modules)
+    if mimic_type.startswith('densenet'):
+        return DenseNetMimic(mimic_modules)
+    elif mimic_type.startswith('resnet'):
+        return ResNetMimic(mimic_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 

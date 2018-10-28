@@ -88,7 +88,7 @@ class ResNet152HeadMimic(nn.Module):
         return self.module_seq(zs)
 
 
-class ResNet152Mimic(nn.Module):
+class ResNetMimic(nn.Module):
     def __init__(self, modules):
         super().__init__()
         self.features = nn.Sequential(*modules[:-1])
