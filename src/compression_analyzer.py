@@ -141,8 +141,9 @@ def plot_compression_rates(model, avg_input_bandwidth):
     plt.show()
 
 
-def analyze_compression_rate(model, test_loader, device):
-    module_wrap_util.wrap_all_child_modules(model, module_wrap_util.CompressionWrapper)
+def analyze_compression_rate(model, input_shape, test_loader, device):
+    input_batch = torch.rand(input_shape).unsqueeze(0)
+    module_wrap_util.wrap_decomposable_modules(model, module_wrap_util.CompressionWrapper, input_batch)
     _, avg_input_bandwidth = test(model, test_loader, device)
     plot_compression_rates(model, avg_input_bandwidth)
 
@@ -191,9 +192,11 @@ def plot_running_time(wrapped_modules):
     plt.show()
 
 
-def analyze_running_time(model, comp_layer_idx, test_loader, device):
+def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device):
     wrapped_modules = list()
-    module_wrap_util.wrap_all_child_modules(model, module_wrap_util.RunTimeWrapper, wrapped_list=wrapped_modules)
+    input_batch = torch.rand(input_shape).unsqueeze(0)
+    module_wrap_util.wrap_decomposable_modules(model, module_wrap_util.RunTimeWrapper, input_batch,
+                                               wrapped_list=wrapped_modules)
     wrapped_modules[0].is_first = True
     if comp_layer_idx < 0:
         for wrapped_module in wrapped_modules:
@@ -216,14 +219,14 @@ def run(args):
     compress_config = train_config['compression']
     test_config = config['test']
     ae_model = load_autoencoder(test_config['autoencoder'], device)
+    input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                       compress_config['type'], compress_config['size'], ae_model=ae_model,
-                                      reshape_size=tuple(config['input_shape'][1:3]),
-                                      compression_quality=test_config['jquality'])
+                                      reshape_size=input_shape[1:3], compression_quality=test_config['jquality'])
 
-    pikle_file_path = args.pkl
-    if not file_util.check_if_exists(pikle_file_path):
+    pickle_file_path = args.pkl
+    if not file_util.check_if_exists(pickle_file_path):
         model = module_util.get_model(config, device)
         model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
         criterion_config = config['criterion']
@@ -236,13 +239,13 @@ def run(args):
                 train(model, train_loader, optimizer, criterion, epoch, device, interval)
                 best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     else:
-        model = file_util.load_pickle(pikle_file_path).to(device)
+        model = file_util.load_pickle(pickle_file_path).to(device)
 
     analysis_mode = args.mode
     if analysis_mode == 'comp_rate':
-        analyze_compression_rate(model, test_loader, device)
+        analyze_compression_rate(model, input_shape, test_loader, device)
     elif analysis_mode == 'run_time':
-        analyze_running_time(model, args.comp_layer, test_loader, device)
+        analyze_running_time(model, input_shape, args.comp_layer, test_loader, device)
     else:
         raise ValueError('mode argument `{}` is not expected'.format(analysis_mode))
 
