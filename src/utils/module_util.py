@@ -38,6 +38,15 @@ def get_autoencoder(config, device):
     return ae_model
 
 
+def extract_target_modules(parent_module, target_class, module_list):
+    if isinstance(parent_module, target_class):
+        module_list.append(parent_module)
+
+    child_modules = list(parent_module.children())
+    for child_module in child_modules:
+        extract_target_modules(child_module, target_class, module_list)
+
+
 def extract_all_child_modules(parent_module, module_list, extract_designed_module=True):
     child_modules = list(parent_module.children())
     if not child_modules or (not extract_designed_module and len(module_list) > 0 and
