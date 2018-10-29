@@ -195,7 +195,7 @@ def plot_running_time(wrapped_modules):
 
 def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device):
     wrapped_modules = list()
-    input_batch = torch.rand(input_shape).unsqueeze(0)
+    input_batch = torch.rand(input_shape).unsqueeze(0).to(device)
     module_wrap_util.wrap_decomposable_modules(model, RunTimeWrapper, input_batch,
                                                wrapped_list=wrapped_modules)
     wrapped_modules[0].is_first = True

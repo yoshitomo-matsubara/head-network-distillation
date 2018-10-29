@@ -25,7 +25,7 @@ def wrap_decomposable_modules(middle_module, wrapper_class, z, middle_name=None,
             try:
                 return middle_module(z.view(z.size(0), -1)), True
             except RuntimeError:
-                ValueError('Error\t', type(middle_module).__name__)
+                print('Error\t', type(middle_module).__name__)
         return z, False
 
     try:
