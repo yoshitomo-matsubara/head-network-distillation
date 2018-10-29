@@ -230,11 +230,11 @@ def run(args):
     if not file_util.check_if_exists(pickle_file_path):
         model = module_util.get_model(config, device)
         model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
-        criterion_config = config['criterion']
-        criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
-        optim_config = config['optimizer']
-        optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         if not args.evaluate:
+            criterion_config = train_config['criterion']
+            criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+            optim_config = train_config['optimizer']
+            optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
             interval = train_config['interval']
             for epoch in range(start_epoch, start_epoch + train_config['epoch']):
                 train(model, train_loader, optimizer, criterion, epoch, device, interval)
