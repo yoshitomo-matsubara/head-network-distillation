@@ -8,6 +8,7 @@ import torch.backends.cudnn as cudnn
 import ae_runner
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
+from structure.wrapper import *
 from utils import misc_util, module_util, module_wrap_util
 from utils.dataset import general_util
 
@@ -111,7 +112,7 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
 
 def extract_compression_rates(parent_module, org_bandwidth_list, compressed_bandwidth_list, name_list):
     for name, child_module in parent_module.named_children():
-        if list(child_module.children()) and not isinstance(child_module, module_wrap_util.CompressionWrapper):
+        if list(child_module.children()) and not isinstance(child_module, CompressionWrapper):
             extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
         else:
             org_bandwidth_list.append(child_module.get_average_org_bandwidth())
@@ -143,7 +144,7 @@ def plot_compression_rates(model, avg_input_bandwidth):
 
 def analyze_compression_rate(model, input_shape, test_loader, device):
     input_batch = torch.rand(input_shape).unsqueeze(0)
-    module_wrap_util.wrap_decomposable_modules(model, module_wrap_util.CompressionWrapper, input_batch)
+    module_wrap_util.wrap_decomposable_modules(model, CompressionWrapper, input_batch)
     _, avg_input_bandwidth = test(model, test_loader, device)
     plot_compression_rates(model, avg_input_bandwidth)
 
@@ -195,7 +196,7 @@ def plot_running_time(wrapped_modules):
 def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device):
     wrapped_modules = list()
     input_batch = torch.rand(input_shape).unsqueeze(0)
-    module_wrap_util.wrap_decomposable_modules(model, module_wrap_util.RunTimeWrapper, input_batch,
+    module_wrap_util.wrap_decomposable_modules(model, RunTimeWrapper, input_batch,
                                                wrapped_list=wrapped_modules)
     wrapped_modules[0].is_first = True
     if comp_layer_idx < 0:
