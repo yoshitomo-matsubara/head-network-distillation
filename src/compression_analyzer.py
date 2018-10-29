@@ -129,6 +129,7 @@ def plot_compression_rates(model, avg_input_bandwidth):
     extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
     xs = list(range(len(org_bandwidth_list)))
     if not misc_util.check_if_plottable():
+        print('Average Input Bandwidth: {}'.format(avg_input_bandwidth))
         print('Layer\tOriginal Bandwidth\tCompressed Bandwidth')
         for i in range(len(xs)):
             print('{}\t{}\t{}'.format(name_list[i], org_bandwidth_list[i], compressed_bandwidth_list[i]))
