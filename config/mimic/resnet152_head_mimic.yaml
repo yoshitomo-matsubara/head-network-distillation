@@ -12,7 +12,7 @@ teacher_model:
     config: './config/resnet152.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 15 # 8, 15, 53 for vers. 1, 2, 3
+    end_idx: 15 # 7, 15, 54 for vers. 1, 2, 3
 
 student_model:
     type: &smodel_type 'resnet152_head_mimic'
