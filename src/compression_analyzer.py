@@ -217,8 +217,8 @@ def run(args):
     config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']
     train_config = config['train']
-    compress_config = train_config['compression']
     test_config = config['test']
+    compress_config = test_config['compression']
     ae_model = load_autoencoder(test_config['autoencoder'], device)
     input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
