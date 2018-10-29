@@ -112,12 +112,14 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
 
 def extract_compression_rates(parent_module, org_bandwidth_list, compressed_bandwidth_list, name_list):
     for name, child_module in parent_module.named_children():
-        if list(child_module.children()) and not isinstance(child_module, CompressionWrapper):
-            extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
-        else:
+        if isinstance(child_module, CompressionWrapper):
             org_bandwidth_list.append(child_module.get_average_org_bandwidth())
             compressed_bandwidth_list.append(child_module.get_average_compressed_bandwidth())
             name_list.append(type(child_module.org_module).__name__)
+        elif list(child_module.children()):
+            extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
+        else:
+            print('CompressionWrapper is missing for {}: {}'.format(name, type(child_module).__name__))
 
 
 def plot_compression_rates(model, avg_input_bandwidth):
