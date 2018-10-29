@@ -145,7 +145,7 @@ def plot_compression_rates(model, avg_input_bandwidth):
 
 
 def analyze_compression_rate(model, input_shape, test_loader, device):
-    input_batch = torch.rand(input_shape).unsqueeze(0)
+    input_batch = torch.rand(input_shape).unsqueeze(0).to(device)
     module_wrap_util.wrap_decomposable_modules(model, CompressionWrapper, input_batch)
     _, avg_input_bandwidth = test(model, test_loader, device)
     plot_compression_rates(model, avg_input_bandwidth)
