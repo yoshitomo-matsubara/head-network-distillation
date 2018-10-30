@@ -57,7 +57,7 @@ def analyze(model, input_shape, model_type, scaled, submoduled):
 def run(args):
     config_file_path = args.config
     if args.mimic and file_util.check_if_exists(config_file_path):
-        config = yaml_util.load_yaml_file(args.config)
+        config = yaml_util.load_yaml_file(config_file_path)
         teacher_model_config = config['teacher_model']
         org_model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, 'cpu')
         model = mimic_tester.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
