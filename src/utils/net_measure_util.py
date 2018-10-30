@@ -16,7 +16,7 @@ def convert2kb(bandwidth_list, bit=32):
 
 
 def convert2accumulated(op_count_list):
-    return np.array([sum(op_count_list[0:i]) for i in range(len(op_count_list))])
+    return np.array([sum(op_count_list[0:i + 1]) for i in range(len(op_count_list))])
 
 
 def format_metrics(bandwidth_list, op_count_list, scaled):
