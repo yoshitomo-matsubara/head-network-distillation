@@ -21,7 +21,7 @@ student_model:
     ckpt: !join ['./resource/ckpt/mimic/', *distil_experiment, '.ckpt']
 
 mimic_model:
-    type: &mmodel_type 'resnet152mimic'
+    type: &mmodel_type 'resnet152_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
