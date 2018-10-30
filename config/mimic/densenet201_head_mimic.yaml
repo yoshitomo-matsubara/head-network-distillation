@@ -1,0 +1,43 @@
+dataset:
+    name: &dataset_name 'caltech101'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
+
+input_shape: [3, 224, 224]
+
+teacher_model:
+    config: './config/densenet201.yaml'
+    extract_designed_module: False
+    start_idx: 0
+    end_idx: 8 # 6, 8, 10 for vers. 1, 2, 3
+
+student_model:
+    type: &smodel_type 'densenet201_head_mimic'
+    version: &ver 2
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
+
+mimic_model:
+    type: &mmodel_type 'densenet201_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
+
+train:
+    epoch: 100
+    batch_size: 20
+    rough_size: [256, 256]
+    interval: 50
+    optimizer:
+        type: 'Adam'
+        params:
+            lr: 0.01
+    criterion:
+        type: 'MSELoss'
+        params:
+            reduction: 'sum'
+
+test:
+    batch_size: 1
