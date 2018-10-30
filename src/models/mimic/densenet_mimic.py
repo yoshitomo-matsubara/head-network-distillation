@@ -24,27 +24,45 @@ def mimic_version2():
     )
 
 
-def mimic_version3():
-    return nn.Sequential(
-        nn.BatchNorm2d(64),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(128),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(128, 256, kernel_size=2, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(256),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(256, 512, kernel_size=2, stride=1, padding=1, bias=False),
-        nn.BatchNorm2d(512),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(512, 640, kernel_size=2, stride=1, bias=False),
-        nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
-    )
+def mimic_version3(teacher_model_type):
+    if teacher_model_type == 'densenet169':
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 512, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 640, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+        )
+    elif teacher_model_type == 'densenet201':
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 512, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 896, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+        )
+    raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
-class DenseNet169HeadMimic(BaseHeadMimic):
+class DenseNetHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
-    def __init__(self, version):
+    def __init__(self, teacher_model_type, version):
         super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
@@ -57,7 +75,7 @@ class DenseNet169HeadMimic(BaseHeadMimic):
         elif version == 2:
             self.module_seq = mimic_version2()
         elif version == 3:
-            self.module_seq = mimic_version3()
+            self.module_seq = mimic_version3(teacher_model_type)
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()
