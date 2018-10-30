@@ -12,6 +12,7 @@ from utils.dataset import general_util, cifar_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='PyTorch image classifier')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
@@ -134,10 +135,11 @@ def run(args):
         optim_config = train_config['optimizer']
         if args.lr is not None:
             optim_config['params']['lr'] = args.lr
-            
+
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
-        for epoch in range(start_epoch, start_epoch + train_config['epoch']):
+        end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
+        for epoch in range(start_epoch, end_epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     test(model, test_loader, criterion, device)

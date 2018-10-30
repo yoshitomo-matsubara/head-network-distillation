@@ -16,6 +16,7 @@ from utils.dataset import general_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Learner')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
@@ -144,7 +145,8 @@ def run(args):
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
-    for epoch in range(start_epoch, start_epoch + train_config['epoch']):
+    end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
+    for epoch in range(start_epoch, end_epoch):
         train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
         avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
         if avg_valid_loss < best_avg_loss:
