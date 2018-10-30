@@ -16,8 +16,8 @@ teacher_model:
 
 student_model:
     type: &smodel_type 'vgg16_head_mimic'
-    experiment: &distil_experiment !join [*dataset_name, '-', *smodel_type]
-    ckpt: !join ['./resource/ckpt/mimic/', *distil_experiment, '.ckpt']
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type]
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
 
 mimic_model:
     type: &mmodel_type 'vgg16_mimic'
