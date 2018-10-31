@@ -18,7 +18,6 @@ def get_argparser():
     parser.add_argument('--pkl', help='pickle file path')
     parser.add_argument('-scale', action='store_true', help='bandwidth scaling option')
     parser.add_argument('-submodule', action='store_true', help='submodule extraction option')
-    parser.add_argument('-mimic', action='store_true', help='mimic model option')
     return parser
 
 
