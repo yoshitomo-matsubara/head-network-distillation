@@ -212,3 +212,44 @@ def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scale
         plot_model_complexity_and_bandwidth(np.array(op_count_list), accum_complexities, bandwidths, layer_list,
                                             bandwidth_label, accum_complexity_label, model_name)
     return op_count_list, bandwidths, accum_complexities
+
+
+def plot_model_complexities(op_counts_list, model_type_list):
+    for i in range(len(op_counts_list)):
+        op_counts = op_counts_list[i]
+        plt.semilogy(list(range(len(op_counts))), op_counts, label=model_type_list[i])
+
+    plt.xlabel('Layer')
+    plt.ylabel('Complexity')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_accumulated_model_complexities(accum_complexities_list, model_type_list):
+    for i in range(len(accum_complexities_list)):
+        accum_complexities = accum_complexities_list[i]
+        plt.plot(list(range(len(accum_complexities))), accum_complexities, label=model_type_list[i])
+
+    plt.xlabel('Layer')
+    plt.ylabel('Accumulated Complexity')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_model_bandwidths(bandwidths_list, scaled, model_type_list):
+    max_length = 0
+    for i in range(len(bandwidths_list)):
+        bandwidths = bandwidths_list[i]
+        plt.semilogy(list(range(len(bandwidths))), bandwidths, label=model_type_list[i])
+        if len(bandwidths) > max_length:
+            max_length = len(bandwidths)
+
+    xs = list(range(max_length))
+    plt.semilogy(xs, [bandwidths[0] for _ in xs], '-', label='Input')
+    plt.xlabel('Layer')
+    plt.ylabel('Scaled Bandwidth' if scaled else 'Bandwidth [kB]')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
