@@ -38,20 +38,20 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     return start_epoch
 
 
-def extract_teacher_model(model, teacher_model_config):
+def extract_teacher_model(model, input_shape, teacher_model_config):
     modules = list()
-    module_util.extract_all_child_modules(model, modules, teacher_model_config['extract_designed_module'])
+    module_util.extract_decomposable_modules(model, torch.rand(input_shape).unsqueeze(0), modules)
     start_idx = teacher_model_config['start_idx']
     end_idx = teacher_model_config['end_idx']
     return nn.Sequential(*modules[start_idx:end_idx])
 
 
-def get_teacher_model(teacher_model_config, device):
+def get_teacher_model(teacher_model_config, input_shape, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
-    return extract_teacher_model(model, teacher_model_config), model_config['type']
+    return extract_teacher_model(model, input_shape, teacher_model_config), model_config['type']
 
 
 def get_student_model(teacher_model_type, student_model_config):
@@ -126,8 +126,9 @@ def run(args):
         cudnn.benchmark = True
 
     config = yaml_util.load_yaml_file(args.config)
+    input_shape = config['input_shape']
     teacher_model_config = config['teacher_model']
-    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
+    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
     student_model = get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
@@ -136,7 +137,7 @@ def run(args):
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
-                                      reshape_size=config['input_shape'][1:3], compression_quality=-1)
+                                      reshape_size=input_shape[1:3], compression_quality=-1)
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']

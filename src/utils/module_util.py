@@ -18,7 +18,7 @@ def get_model(config, device):
     elif model_type in torchvision.models.__dict__:
         model = torchvision.models.__dict__[model_type](**model_config['params'])
     else:
-        ValueError('model_type `{}` is not expected'.format(model_type))
+        raise ValueError('model_type `{}` is not expected'.format(model_type))
 
     model = model.to(device)
     if device == 'cuda':
@@ -32,7 +32,7 @@ def get_autoencoder(config, device):
     if ae_type == 'vae':
         ae_model = VAE(**ae_config['params'])
     else:
-        ValueError('ae_type `{}` is not expected'.format(ae_type))
+        raise ValueError('ae_type `{}` is not expected'.format(ae_type))
 
     ae_model = ae_model.to(device)
     return ae_model
@@ -58,7 +58,7 @@ def extract_all_child_modules(parent_module, module_list, extract_designed_modul
         extract_all_child_modules(child_module, module_list, extract_designed_module)
 
 
-def extract_decomposable_modules(parent_module, z, module_list, output_size_list, first=True):
+def extract_decomposable_modules(parent_module, z, module_list, output_size_list=list(), first=True):
     child_modules = list(parent_module.children())
     if not child_modules:
         module_list.append(parent_module)
@@ -82,6 +82,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
 
     submodule_list = list()
     sub_output_size_list = list()
+    flag = True
     for child_module in child_modules:
         z, flag = extract_decomposable_modules(child_module, z, submodule_list, sub_output_size_list, first=False)
 
