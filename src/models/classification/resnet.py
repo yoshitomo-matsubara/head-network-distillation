@@ -3,17 +3,17 @@ from torchvision.models.resnet import BasicBlock, Bottleneck
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=101,
+    def __init__(self, block, layers, num_classes=101, num_init_features=64,
                  first_conv2d_ksize=7, first_conv2d_stride=2, first_conv2d_padding=3,
                  last_avgpool2d_ksize=7, last_avgpool2d_stride=1):
-        self.inplanes = 64
+        self.inplanes = num_init_features
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=first_conv2d_ksize,
+        self.conv1 = nn.Conv2d(3, num_init_features, kernel_size=first_conv2d_ksize,
                                stride=first_conv2d_stride, padding=first_conv2d_padding, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(num_init_features)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer1 = self._make_layer(block, num_init_features, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)

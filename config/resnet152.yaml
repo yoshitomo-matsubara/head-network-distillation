@@ -14,6 +14,7 @@ model:
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
+        num_init_features: 64
         first_conv2d_ksize: 7
         first_conv2d_stride: 2
         first_conv2d_padding: 3
