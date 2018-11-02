@@ -6,25 +6,21 @@ dataset:
         valid: !join [*data_dir, 'valid.txt']
         test: !join [*data_dir, 'test.txt']
 
-input_shape: [3, 224, 224]
+input_shape: [3, 299, 299]
 
 model:
-    type: &model_type 'alexnet'
+    type: &model_type 'inception_v3'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
-        # Default parameters for input size(3, 224, 224)
-        first_conv2d_ksize: 11
-        first_conv2d_stride: 4
-        first_conv2d_padding: 2
-        last_maxpool2d_ksize: 3
-        last_maxpool2d_stride: 2
+        aux_logits: True
+        transform_input: False
 
 train:
     epoch: 50
     batch_size: 20
-    rough_size: [256, 256]
+    rough_size: [327, 327]
     interval: 50
     optimizer:
         type: 'sgd'
@@ -41,6 +37,6 @@ test:
     batch_size: 1
     jquality: 0
     compression:
-        type: None
-        size: None
-    autoencoder: None
+        type:
+        size:
+    autoencoder:

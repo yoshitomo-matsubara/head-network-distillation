@@ -3,11 +3,12 @@ import os
 
 import torch
 import torch.backends.cudnn as cudnn
-import torch.optim as optim
 
 from models.mimic.densenet_mimic import *
+from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
 from myutils.common import file_util, yaml_util
+from myutils.pytorch import func_util
 from utils import module_util
 from utils.dataset import general_util
 
@@ -15,6 +16,8 @@ from utils.dataset import general_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Learner')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
+    argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
@@ -35,49 +38,32 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     return start_epoch
 
 
-def extract_teacher_model(model, teacher_model_config):
+def extract_teacher_model(model, input_shape, teacher_model_config):
     modules = list()
-    module_util.extract_all_child_modules(model, modules, teacher_model_config['extract_designed_module'])
+    module_util.extract_decomposable_modules(model, torch.rand(input_shape).unsqueeze(0), modules)
     start_idx = teacher_model_config['start_idx']
     end_idx = teacher_model_config['end_idx']
     return nn.Sequential(*modules[start_idx:end_idx])
 
 
-def get_teacher_model(teacher_model_config, device):
+def get_teacher_model(teacher_model_config, input_shape, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
-    return extract_teacher_model(model, teacher_model_config), model_config['type']
+    return extract_teacher_model(model, input_shape, teacher_model_config), model_config['type']
 
 
 def get_student_model(teacher_model_type, student_model_config):
     student_model_type = student_model_config['type']
-    if teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
+    if teacher_model_type.startswith('densenet')\
+            and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
+        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
+    elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
+        return ResNet152HeadMimic(student_model_config['version'])
+    elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
-    elif teacher_model_type.startswith('densenet') and student_model_type == 'densenet169_head_mimic':
-        return DenseNet169HeadMimic(student_model_config['version'])
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
-
-
-def get_criterion(criterion_config):
-    criterion_type = criterion_config['type']
-    params_config = criterion_config['params']
-    if criterion_type == 'mse':
-        return nn.MSELoss(**params_config)
-    raise ValueError('criterion_type `{}` is not expected'.format(criterion_type))
-
-
-def get_optimizer(optimizer_config, model):
-    optimizer_type = optimizer_config['type']
-    params_config = optimizer_config['params']
-    if optimizer_type == 'sgd':
-        return optim.SGD(model.parameters(), **params_config)
-    elif optimizer_type == 'adam':
-        return optim.Adam(model.parameters(), **params_config)
-    elif optimizer_type == 'adagrad':
-        return optim.Adagrad(model.parameters(), **params_config)
-    raise ValueError('optimizer_type `{}` is not expected'.format(optimizer_type))
 
 
 def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -140,8 +126,9 @@ def run(args):
         cudnn.benchmark = True
 
     config = yaml_util.load_yaml_file(args.config)
+    input_shape = config['input_shape']
     teacher_model_config = config['teacher_model']
-    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, device)
+    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
     student_model = get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
@@ -150,12 +137,18 @@ def run(args):
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
-                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
-    criterion = get_criterion(train_config['criterion'])
-    optimizer = get_optimizer(train_config['optimizer'], student_model)
+                                      reshape_size=input_shape[1:3], compression_quality=-1)
+    criterion_config = train_config['criterion']
+    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+    optim_config = train_config['optimizer']
+    if args.lr is not None:
+        optim_config['params']['lr'] = args.lr
+
+    optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
-    for epoch in range(start_epoch, train_config['epoch'] + 1):
+    end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
+    for epoch in range(start_epoch, end_epoch):
         train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
         avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
         if avg_valid_loss < best_avg_loss:

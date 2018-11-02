@@ -1,22 +1,19 @@
 dataset:
-    name: &dataset_name 'caltech101'
-    root: &data_dir './resource/data/caltech101/'
-    data:
-        train: !join [*data_dir, 'train.txt']
-        valid: !join [*data_dir, 'valid.txt']
-        test: !join [*data_dir, 'test.txt']
+    name: &dataset_name 'cifar10'
+    data: './resource/data/'
 
-input_shape: [3, 224, 224]
+input_shape: [3, 32, 32]
 
 model:
-    type: &model_type 'vgg16'
+    type: &model_type 'lenet5'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    params:
+        num_classes: 10
 
 train:
     epoch: 50
-    batch_size: 20
-    rough_size: [256, 256]
+    batch_size: 100
     interval: 50
     optimizer:
         type: 'sgd'
@@ -33,6 +30,6 @@ test:
     batch_size: 1
     jquality: 0
     compression:
-        type:
-        size:
-    autoencoder:
+        type: None
+        size: None
+    autoencoder: None

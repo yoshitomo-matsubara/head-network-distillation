@@ -2,8 +2,6 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.optim as optim
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
@@ -12,11 +10,13 @@ from utils.dataset import general_util, cifar_util
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(description='PyTorch image classifier')
-    parser.add_argument('--config', required=True, help='yaml file path')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
-    return parser
+    argparser = argparse.ArgumentParser(description='PyTorch image classifier')
+    argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
+    argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
+    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
+    argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    return argparser
 
 
 def resume_from_ckpt(model, model_config, init):
@@ -42,19 +42,14 @@ def get_data_loaders(config):
     if dataset_name.startswith('caltech'):
         return general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                              compress_config['type'], compress_config['size'], ae_model=None,
-                                             reshape_size=tuple(config['input_shape'][1:3]),
+                                             rough_size=train_config['rough_size'],
+                                             reshape_size=config['input_shape'][1:3],
                                              compression_quality=test_config['jquality'])
     elif dataset_name.startswith('cifar'):
         return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                            compress_config['type'], compress_config['size'], train_config['valid_rate'],
                                            is_cifar100=dataset_name == 'cifar100', ae_model=None)
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
-
-
-def get_criterion_optimizer(model, args, momentum=0.9, weight_decay=5e-4):
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum, weight_decay=weight_decay)
-    return criterion, optimizer
 
 
 def train(model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -67,11 +62,12 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        loss = sum((criterion(o, targets) for o in outputs)) if isinstance(outputs, tuple)\
+            else criterion(outputs, targets)
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
-        _, predicted = outputs.max(1)
+        _, predicted = outputs[0].max(1) if isinstance(outputs, tuple) else outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
@@ -111,7 +107,7 @@ def test(model, test_loader, criterion, device, data_type='Test'):
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    print('\n{} set: Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         data_type, test_loss, correct, total, acc))
     return acc
 
@@ -138,9 +134,13 @@ def run(args):
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
         optim_config = train_config['optimizer']
+        if args.lr is not None:
+            optim_config['params']['lr'] = args.lr
+
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
-        for epoch in range(start_epoch, start_epoch + train_config['epoch']):
+        end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
+        for epoch in range(start_epoch, end_epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
     test(model, test_loader, criterion, device)

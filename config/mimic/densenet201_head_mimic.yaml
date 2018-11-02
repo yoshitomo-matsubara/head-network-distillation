@@ -9,19 +9,20 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/vgg16.yaml'
+    config: './config/densenet201.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 8
+    end_idx: 30 # 14, 30, 82 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'vgg16_head_mimic'
-    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type]
+    type: &smodel_type 'densenet201_head_mimic'
+    version: &ver 2
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
 
 mimic_model:
-    type: &mmodel_type 'vgg16_mimic'
-    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type]
+    type: &mmodel_type 'densenet201_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
 train:
@@ -32,7 +33,7 @@ train:
     optimizer:
         type: 'Adam'
         params:
-            lr: 0.001
+            lr: 0.01
     criterion:
         type: 'MSELoss'
         params:

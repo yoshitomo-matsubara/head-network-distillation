@@ -16,3 +16,26 @@ model:
         first_conv2d_padding: 3
         last_avgpool2d_ksize: 2
         last_avgpool2d_stride: 1
+
+train:
+    epoch: 50
+    batch_size: 100
+    interval: 50
+    optimizer:
+        type: 'sgd'
+        params:
+            lr: 0.01
+            momentum: 0.9
+            weight_decay: 0.0005
+    criterion:
+        type: 'CrossEntropyLoss'
+        params:
+            reduction: 'elementwise_mean'
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type: None
+        size: None
+    autoencoder: None

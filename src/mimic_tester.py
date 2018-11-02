@@ -5,6 +5,7 @@ import torch.backends.cudnn as cudnn
 
 import mimic_learner
 from models.mimic.densenet_mimic import *
+from models.mimic.resnet_mimic import *
 from myutils.common import file_util, yaml_util
 from utils import module_util
 from utils.dataset import general_util
@@ -42,8 +43,10 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     mimic_modules.extend(org_modules[end_idx:])
     mimic_model_config = student_config['mimic_model']
     mimic_type = mimic_model_config['type']
-    if mimic_type == 'densenet169mimic':
-        return DenseNet169Mimic(mimic_modules)
+    if mimic_type.startswith('densenet'):
+        return DenseNetMimic(mimic_modules)
+    elif mimic_type.startswith('resnet'):
+        return ResNetMimic(mimic_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 

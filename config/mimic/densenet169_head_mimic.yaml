@@ -1,6 +1,10 @@
 dataset:
     name: &dataset_name 'caltech101'
-    data: './resource/data/caltech101/'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
 
 input_shape: [3, 224, 224]
 
@@ -8,29 +12,30 @@ teacher_model:
     config: './config/densenet169.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 8
+    end_idx: 30 # 14, 30, 66 for vers. 1, 2, 3
 
 student_model:
     type: &smodel_type 'densenet169_head_mimic'
     version: &ver 2
-    experiment: &distil_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic/', *distil_experiment, '.ckpt']
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
 
 mimic_model:
-    type: &mmodel_type 'densenet169mimic'
+    type: &mmodel_type 'densenet169_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
 
 train:
-    epoch: 50
+    epoch: 100
     batch_size: 20
+    rough_size: [256, 256]
     interval: 50
     optimizer:
-        type: 'adam'
+        type: 'Adam'
         params:
             lr: 0.01
     criterion:
-        type: 'mse'
+        type: 'MSELoss'
         params:
             reduction: 'sum'
 

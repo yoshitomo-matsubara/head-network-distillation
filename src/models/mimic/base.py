@@ -1,18 +1,9 @@
 import torch.nn as nn
 
 
-class Vgg16HeadMimic(nn.Module):
-    # designed for input image size [3, 224, 224]
-    def __init__(self):
+class BaseHeadMimic(nn.Module):
+    def __init__(self, ):
         super().__init__()
-        self.module_seq = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True)
-        )
-        self.initialize_weights()
 
     def initialize_weights(self):
         for m in self.modules():
@@ -28,4 +19,15 @@ class Vgg16HeadMimic(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, sample_batch):
-        return self.module_seq(sample_batch)
+        raise NotImplementedError
+
+
+class BaseMimic(nn.Module):
+    def __init__(self, modules=None):
+        super().__init__()
+        self.features = nn.Sequential(*modules[:-1])
+        self.classifier = modules[-1]
+
+    def forward(self, sample_batch):
+        features = self.features(sample_batch)
+        return self.classifier(features.view(features.size(0), -1))

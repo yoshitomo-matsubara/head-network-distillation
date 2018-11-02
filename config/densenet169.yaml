@@ -1,6 +1,10 @@
 dataset:
     name: &dataset_name 'caltech101'
-    data: './resource/data/caltech101/'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
 
 input_shape: [3, 224, 224]
 
@@ -15,7 +19,7 @@ model:
         bn_size: 4
         drop_rate: 0
         num_classes: 101
-        # additional parameters for Caltech101 and 256
+        # Default parameters for input size(3, 224, 224)
         conv2d_ksize: 7
         conv2d_stride: 2
         conv2d_padding: 3
@@ -27,6 +31,7 @@ model:
 train:
     epoch: 50
     batch_size: 20
+    rough_size: [256, 256]
     interval: 50
     optimizer:
         type: 'sgd'

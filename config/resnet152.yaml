@@ -9,17 +9,17 @@ dataset:
 input_shape: [3, 224, 224]
 
 model:
-    type: &model_type 'alexnet'
+    type: &model_type 'resnet152'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
-        # Default parameters for input size(3, 224, 224)
-        first_conv2d_ksize: 11
-        first_conv2d_stride: 4
-        first_conv2d_padding: 2
-        last_maxpool2d_ksize: 3
-        last_maxpool2d_stride: 2
+        num_init_features: 64
+        first_conv2d_ksize: 7
+        first_conv2d_stride: 2
+        first_conv2d_padding: 3
+        last_avgpool2d_ksize: 7
+        last_avgpool2d_stride: 1
 
 train:
     epoch: 50
@@ -41,6 +41,6 @@ test:
     batch_size: 1
     jquality: 0
     compression:
-        type: None
-        size: None
-    autoencoder: None
+        type:
+        size:
+    autoencoder:
