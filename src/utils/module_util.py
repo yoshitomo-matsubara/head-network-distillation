@@ -60,7 +60,7 @@ def extract_all_child_modules(parent_module, module_list, extract_designed_modul
         extract_all_child_modules(child_module, module_list, extract_designed_module)
 
 
-def extract_decomposable_modules(parent_module, z, module_list, output_size_list=list(), first=True):
+def extract_decomposable_modules(parent_module, z, module_list, output_size_list=list(), first=True, exception_size=-1):
     parent_module.eval()
     child_modules = list(parent_module.children())
     if not child_modules:
@@ -71,7 +71,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
             return z, True
         except (RuntimeError, ValueError):
             try:
-                z = parent_module(z.view(z.size(0), -1))
+                z = parent_module(z.view(z.size(0), exception_size))
                 output_size_list.append([*z.size()])
                 return z, True
             except RuntimeError:
@@ -81,7 +81,14 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
     try:
         expected_z = parent_module(z)
     except (RuntimeError, ValueError):
-        return z, False
+        try:
+            resized_z = z.view(z.size(0), exception_size)
+            expected_z = parent_module(resized_z)
+            z = resized_z
+
+        except RuntimeError:
+            ValueError('Error\t', type(parent_module).__name__)
+            return z, False
 
     submodule_list = list()
     sub_output_size_list = list()
