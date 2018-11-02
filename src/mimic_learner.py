@@ -8,6 +8,7 @@ from models.mimic.densenet_mimic import *
 from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
+from models.classification.inception import Inception3
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
@@ -32,7 +33,13 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
+    state_dict = checkpoint['model']
+    if isinstance(model, Inception3):
+        for key in list(state_dict.keys()):
+            if key.startswith('AuxLogits'):
+                state_dict.pop(key)
+
+    model.load_state_dict(state_dict)
     start_epoch = checkpoint['epoch']
     if is_student:
         return start_epoch, checkpoint['best_avg_loss']
