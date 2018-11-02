@@ -28,6 +28,9 @@ def load_student_model(student_config, teacher_model_type, device):
 
 def get_org_model(teacher_model_config, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    if teacher_config['model']['type'] == 'inception_v3':
+        teacher_config['model']['params']['aux_logits'] = False
+
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
     mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
@@ -37,7 +40,8 @@ def get_org_model(teacher_model_config, device):
 def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device):
     student_model = load_student_model(student_config, teacher_model_type, device)
     org_modules = list()
-    module_util.extract_all_child_modules(org_model, org_modules, teacher_model_config['extract_designed_module'])
+    input_batch = torch.rand(student_config['input_shape']).unsqueeze(0)
+    module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
     mimic_modules.extend(org_modules[end_idx:])
