@@ -5,6 +5,7 @@ import torch
 import torch.backends.cudnn as cudnn
 
 from models.mimic.densenet_mimic import *
+from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
 from myutils.common import file_util, yaml_util
@@ -62,6 +63,8 @@ def get_student_model(teacher_model_type, student_model_config):
     if teacher_model_type.startswith('densenet')\
             and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
         return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
+    elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
+        return InceptionHeadMimic(student_model_config['version'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
         return ResNet152HeadMimic(student_model_config['version'])
     elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
