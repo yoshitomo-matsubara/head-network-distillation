@@ -34,7 +34,7 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     state_dict = checkpoint['model']
-    if isinstance(model.module, Inception3):
+    if not is_student and isinstance(model.module, Inception3):
         for key in list(state_dict.keys()):
             if key.startswith('module.AuxLogits'):
                 state_dict.pop(key)
