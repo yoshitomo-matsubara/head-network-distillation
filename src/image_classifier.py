@@ -67,7 +67,7 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
-        _, predicted = outputs.max(1)
+        _, predicted = outputs[0].max(1) if isinstance(outputs, tuple) else outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
