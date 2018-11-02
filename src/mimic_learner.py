@@ -36,7 +36,7 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     state_dict = checkpoint['model']
     if isinstance(model, Inception3):
         for key in list(state_dict.keys()):
-            if key.startswith('AuxLogits'):
+            if key.startswith('module.AuxLogits'):
                 state_dict.pop(key)
 
     model.load_state_dict(state_dict)
