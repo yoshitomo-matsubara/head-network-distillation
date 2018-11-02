@@ -62,7 +62,8 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        loss = sum((criterion(o, targets) for o in outputs)) if isinstance(outputs, tuple)\
+            else criterion(outputs, targets)
         loss.backward()
         optimizer.step()
         train_loss += loss.item()

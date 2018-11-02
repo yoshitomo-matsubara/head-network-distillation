@@ -14,7 +14,7 @@ model:
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
-        aux_logits: False
+        aux_logits: True
         transform_input: False
 
 train:

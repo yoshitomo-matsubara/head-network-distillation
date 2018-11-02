@@ -15,6 +15,8 @@ def get_model(config, device):
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):
         model = resnet_model(model_type, model_config['params'])
+    elif model_type.startswith('inception_v3'):
+        model = inception_v3(**model_config['params'])
     elif model_type in torchvision.models.__dict__:
         model = torchvision.models.__dict__[model_type](**model_config['params'])
     else:
@@ -59,6 +61,7 @@ def extract_all_child_modules(parent_module, module_list, extract_designed_modul
 
 
 def extract_decomposable_modules(parent_module, z, module_list, output_size_list=list(), first=True):
+    parent_module.eval()
     child_modules = list(parent_module.children())
     if not child_modules:
         module_list.append(parent_module)
@@ -82,11 +85,13 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
 
     submodule_list = list()
     sub_output_size_list = list()
-    flag = True
+    decomposable = True
     for child_module in child_modules:
-        z, flag = extract_decomposable_modules(child_module, z, submodule_list, sub_output_size_list, first=False)
+        z, decomposable = extract_decomposable_modules(child_module, z, submodule_list, sub_output_size_list, False)
+        if not decomposable:
+            break
 
-    if flag and expected_z.size() == z.size() and expected_z.isclose(z).all().item() == 1:
+    if decomposable and expected_z.size() == z.size() and expected_z.isclose(z).all().item() == 1:
         module_list.extend(submodule_list)
         output_size_list.extend(sub_output_size_list)
         return expected_z, True
