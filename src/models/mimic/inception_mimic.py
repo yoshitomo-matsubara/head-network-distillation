@@ -46,13 +46,19 @@ def mimic_version3():
         nn.Conv2d(256, 512, kernel_size=2, stride=1, padding=1, bias=False),
         nn.BatchNorm2d(512),
         nn.ReLU(inplace=True),
-        nn.Conv2d(512, 768, kernel_size=2, stride=1, bias=False),
+        nn.Conv2d(512, 768, kernel_size=2, stride=1, padding=1, bias=False),
         nn.BatchNorm2d(768),
         nn.ReLU(inplace=True),
         nn.Conv2d(768, 1024, kernel_size=2, stride=1, bias=False),
         nn.BatchNorm2d(1024),
         nn.ReLU(inplace=True),
         nn.Conv2d(1024, 1280, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(1280),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(1280, 1536, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(1536),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(1536, 1280, kernel_size=2, stride=1, bias=False),
         nn.AvgPool2d(kernel_size=2, stride=2)
     )
 
