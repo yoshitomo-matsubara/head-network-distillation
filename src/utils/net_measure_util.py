@@ -198,7 +198,7 @@ def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scale
     bandwidth_list = [np.prod(input_shape)]
     for i, submodule in enumerate(submodules):
         input_shape = input_shape if i == 0 else output_sizes[i - 1][1:]\
-            if len(output_sizes[i - 1]) > 2 and i != len(submodules) - 1 else output_sizes[i - 1][1]
+            if not isinstance(submodule, nn.Linear) else output_sizes[i - 1][1]
         module_name = '{}: {}'.format(type(submodule).__name__, i)
         layer_list.append(module_name)
         sub_op_counts, sub_bandwidths, _ =\
