@@ -146,11 +146,11 @@ class DenseNetHeadMimic(BaseHeadMimic):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
-        if version in ['1' or '1b']:
+        if version in ['1', '1b']:
             self.module_seq = mimic_version1(version == '1b')
-        elif version in ['2' or '2b']:
+        elif version in ['2', '2b']:
             self.module_seq = mimic_version2(version == '2b')
-        elif version in ['3' or '3b']:
+        elif version in ['3', '3b']:
             self.module_seq = mimic_version3(teacher_model_type, version == '3b')
         else:
             raise ValueError('version `{}` is not expected'.format(version))
