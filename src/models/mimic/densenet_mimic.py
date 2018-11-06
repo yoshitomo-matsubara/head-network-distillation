@@ -3,7 +3,21 @@ import torch.nn as nn
 from .base import BaseHeadMimic, BaseMimic
 
 
-def mimic_version1():
+def mimic_version1(make_bottleneck=False):
+    if make_bottleneck:
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 3, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(3, 64, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+        )
+
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
@@ -62,7 +76,7 @@ def mimic_version3(teacher_model_type):
 
 class DenseNetHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
-    def __init__(self, teacher_model_type, version):
+    def __init__(self, teacher_model_type, version, bottlenecked=False):
         super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
@@ -71,7 +85,7 @@ class DenseNetHeadMimic(BaseHeadMimic):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
         if version == 1:
-            self.module_seq = mimic_version1()
+            self.module_seq = mimic_version1(bottlenecked)
         elif version == 2:
             self.module_seq = mimic_version2()
         elif version == 3:
