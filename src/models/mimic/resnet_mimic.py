@@ -127,12 +127,12 @@ class ResNet152HeadMimic(BaseHeadMimic):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
-        if version == 1:
-            self.module_seq = mimic_version1()
-        elif version == 2:
-            self.module_seq = mimic_version2()
-        elif version == 3:
-            self.module_seq = mimic_version3()
+        if version in ['1', '1b']:
+            self.module_seq = mimic_version1(version == '1b')
+        elif version in ['2', '2b']:
+            self.module_seq = mimic_version2(version == '2b')
+        elif version in ['3', '3b']:
+            self.module_seq = mimic_version3(version == '3b')
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()
