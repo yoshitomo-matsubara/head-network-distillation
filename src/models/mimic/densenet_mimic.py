@@ -17,7 +17,6 @@ def mimic_version1(make_bottleneck=False):
             nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
             nn.AvgPool2d(kernel_size=2, stride=2)
         )
-
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
@@ -43,7 +42,6 @@ def mimic_version2(make_bottleneck=False):
             nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False),
             nn.AvgPool2d(kernel_size=2, stride=2)
         )
-
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
@@ -79,7 +77,6 @@ def mimic_version3(teacher_model_type, make_bottleneck=False):
                 nn.Conv2d(512, 640, kernel_size=2, stride=1, bias=False),
                 nn.AvgPool2d(kernel_size=2, stride=2)
             )
-
         return nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),

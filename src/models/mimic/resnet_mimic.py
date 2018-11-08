@@ -3,7 +3,23 @@ import torch.nn as nn
 from .base import BaseHeadMimic, BaseMimic
 
 
-def mimic_version1():
+def mimic_version1(make_bottleneck=False):
+    if make_bottleneck:
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 3, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(3, 64, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=1, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=1)
+        )
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
@@ -15,22 +31,69 @@ def mimic_version1():
     )
 
 
-def mimic_version2():
+def mimic_version2(make_bottleneck=False):
+    if make_bottleneck:
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 3, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(3, 64, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2)
+        )
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
         nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False),
         nn.BatchNorm2d(128),
         nn.ReLU(inplace=True),
-        nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False),
+        nn.Conv2d(128, 256, kernel_size=2, stride=1, padding=1, bias=False),
         nn.BatchNorm2d(256),
         nn.ReLU(inplace=True),
         nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False),
-        nn.AvgPool2d(kernel_size=2, stride=2, padding=1)
+        nn.AvgPool2d(kernel_size=2, stride=2)
     )
 
 
-def mimic_version3():
+def mimic_version3(make_bottleneck=False):
+    if make_bottleneck:
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 3, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(3, 64, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 512, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 1024, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(1024),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(1024, 2048, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(2048),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(2048, 2048, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=7, stride=2)
+        )
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
