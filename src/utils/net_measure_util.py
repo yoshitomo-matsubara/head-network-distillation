@@ -189,16 +189,16 @@ def compute_layerwise_complexity_and_bandwidth(model, model_name, input_shape, s
     return op_count_list, bandwidths, accum_complexities
 
 
-def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scaled=False, plot=True):
+def compute_model_complexity_and_bandwidth(model, model_name, input_shape, scaled=False, plot=True, **kwargs):
     submodules = list()
     output_sizes = list()
-    module_util.extract_decomposable_modules(model, torch.rand(input_shape).unsqueeze(0), submodules, output_sizes)
+    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape), submodules, output_sizes, **kwargs)
     layer_list = ['Input']
     op_count_list = list()
     bandwidth_list = [np.prod(input_shape)]
     for i, submodule in enumerate(submodules):
         input_shape = input_shape if i == 0 else output_sizes[i - 1][1:]\
-            if i != len(submodules) - 1 and len(output_sizes[-1]) == 2 else output_sizes[i - 1][1]
+            if not isinstance(submodule, nn.Linear) else output_sizes[i - 1][1]
         module_name = '{}: {}'.format(type(submodule).__name__, i)
         layer_list.append(module_name)
         sub_op_counts, sub_bandwidths, _ =\

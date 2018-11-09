@@ -5,8 +5,10 @@ import torch
 import torch.backends.cudnn as cudnn
 
 from models.mimic.densenet_mimic import *
+from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
+from models.classification.inception import Inception3
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
@@ -31,16 +33,22 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
+    state_dict = checkpoint['model']
+    if not is_student and isinstance(model.module, Inception3):
+        for key in list(state_dict.keys()):
+            if key.startswith('module.AuxLogits'):
+                state_dict.pop(key)
+
+    model.load_state_dict(state_dict)
     start_epoch = checkpoint['epoch']
     if is_student:
         return start_epoch, checkpoint['best_avg_loss']
     return start_epoch
 
 
-def extract_teacher_model(model, input_shape, teacher_model_config):
+def extract_teacher_model(model, input_shape, device, teacher_model_config):
     modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(input_shape).unsqueeze(0), modules)
+    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to(device), modules)
     start_idx = teacher_model_config['start_idx']
     end_idx = teacher_model_config['end_idx']
     return nn.Sequential(*modules[start_idx:end_idx])
@@ -48,10 +56,13 @@ def extract_teacher_model(model, input_shape, teacher_model_config):
 
 def get_teacher_model(teacher_model_config, input_shape, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    if teacher_config['model']['type'] == 'inception_v3':
+        teacher_config['model']['params']['aux_logits'] = False
+
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
-    return extract_teacher_model(model, input_shape, teacher_model_config), model_config['type']
+    return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
 
 
 def get_student_model(teacher_model_type, student_model_config):
@@ -59,6 +70,8 @@ def get_student_model(teacher_model_type, student_model_config):
     if teacher_model_type.startswith('densenet')\
             and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
         return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
+    elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
+        return InceptionHeadMimic(student_model_config['version'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
         return ResNet152HeadMimic(student_model_config['version'])
     elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':

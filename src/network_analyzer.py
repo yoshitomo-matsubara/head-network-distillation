@@ -40,6 +40,9 @@ def read_config(config_file_path):
     if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
         return None, None, None
 
+    if config['model']['type'] == 'inception_v3':
+        config['model']['params']['aux_logits'] = False
+
     model = module_util.get_model(config, 'cpu')
     model_type = config['model']['type']
     input_shape = config['input_shape']

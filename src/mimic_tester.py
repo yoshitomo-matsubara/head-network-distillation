@@ -5,6 +5,7 @@ import torch.backends.cudnn as cudnn
 
 import mimic_learner
 from models.mimic.densenet_mimic import *
+from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from myutils.common import file_util, yaml_util
 from utils import module_util
@@ -28,6 +29,9 @@ def load_student_model(student_config, teacher_model_type, device):
 
 def get_org_model(teacher_model_config, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    if teacher_config['model']['type'] == 'inception_v3':
+        teacher_config['model']['params']['aux_logits'] = False
+
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
     mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
@@ -37,7 +41,8 @@ def get_org_model(teacher_model_config, device):
 def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device):
     student_model = load_student_model(student_config, teacher_model_type, device)
     org_modules = list()
-    module_util.extract_all_child_modules(org_model, org_modules, teacher_model_config['extract_designed_module'])
+    input_batch = torch.rand(student_config['input_shape']).unsqueeze(0).to(device)
+    module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
     mimic_modules.extend(org_modules[end_idx:])
@@ -45,6 +50,8 @@ def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model
     mimic_type = mimic_model_config['type']
     if mimic_type.startswith('densenet'):
         return DenseNetMimic(mimic_modules)
+    elif mimic_type.startswith('inception'):
+        return InceptionMimic(mimic_modules)
     elif mimic_type.startswith('resnet'):
         return ResNetMimic(mimic_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
