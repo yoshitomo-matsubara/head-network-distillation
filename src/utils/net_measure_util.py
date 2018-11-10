@@ -253,3 +253,37 @@ def plot_model_bandwidths(bandwidths_list, scaled, model_type_list):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+
+def plot_teacher_and_student_complexities(teacher_complexities, student_complexities, names=None):
+    xs = np.array(list(range(len(teacher_complexities))))
+    plt.bar(xs - 0.125, teacher_complexities, width=0.25, label='Teacher')
+    plt.bar(xs + 0.125, student_complexities, width=0.25, label='Student')
+    plt.xticks(xs, ['Ver.{}'.format(x + 1) for x in xs] if names is None else names)
+    plt.ylabel('Total complexity')
+    for i in range(len(teacher_complexities)):
+        txt = '{:.1f}x\nfaster'.format(teacher_complexities[i] / student_complexities[i])
+        plt.annotate(txt, (xs[i] + 0.05, student_complexities[i] + 10 ** int(np.log10(student_complexities[i])) / 5))
+
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_bottleneck_bandwidth_vs_complexity(teacher_bandwidths, teacher_complexities,
+                                            student_bandwidths, student_complexities, names=None):
+    plt.scatter(teacher_bandwidths, teacher_complexities, label='Teacher')
+    plt.scatter(student_bandwidths, student_complexities, label='Student')
+    for i in range(len(teacher_bandwidths)):
+        plt.arrow(teacher_bandwidths[i], teacher_complexities[i], student_bandwidths[i] - teacher_bandwidths[i],
+                  student_complexities[i] - teacher_complexities[i], color='black', length_includes_head=True,
+                  head_length=10 ** int(np.log10(student_complexities[i])), head_width=0.005, zorder=0)
+        if names is not None:
+            plt.annotate(names[i], (teacher_bandwidths[i] - 0.005,
+                                    teacher_complexities[i] + 10 ** int(np.log10(teacher_complexities[i]) - 1)))
+
+    plt.xlabel('Scaled Bottleneck Bandwidth')
+    plt.ylabel('Total complexity')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
