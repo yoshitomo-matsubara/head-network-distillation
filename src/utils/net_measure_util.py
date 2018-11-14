@@ -35,10 +35,11 @@ def format_metrics(bandwidth_list, op_count_list, scaled):
 def plot_model_complexity(xs, op_count_list, layer_list, model_name):
     plt.semilogy(xs[1:], op_count_list, label=model_name)
     plt.xticks(xs[1:], layer_list[1:], rotation=90, fontsize=12)
+    plt.yticks(fontsize=12)
     plt.xlim(xs[1] - 1, xs[-1] + 1)
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel('Complexity', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xlabel('Layer', fontsize=14)
+    plt.ylabel('Complexity', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -47,9 +48,10 @@ def plot_accumulated_model_complexity(xs, accumulated_op_counts, layer_list, acc
     plt.plot(xs[1:], accumulated_op_counts, label=model_name)
     plt.xticks(xs[1:], layer_list[1:], rotation=90, fontsize=12)
     plt.xlim(xs[1] - 1, xs[-1] + 1)
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel(accum_complexity_label, fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xlabel('Layer', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.ylabel(accum_complexity_label, fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -58,20 +60,23 @@ def plot_model_bandwidth(xs, bandwidths, layer_list, bandwidth_label, model_name
     plt.semilogy(xs, bandwidths, label=model_name)
     plt.semilogy(xs, [bandwidths[0] for x in xs], '-', label='Input')
     plt.xticks(xs, layer_list, rotation=90, fontsize=12)
+    plt.yticks(fontsize=12)
     plt.xlim(xs[0] - 1, xs[-1] + 1)
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel(bandwidth_label, fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xlabel('Layer', fontsize=14)
+    plt.ylabel(bandwidth_label, fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
 
 def plot_bandwidth_vs_model_complexity(bandwidths, op_count_list, bandwidth_label, model_name):
     plt.scatter(bandwidths[1:], op_count_list, label=model_name)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.yscale('log')
-    plt.xlabel(bandwidth_label, fontsize=12)
-    plt.ylabel('Complexity', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xlabel(bandwidth_label, fontsize=14)
+    plt.ylabel('Complexity', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -80,9 +85,11 @@ def plot_accumulated_model_complexity_vs_bandwidth(accumulated_op_counts, bandwi
                                                    bandwidth_label, accum_complexity_label, model_name):
     plt.plot(accumulated_op_counts, bandwidths[1:], marker='o', label=model_name)
     plt.plot(accumulated_op_counts, [bandwidths[0] for x in accumulated_op_counts], '-', label='Input')
-    plt.xlabel(accum_complexity_label)
-    plt.ylabel(bandwidth_label)
-    plt.legend(fontsize=11)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlabel(accum_complexity_label, fontsize=14)
+    plt.ylabel(bandwidth_label, fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -94,14 +101,21 @@ def plot_accumulated_model_complexity_and_bandwidth(xs, accumulated_op_counts, b
     ax1.set_xticks(xs)
     ax1.set_xlim(xs[0] - 1, xs[-1] + 1)
     ax1.set_xticklabels(layer_list, fontsize=12)
-    ax1.set_xlabel('Layer', fontsize=12)
-    ax1.set_ylabel(bandwidth_label, color='b', fontsize=12)
+    ax1.set_xlabel('Layer', fontsize=14)
+    ax1.set_ylabel(bandwidth_label, color='b', fontsize=14)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(90)
+        tick.set_fontsize(12)
+
+    for tick in ax1.get_yticklabels():
+        tick.set_fontsize(12)
 
     ax2 = ax1.twinx()
     ax2.plot(xs[1:], accumulated_op_counts, 'r--')
-    ax2.set_ylabel(accum_complexity_label, color='r', fontsize=12)
+    for tick in ax2.get_yticklabels():
+        tick.set_fontsize(12)
+
+    ax2.set_ylabel(accum_complexity_label, color='r', fontsize=14)
     plt.tight_layout()
     plt.show()
 
@@ -225,9 +239,11 @@ def plot_model_complexities(op_counts_list, model_type_list):
         op_counts = op_counts_list[i]
         plt.semilogy(list(range(len(op_counts))), op_counts, label=model_type_list[i])
 
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel('Complexity', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlabel('Layer', fontsize=14)
+    plt.ylabel('Complexity', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -237,9 +253,11 @@ def plot_accumulated_model_complexities(accum_complexities_list, model_type_list
         accum_complexities = accum_complexities_list[i]
         plt.plot(list(range(len(accum_complexities))), accum_complexities, label=model_type_list[i])
 
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel('Accumulated Complexity', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlabel('Layer', fontsize=14)
+    plt.ylabel('Accumulated Complexity', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -254,9 +272,11 @@ def plot_model_bandwidths(bandwidths_list, scaled, model_type_list):
 
     xs = list(range(max_length))
     plt.semilogy(xs, [bandwidths[0] for _ in xs], '-', label='Input')
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel('Scaled Bandwidth' if scaled else 'Bandwidth [kB]', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlabel('Layer', fontsize=14)
+    plt.ylabel('Scaled Bandwidth' if scaled else 'Bandwidth [kB]', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -265,13 +285,14 @@ def plot_teacher_and_student_complexities(teacher_complexities, student_complexi
     xs = np.array(list(range(len(teacher_complexities))))
     plt.bar(xs - 0.125, teacher_complexities, width=0.25, label='Teacher')
     plt.bar(xs + 0.125, student_complexities, width=0.25, label='Student')
-    plt.xticks(xs, ['Ver.{}'.format(x + 1) for x in xs] if names is None else names, fontsize=11)
-    plt.ylabel('Total complexity', fontsize=12)
+    plt.xticks(xs, ['Ver.{}'.format(x + 1) for x in xs] if names is None else names, fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.ylabel('Total complexity', fontsize=14)
     for i in range(len(teacher_complexities)):
         txt = '{:.1f}x\nfaster'.format(teacher_complexities[i] / student_complexities[i])
         plt.annotate(txt, (xs[i] + 0.05, student_complexities[i] + 10 ** int(np.log10(student_complexities[i])) / 5))
 
-    plt.legend(fontsize=11)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -288,8 +309,10 @@ def plot_bottleneck_bandwidth_vs_complexity(teacher_bandwidths, teacher_complexi
             plt.annotate(names[i], (teacher_bandwidths[i] - 0.005,
                                     teacher_complexities[i] + 10 ** int(np.log10(teacher_complexities[i]) - 1)))
 
-    plt.xlabel('Scaled Bottleneck Bandwidth', fontsize=12)
-    plt.ylabel('Total complexity', fontsize=12)
-    plt.legend(fontsize=11)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlabel('Scaled Bottleneck Bandwidth', fontsize=14)
+    plt.ylabel('Total complexity', fontsize=14)
+    plt.legend(fontsize=13)
     plt.tight_layout()
     plt.show()
