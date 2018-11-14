@@ -253,6 +253,7 @@ def run(args):
         model = file_util.load_pickle(pickle_file_path).to(device)
 
     analysis_mode = args.mode
+    model.eval()
     if analysis_mode == 'comp_rate':
         analyze_compression_rate(model, input_shape, test_loader, device)
     elif analysis_mode == 'run_time':
