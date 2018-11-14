@@ -107,7 +107,7 @@ def test(model, test_loader, criterion, device, data_type='Test'):
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    print('\n{} set: Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
         data_type, test_loss, correct, total, acc))
     return acc
 

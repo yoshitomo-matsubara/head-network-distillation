@@ -102,7 +102,7 @@ def test(model, test_loader, device, data_type='Test'):
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
+    print('\n{} set: Accuracy: {}/{} ({:.4f}%)\n'.format(data_type, correct, total, acc))
     return acc, bandwidth / total, compressed_bandwidth / total
 
 
