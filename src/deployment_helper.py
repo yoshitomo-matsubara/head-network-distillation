@@ -60,7 +60,7 @@ def run(args):
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
     teacher_model_config = config['teacher_model']
-    model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, device)
+    model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, 'cuda')
     if args.org:
         split_original_model(model, input_shape, teacher_model_config, device, partition_idx,
                              head_output_file_path, tail_output_file_path)
