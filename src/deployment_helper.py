@@ -16,7 +16,7 @@ def get_argparser():
     argparser.add_argument('--tail', required=True, help='output file path for tail network pickle')
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
     argparser.add_argument('-cpu', action='store_true', help='option to make a model runnable without cuda')
-    return parser
+    return argparser
 
 
 def split_original_model(model, input_shape, teacher_model_config, device, partition_idx,
