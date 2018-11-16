@@ -38,7 +38,7 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False, is_cpu=False):
         for key, val in state_dict.items():
             state_dict[key] = val.cpu()
 
-    if not is_student and isinstance(model.module, Inception3):
+    if not is_student and hasattr(model, 'module') and isinstance(model.module, Inception3):
         for key in list(state_dict.keys()):
             if key.startswith('module.AuxLogits'):
                 state_dict.pop(key)
