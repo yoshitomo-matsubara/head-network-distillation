@@ -38,15 +38,15 @@ def get_org_model(teacher_model_config, device):
     return model, model_config['type']
 
 
-def get_mimic_model(student_config, org_model, teacher_model_type, teacher_model_config, device):
-    student_model = load_student_model(student_config, teacher_model_type, device)
+def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
+    student_model = load_student_model(config, teacher_model_type, device)
     org_modules = list()
-    input_batch = torch.rand(student_config['input_shape']).unsqueeze(0).to(device)
+    input_batch = torch.rand(config['input_shape']).unsqueeze(0).to(device)
     module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
     mimic_modules.extend(org_modules[end_idx:])
-    mimic_model_config = student_config['mimic_model']
+    mimic_model_config = config['mimic_model']
     mimic_type = mimic_model_config['type']
     if mimic_type.startswith('densenet'):
         return DenseNetMimic(mimic_modules)
