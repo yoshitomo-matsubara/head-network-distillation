@@ -1,9 +1,11 @@
 import argparse
 
 import torch
-import torch.nn as nn
 
 import mimic_tester
+from models.mimic.densenet_mimic import *
+from models.mimic.inception_mimic import *
+from models.mimic.resnet_mimic import *
 from myutils.common import file_util, yaml_util
 from utils import module_util
 
@@ -20,7 +22,19 @@ def get_argparser():
     return argparser
 
 
-def split_original_model(model, input_shape, teacher_model_config, sensor_device, edge_device, partition_idx,
+def get_tail_network(config, tail_modules):
+    mimic_model_config = config['mimic_model']
+    mimic_type = mimic_model_config['type']
+    if mimic_type.startswith('densenet'):
+        return DenseNetMimic(tail_modules)
+    elif mimic_type.startswith('inception'):
+        return InceptionMimic(tail_modules)
+    elif mimic_type.startswith('resnet'):
+        return ResNetMimic(tail_modules)
+    raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
+
+
+def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                          head_output_file_path, tail_output_file_path):
     print('Splitting an original DNN model')
     modules = list()
@@ -28,6 +42,7 @@ def split_original_model(model, input_shape, teacher_model_config, sensor_device
     head_module_list = list()
     tail_module_list = list()
     if partition_idx < 0:
+        teacher_model_config = config['teacher_model']
         start_idx = teacher_model_config['start_idx']
         end_idx = teacher_model_config['end_idx']
         head_module_list.extend(modules[start_idx:end_idx])
@@ -43,7 +58,7 @@ def split_original_model(model, input_shape, teacher_model_config, sensor_device
         tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
-    tail_network = nn.Sequential(*tail_module_list)
+    tail_network = get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network, head_output_file_path)
     file_util.save_pickle(tail_network, tail_output_file_path)
 
@@ -66,7 +81,7 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     for tail_module in [*student_modules[partition_idx:], *org_modules[end_idx:]]:
         tail_module_list.append(tail_module.to(edge_device))
 
-    tail_network = nn.Sequential(*tail_module_list)
+    tail_network = get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network, head_output_file_path)
     file_util.save_pickle(tail_network, tail_output_file_path)
 
@@ -79,10 +94,9 @@ def run(args):
     head_output_file_path = args.head
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
-    teacher_model_config = config['teacher_model']
-    model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, 'cuda')
+    model, teacher_model_type = mimic_tester.get_org_model(config['teacher_model'], 'cuda')
     if args.org:
-        split_original_model(model, input_shape, teacher_model_config, sensor_device, edge_device, partition_idx,
+        split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                              head_output_file_path, tail_output_file_path)
     else:
         split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
