@@ -24,7 +24,7 @@ def split_original_model(model, input_shape, teacher_model_config, sensor_device
                          head_output_file_path, tail_output_file_path):
     print('Splitting an original DNN model')
     modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to(edge_device), modules)
+    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to('cuda'), modules)
     head_module_list = list()
     tail_module_list = list()
     if partition_idx < 0:
@@ -52,10 +52,10 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
                                partition_idx, head_output_file_path, tail_output_file_path):
     print('Splitting within a student DNN model')
     org_modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to(edge_device), org_modules)
+    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to('cuda'), org_modules)
     student_model = mimic_tester.load_student_model(config, teacher_model_type, 'cuda')
     student_modules = list()
-    module_util.extract_decomposable_modules(student_model, torch.rand(1, *input_shape).to(edge_device), student_modules)
+    module_util.extract_decomposable_modules(student_model, torch.rand(1, *input_shape).to('cuda'), student_modules)
     head_module_list = list()
     for head_module in student_modules[:partition_idx]:
         head_module_list.append(head_module.to(sensor_device))
