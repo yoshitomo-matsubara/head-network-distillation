@@ -24,7 +24,7 @@ def get_argparser():
     return argparser
 
 
-def resume_from_ckpt(ckpt_file_path, model, is_student=False, is_cpu=False):
+def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     if not os.path.exists(ckpt_file_path):
         print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
         if is_student:
@@ -34,15 +34,7 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False, is_cpu=False):
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     state_dict = checkpoint['model']
-    if is_cpu:
-        is_data_parallel = isinstance(model, nn.parallel.DataParallel)
-        tmp_state_dict = dict()
-        for key, val in state_dict.items():
-            tmp_key = key.lstrip('module.') if is_data_parallel else key
-            if is_student or not tmp_key.startswith('AuxLogits') or not isinstance(model.module, Inception3):
-                tmp_state_dict[tmp_key] = val.cpu()
-        state_dict = tmp_state_dict
-    elif not is_student and hasattr(model, 'module') and isinstance(model.module, Inception3):
+    if not is_student and isinstance(model.module, Inception3):
         for key in list(state_dict.keys()):
             if key.startswith('module.AuxLogits'):
                 state_dict.pop(key)

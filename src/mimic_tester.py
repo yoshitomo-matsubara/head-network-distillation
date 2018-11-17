@@ -34,7 +34,7 @@ def get_org_model(teacher_model_config, device):
 
     model = module_util.get_model(teacher_config, device)
     model_config = teacher_config['model']
-    mimic_learner.resume_from_ckpt(model_config['ckpt'], model, is_cpu=device == 'cpu')
+    mimic_learner.resume_from_ckpt(model_config['ckpt'], model)
     return model, model_config['type']
 
 
