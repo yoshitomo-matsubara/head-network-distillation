@@ -89,6 +89,9 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
 
 
 def convert_model(model, device, output_file_path):
+    if device == 'cpu' and isinstance(model, nn.parallel.DataParallel):
+        model = model.module
+
     for module in model.modules():
         module.to(device)
     file_util.save_pickle(model, output_file_path)
