@@ -14,8 +14,8 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description='PyTorch deployment helper')
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--partition', type=int, default=-1, help='partition index (starts from 0)')
-    argparser.add_argument('--head', required=True, help='output file path for head network pickle')
-    argparser.add_argument('--tail', required=True, help='output file path for tail network pickle')
+    argparser.add_argument('--head', help='output file path for head network pickle')
+    argparser.add_argument('--tail', help='output file path for tail network pickle')
     argparser.add_argument('--model', help='output file path for original network pickle')
     argparser.add_argument('--device', help='device for original network pickle')
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
@@ -103,10 +103,10 @@ def run(args):
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
     model, teacher_model_type = mimic_tester.get_org_model(config['teacher_model'], 'cuda')
-    if args.org:
+    if args.org and head_output_file_path is not None and tail_output_file_path is not None:
         split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                              head_output_file_path, tail_output_file_path)
-    else:
+    elif head_output_file_path is not None and tail_output_file_path is not None:
         split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
                                    partition_idx, head_output_file_path, tail_output_file_path)
 
