@@ -16,6 +16,8 @@ def get_argparser():
     argparser.add_argument('--partition', type=int, default=-1, help='partition index (starts from 0)')
     argparser.add_argument('--head', required=True, help='output file path for head network pickle')
     argparser.add_argument('--tail', required=True, help='output file path for tail network pickle')
+    argparser.add_argument('--model', help='output file path for original network pickle')
+    argparser.add_argument('--device', help='device for original network pickle')
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
     argparser.add_argument('-scpu', action='store_true', help='option to make sensor-side model runnable without cuda')
     argparser.add_argument('-ecpu', action='store_true', help='option to make edge-side model runnable without cuda')
@@ -86,6 +88,12 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     file_util.save_pickle(tail_network, tail_output_file_path)
 
 
+def convert_model(model, device, output_file_path):
+    for module in model.modules():
+        module.to(device)
+    file_util.save_pickle(model, output_file_path)
+
+
 def run(args):
     config = yaml_util.load_yaml_file(args.config)
     sensor_device = 'cpu' if args.scpu else 'cuda'
@@ -101,6 +109,9 @@ def run(args):
     else:
         split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
                                    partition_idx, head_output_file_path, tail_output_file_path)
+
+    if args.model is not None and args.device is not None:
+        convert_model(model, args.device, args.model)
 
 
 if __name__ == '__main__':
