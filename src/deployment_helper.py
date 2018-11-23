@@ -1,10 +1,8 @@
 import argparse
 
 import torch
+import torch.nn as nn
 
-from models.mimic.densenet_mimic import *
-from models.mimic.inception_mimic import *
-from models.mimic.resnet_mimic import *
 from myutils.common import file_util, yaml_util
 from utils import mimic_util, module_util
 
@@ -21,18 +19,6 @@ def get_argparser():
     argparser.add_argument('-scpu', action='store_true', help='option to make sensor-side model runnable without cuda')
     argparser.add_argument('-ecpu', action='store_true', help='option to make edge-side model runnable without cuda')
     return argparser
-
-
-def get_tail_network(config, tail_modules):
-    mimic_model_config = config['mimic_model']
-    mimic_type = mimic_model_config['type']
-    if mimic_type.startswith('densenet'):
-        return DenseNetMimic(tail_modules)
-    elif mimic_type.startswith('inception'):
-        return InceptionMimic(tail_modules)
-    elif mimic_type.startswith('resnet'):
-        return ResNetMimic(tail_modules)
-    raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 
 def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
@@ -59,7 +45,7 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
         tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
-    tail_network = get_tail_network(config, tail_module_list)
+    tail_network = mimic_util.get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network, head_output_file_path)
     file_util.save_pickle(tail_network, tail_output_file_path)
 
@@ -82,7 +68,7 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     for tail_module in [*student_modules[partition_idx:], *org_modules[end_idx:]]:
         tail_module_list.append(tail_module.to(edge_device))
 
-    tail_network = get_tail_network(config, tail_module_list)
+    tail_network = mimic_util.get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network, head_output_file_path)
     file_util.save_pickle(tail_network, tail_output_file_path)
 

@@ -86,6 +86,18 @@ def get_org_model(teacher_model_config, device):
     return model, model_config['type']
 
 
+def get_tail_network(config, tail_modules):
+    mimic_model_config = config['mimic_model']
+    mimic_type = mimic_model_config['type']
+    if mimic_type.startswith('densenet'):
+        return DenseNetMimic(tail_modules)
+    elif mimic_type.startswith('inception'):
+        return InceptionMimic(tail_modules)
+    elif mimic_type.startswith('resnet'):
+        return ResNetMimic(tail_modules)
+    raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
+
+
 def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
     student_model = load_student_model(config, teacher_model_type, device)
     org_modules = list()
