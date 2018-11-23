@@ -1,0 +1,105 @@
+import os
+
+import torch
+
+from models.classification.inception import Inception3
+from models.mimic.densenet_mimic import *
+from models.mimic.inception_mimic import *
+from models.mimic.resnet_mimic import *
+from models.mimic.vgg_mimic import *
+from myutils.common import yaml_util
+from utils import module_util
+
+
+def resume_from_ckpt(ckpt_file_path, model, is_student=False):
+    if not os.path.exists(ckpt_file_path):
+        print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
+        if is_student:
+            return 1, 1e60
+        return 1
+
+    print('Resuming from checkpoint..')
+    checkpoint = torch.load(ckpt_file_path)
+    state_dict = checkpoint['model']
+    if not is_student and isinstance(model, Inception3) or\
+            (hasattr(model, 'module') and isinstance(model.module, Inception3)):
+        for key in list(state_dict.keys()):
+            if key.startswith('AuxLogits') or key.startswith('module.AuxLogits'):
+                state_dict.pop(key)
+
+    model.load_state_dict(state_dict)
+    start_epoch = checkpoint['epoch']
+    if is_student:
+        return start_epoch, checkpoint['best_avg_loss']
+    return start_epoch
+
+
+def extract_teacher_model(model, input_shape, device, teacher_model_config):
+    modules = list()
+    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to(device), modules)
+    start_idx = teacher_model_config['start_idx']
+    end_idx = teacher_model_config['end_idx']
+    return nn.Sequential(*modules[start_idx:end_idx])
+
+
+def get_teacher_model(teacher_model_config, input_shape, device):
+    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    if teacher_config['model']['type'] == 'inception_v3':
+        teacher_config['model']['params']['aux_logits'] = False
+
+    model = module_util.get_model(teacher_config, device)
+    model_config = teacher_config['model']
+    resume_from_ckpt(model_config['ckpt'], model)
+    return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
+
+
+def get_student_model(teacher_model_type, student_model_config):
+    student_model_type = student_model_config['type']
+    if teacher_model_type.startswith('densenet')\
+            and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
+        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
+    elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
+        return InceptionHeadMimic(student_model_config['version'])
+    elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
+        return ResNet152HeadMimic(student_model_config['version'])
+    elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
+        return Vgg16HeadMimic()
+    raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
+
+
+def load_student_model(student_config, teacher_model_type, device):
+    student_model_config = student_config['student_model']
+    student_model = get_student_model(teacher_model_type, student_model_config)
+    student_model = student_model.to(device)
+    resume_from_ckpt(student_model_config['ckpt'], student_model, True)
+    return student_model
+
+
+def get_org_model(teacher_model_config, device):
+    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
+    if teacher_config['model']['type'] == 'inception_v3':
+        teacher_config['model']['params']['aux_logits'] = False
+
+    model = module_util.get_model(teacher_config, device)
+    model_config = teacher_config['model']
+    resume_from_ckpt(model_config['ckpt'], model)
+    return model, model_config['type']
+
+
+def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
+    student_model = load_student_model(config, teacher_model_type, device)
+    org_modules = list()
+    input_batch = torch.rand(config['input_shape']).unsqueeze(0).to(device)
+    module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
+    end_idx = teacher_model_config['end_idx']
+    mimic_modules = [student_model]
+    mimic_modules.extend(org_modules[end_idx:])
+    mimic_model_config = config['mimic_model']
+    mimic_type = mimic_model_config['type']
+    if mimic_type.startswith('densenet'):
+        return DenseNetMimic(mimic_modules)
+    elif mimic_type.startswith('inception'):
+        return InceptionMimic(mimic_modules)
+    elif mimic_type.startswith('resnet'):
+        return ResNetMimic(mimic_modules)
+    raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))

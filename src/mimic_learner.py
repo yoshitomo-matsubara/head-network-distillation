@@ -1,17 +1,11 @@
 import argparse
-import os
 
 import torch
 import torch.backends.cudnn as cudnn
 
-from models.mimic.densenet_mimic import *
-from models.mimic.inception_mimic import *
-from models.mimic.resnet_mimic import *
-from models.mimic.vgg_mimic import *
-from models.classification.inception import Inception3
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
-from utils import module_util
+from utils import mimic_util
 from utils.dataset import general_util
 
 
@@ -22,62 +16,6 @@ def get_argparser():
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
-
-
-def resume_from_ckpt(ckpt_file_path, model, is_student=False):
-    if not os.path.exists(ckpt_file_path):
-        print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
-        if is_student:
-            return 1, 1e60
-        return 1
-
-    print('Resuming from checkpoint..')
-    checkpoint = torch.load(ckpt_file_path)
-    state_dict = checkpoint['model']
-    if not is_student and isinstance(model, Inception3) or\
-            (hasattr(model, 'module') and isinstance(model.module, Inception3)):
-        for key in list(state_dict.keys()):
-            if key.startswith('AuxLogits') or key.startswith('module.AuxLogits'):
-                state_dict.pop(key)
-
-    model.load_state_dict(state_dict)
-    start_epoch = checkpoint['epoch']
-    if is_student:
-        return start_epoch, checkpoint['best_avg_loss']
-    return start_epoch
-
-
-def extract_teacher_model(model, input_shape, device, teacher_model_config):
-    modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to(device), modules)
-    start_idx = teacher_model_config['start_idx']
-    end_idx = teacher_model_config['end_idx']
-    return nn.Sequential(*modules[start_idx:end_idx])
-
-
-def get_teacher_model(teacher_model_config, input_shape, device):
-    teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
-    if teacher_config['model']['type'] == 'inception_v3':
-        teacher_config['model']['params']['aux_logits'] = False
-
-    model = module_util.get_model(teacher_config, device)
-    model_config = teacher_config['model']
-    resume_from_ckpt(model_config['ckpt'], model)
-    return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
-
-
-def get_student_model(teacher_model_type, student_model_config):
-    student_model_type = student_model_config['type']
-    if teacher_model_type.startswith('densenet')\
-            and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
-        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
-    elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
-        return InceptionHeadMimic(student_model_config['version'])
-    elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
-        return ResNet152HeadMimic(student_model_config['version'])
-    elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
-        return Vgg16HeadMimic()
-    raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
 def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -142,11 +80,12 @@ def run(args):
     config = yaml_util.load_yaml_file(args.config)
     input_shape = config['input_shape']
     teacher_model_config = config['teacher_model']
-    teacher_model, teacher_model_type = get_teacher_model(teacher_model_config, input_shape, device)
+    teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
-    student_model = get_student_model(teacher_model_type, student_model_config)
+    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
-    start_epoch, best_avg_loss = resume_from_ckpt(student_model_config['ckpt'], student_model, is_student=True)
+    start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
+                                                             is_student=True)
     train_config = config['train']
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\

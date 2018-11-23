@@ -4,12 +4,10 @@ import os
 import numpy as np
 import torchvision
 
-import mimic_learner
-import mimic_tester
-from models.classification import *
+from models.classification.lenet5 import MnistLeNet5
 from models.mock import *
 from myutils.common import file_util, yaml_util
-from utils import data_util, module_util, net_measure_util
+from utils import data_util, mimic_util, module_util, net_measure_util
 
 
 def get_argparser():
@@ -65,8 +63,8 @@ def analyze_single_model(config_file_path, args, plot=True):
         config = yaml_util.load_yaml_file(config_file_path)
         if 'teacher_model' in config:
             teacher_model_config = config['teacher_model']
-            org_model, teacher_model_type = mimic_tester.get_org_model(teacher_model_config, 'cpu')
-            model = mimic_tester.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
+            org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, 'cpu')
+            model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
             model_type = config['mimic_model']['type']
             input_shape = config['input_shape']
         else:
@@ -101,8 +99,8 @@ def analyze_multiple_models(config_file_paths, args):
 
 def get_teacher_and_student_models(mimic_config, input_shape):
     teacher_model_config = mimic_config['teacher_model']
-    teacher_model, teacher_model_type = mimic_learner.get_teacher_model(teacher_model_config, input_shape, 'cpu')
-    student_model = mimic_learner.get_student_model(teacher_model_type, mimic_config['student_model'])
+    teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, 'cpu')
+    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'])
     return teacher_model_type, teacher_model, student_model
 
 

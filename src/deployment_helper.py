@@ -2,12 +2,11 @@ import argparse
 
 import torch
 
-import mimic_tester
 from models.mimic.densenet_mimic import *
 from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from myutils.common import file_util, yaml_util
-from utils import module_util
+from utils import mimic_util, module_util
 
 
 def get_argparser():
@@ -70,7 +69,7 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     print('Splitting within a student DNN model')
     org_modules = list()
     module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to('cuda'), org_modules)
-    student_model = mimic_tester.load_student_model(config, teacher_model_type, 'cuda')
+    student_model = mimic_util.load_student_model(config, teacher_model_type, 'cuda')
     student_modules = list()
     module_util.extract_decomposable_modules(student_model, torch.rand(1, *input_shape).to('cuda'), student_modules)
     head_module_list = list()
@@ -105,7 +104,7 @@ def run(args):
     head_output_file_path = args.head
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
-    model, teacher_model_type = mimic_tester.get_org_model(config['teacher_model'], 'cuda')
+    model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
     if args.org and head_output_file_path is not None and tail_output_file_path is not None:
         split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                              head_output_file_path, tail_output_file_path)
