@@ -88,9 +88,13 @@ def test(model, test_loader, device, data_type='Test'):
     correct = 0
     total = 0
     bandwidth = 0
+    compressed_bandwidth = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
-            bandwidth += inputs.clone().cpu().detach().numpy().nbytes
+            np_input = inputs.clone().cpu().detach().numpy()
+            bandwidth += np_input.nbytes
+            compressed_input = zlib.compress(np_input, 9)
+            compressed_bandwidth += sys.getsizeof(compressed_input)
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             _, predicted = outputs.max(1)
@@ -98,12 +102,12 @@ def test(model, test_loader, device, data_type='Test'):
             correct += predicted.eq(targets).sum().item()
 
     acc = 100.0 * correct / total
-    print('\n{} set: Accuracy: {}/{} ({:.0f}%)\n'.format(data_type, correct, total, acc))
-    return acc, bandwidth / total
+    print('\n{} set: Accuracy: {}/{} ({:.4f}%)\n'.format(data_type, correct, total, acc))
+    return acc, bandwidth / total, compressed_bandwidth / total
 
 
-def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
-    acc, _ = test(model, valid_loader, criterion, device, 'Validation')
+def validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model_type):
+    acc, _, _ = test(model, valid_loader, device, 'Validation')
     if acc > best_acc:
         save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
         best_acc = acc
@@ -122,14 +126,17 @@ def extract_compression_rates(parent_module, org_bandwidth_list, compressed_band
             print('CompressionWrapper is missing for {}: {}'.format(name, type(child_module).__name__))
 
 
-def plot_compression_rates(model, avg_input_bandwidth):
+def plot_compression_rates(model, avg_input_bandwidth, avg_compressed_input_bandwidth):
     org_bandwidth_list = list()
     compressed_bandwidth_list = list()
     name_list = list()
+    org_bandwidth_list.append(avg_input_bandwidth)
+    compressed_bandwidth_list.append(avg_compressed_input_bandwidth)
+    name_list.append('Input')
     extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
     xs = list(range(len(org_bandwidth_list)))
     if not misc_util.check_if_plottable():
-        print('Average Input Bandwidth: {}'.format(avg_input_bandwidth))
+        print('Average Input Bandwidth: {}\tCompressed: {}'.format(avg_input_bandwidth,avg_compressed_input_bandwidth))
         print('Layer\tOriginal Bandwidth\tCompressed Bandwidth')
         for i in range(len(xs)):
             print('{}\t{}\t{}'.format(name_list[i], org_bandwidth_list[i], compressed_bandwidth_list[i]))
@@ -148,8 +155,8 @@ def plot_compression_rates(model, avg_input_bandwidth):
 def analyze_compression_rate(model, input_shape, test_loader, device):
     input_batch = torch.rand(input_shape).unsqueeze(0).to(device)
     module_wrap_util.wrap_decomposable_modules(model, CompressionWrapper, input_batch)
-    _, avg_input_bandwidth = test(model, test_loader, device)
-    plot_compression_rates(model, avg_input_bandwidth)
+    _, avg_input_bandwidth, avg_compressed_input_bandwidth = test(model, test_loader, device)
+    plot_compression_rates(model, avg_input_bandwidth, avg_compressed_input_bandwidth)
 
 
 def extract_running_times(wrapped_modules):
@@ -208,7 +215,7 @@ def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device
     elif 0 < comp_layer_idx <= len(wrapped_modules):
         wrapped_modules[comp_layer_idx - 1].is_compressed = True
 
-    _, avg_input_bandwidth = test(model, test_loader, device)
+    _, avg_input_bandwidth, _ = test(model, test_loader, device)
     plot_running_time(wrapped_modules)
 
 
@@ -241,11 +248,12 @@ def run(args):
             interval = train_config['interval']
             for epoch in range(start_epoch, start_epoch + train_config['epoch']):
                 train(model, train_loader, optimizer, criterion, epoch, device, interval)
-                best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+                best_acc = validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model_type)
     else:
         model = file_util.load_pickle(pickle_file_path).to(device)
 
     analysis_mode = args.mode
+    model.eval()
     if analysis_mode == 'comp_rate':
         analyze_compression_rate(model, input_shape, test_loader, device)
     elif analysis_mode == 'run_time':
