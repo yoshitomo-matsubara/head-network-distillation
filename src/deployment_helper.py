@@ -63,13 +63,16 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     end_idx = config['teacher_model']['end_idx']
     if partition_idx < 0:
         head_module_list.extend(student_modules)
-        tail_module_list.extend(org_modules[end_idx:])
     else:
-        for head_module in student_modules[:partition_idx]:
-            head_module_list.append(head_module.to(sensor_device))
+        head_module_list.extend(student_modules[:partition_idx])
+        tail_module_list.extend(student_modules[partition_idx:])
 
-        for tail_module in [*student_modules[partition_idx:], *org_modules[end_idx:]]:
-            tail_module_list.append(tail_module.to(edge_device))
+    tail_module_list.extend(org_modules[end_idx:])
+    for head_module in head_module_list:
+        head_module.to(sensor_device)
+
+    for tail_module in tail_module_list:
+        tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
