@@ -17,7 +17,7 @@ def get_argparser():
     argparser.add_argument('--device', help='device for original network pickle')
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
     argparser.add_argument('-scpu', action='store_true', help='option to make sensor-side model runnable without cuda')
-    argparser.add_argument('-ecpu', action='store_true', help='option to make edge-side model runnable without cuda')
+    argparser.add_argument('-ecpu', action='store_true', help='option to make edge-server model runnable without cuda')
     return argparser
 
 
@@ -59,15 +59,22 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     student_modules = list()
     module_util.extract_decomposable_modules(student_model, torch.rand(1, *input_shape).to('cuda'), student_modules)
     head_module_list = list()
-    for head_module in student_modules[:partition_idx]:
-        head_module_list.append(head_module.to(sensor_device))
+    tail_module_list = list()
+    end_idx = config['teacher_model']['end_idx']
+    if partition_idx < 0:
+        head_module_list.extend(student_modules)
+    else:
+        head_module_list.extend(student_modules[:partition_idx])
+        tail_module_list.extend(student_modules[partition_idx:])
+
+    tail_module_list.extend(org_modules[end_idx:])
+    for head_module in head_module_list:
+        head_module.to(sensor_device)
+
+    for tail_module in tail_module_list:
+        tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
-    end_idx = config['teacher_model']['end_idx']
-    tail_module_list = list()
-    for tail_module in [*student_modules[partition_idx:], *org_modules[end_idx:]]:
-        tail_module_list.append(tail_module.to(edge_device))
-
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network, head_output_file_path)
     file_util.save_pickle(tail_network, tail_output_file_path)
