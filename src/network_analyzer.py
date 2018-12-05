@@ -16,7 +16,7 @@ def get_argparser():
     parser.add_argument('--model', default='AlexNet', help='network model (default: alexnet)')
     parser.add_argument('--config', nargs='+', help='yaml file path')
     parser.add_argument('--pkl', help='pickle file path')
-    parser.add_argument('-scale', action='store_true', help='bandwidth scaling option')
+    parser.add_argument('-scale', action='store_true', help='data size scaling option')
     parser.add_argument('-submodule', action='store_true', help='submodule extraction option')
     parser.add_argument('-ts', action='store_true', help='teacher-student models option')
     return parser
@@ -52,9 +52,9 @@ def read_config(config_file_path):
 
 def analyze(model, input_shape, model_type, scaled, submoduled, plot):
     if submoduled:
-        return net_measure_util.compute_model_complexity_and_bandwidth(model, model_type, input_shape,
+        return net_measure_util.compute_model_complexity_and_data_size(model, model_type, input_shape,
                                                                        scaled=scaled, plot=plot)
-    return net_measure_util.compute_layerwise_complexity_and_bandwidth(model, model_type, input_shape,
+    return net_measure_util.compute_layerwise_complexity_and_data_size(model, model_type, input_shape,
                                                                        scaled=scaled, plot=plot)
 
 
@@ -75,26 +75,26 @@ def analyze_single_model(config_file_path, args, plot=True):
         input_shape = list(data_util.convert2type_list(args.isize, ',', int))
         model = file_util.load_pickle(pickle_file_path) if file_util.check_if_exists(pickle_file_path)\
             else get_model(model_type)
-    op_counts, bandwidths, accum_complexities =\
+    op_counts, data_sizes, accum_complexities =\
         analyze(model, input_shape, model_type, args.scale, args.submodule, plot)
-    return op_counts, bandwidths, accum_complexities, model_type
+    return op_counts, data_sizes, accum_complexities, model_type
 
 
 def analyze_multiple_models(config_file_paths, args):
     op_counts_list = list()
-    bandwidths_list = list()
+    data_sizes_list = list()
     accum_complexities_list = list()
     model_type_list = list()
     for config_file_path in config_file_paths:
-        op_counts, bandwidths, accum_complexities, model_type = analyze_single_model(config_file_path, args, False)
+        op_counts, data_sizes, accum_complexities, model_type = analyze_single_model(config_file_path, args, False)
         op_counts_list.append(op_counts)
-        bandwidths_list.append(bandwidths)
+        data_sizes_list.append(data_sizes)
         accum_complexities_list.append(accum_complexities)
         model_type_list.append(model_type)
 
     net_measure_util.plot_model_complexities(op_counts_list, model_type_list)
     net_measure_util.plot_accumulated_model_complexities(accum_complexities_list, model_type_list)
-    net_measure_util.plot_model_bandwidths(bandwidths_list, args.scale, model_type_list)
+    net_measure_util.plot_model_data_sizes(data_sizes_list, args.scale, model_type_list)
 
 
 def get_teacher_and_student_models(mimic_config, input_shape):
@@ -110,34 +110,34 @@ def analyze_teacher_student_models(mimic_config_file_paths, args):
     model_type_list = list()
     teacher_complexity_list = list()
     student_complexity_list = list()
-    teacher_bandwidth_list = list()
-    student_bandwidth_list = list()
+    teacher_data_size_list = list()
+    student_data_size_list = list()
     for mimic_config_file_path in mimic_config_file_paths:
         mimic_config = yaml_util.load_yaml_file(mimic_config_file_path)
         input_shape = mimic_config['input_shape']
         teacher_model_type, teacher_model, student_model = get_teacher_and_student_models(mimic_config, input_shape)
-        _, teacher_bandwidths, teacher_accum_complexities = analyze(teacher_model, input_shape, None, scaled=scaled,
+        _, teacher_data_sizes, teacher_accum_complexities = analyze(teacher_model, input_shape, None, scaled=scaled,
                                                                     submoduled=submoduled, plot=False)
-        _, student_bandwidths, student_accum_complexities = analyze(student_model, input_shape, None, scaled=scaled,
+        _, student_data_sizes, student_accum_complexities = analyze(student_model, input_shape, None, scaled=scaled,
                                                                     submoduled=submoduled, plot=False)
         student_model_config = mimic_config['student_model']
         student_model_version = student_model_config['version']
         made_bottleneck = student_model_version.endswith('b')
         model_type_list.append('Ver.{}'.format(student_model_version))
         teacher_complexity_list.append(teacher_accum_complexities[-1])
-        teacher_bandwidth_list.append(teacher_bandwidths[-1] / teacher_bandwidths[0])
-        bottleneck_idx = np.argmin(student_bandwidths) if made_bottleneck else -1
-        if student_bandwidths[bottleneck_idx] >= student_bandwidths[0] or not made_bottleneck:
+        teacher_data_size_list.append(teacher_data_sizes[-1] / teacher_data_sizes[0])
+        bottleneck_idx = np.argmin(student_data_sizes) if made_bottleneck else -1
+        if student_data_sizes[bottleneck_idx] >= student_data_sizes[0] or not made_bottleneck:
             student_complexity_list.append(student_accum_complexities[-1])
-            student_bandwidth_list.append(student_bandwidths[-1] / student_bandwidths[0])
+            student_data_size_list.append(student_data_sizes[-1] / student_data_sizes[0])
         else:
             student_complexity_list.append(student_accum_complexities[bottleneck_idx - 1])
-            student_bandwidth_list.append(student_bandwidths[bottleneck_idx] / student_bandwidths[0])
+            student_data_size_list.append(student_data_sizes[bottleneck_idx] / student_data_sizes[0])
 
     net_measure_util.plot_teacher_and_student_complexities(teacher_complexity_list, student_complexity_list,
                                                            model_type_list)
-    net_measure_util.plot_bottleneck_bandwidth_vs_complexity(teacher_bandwidth_list, teacher_complexity_list,
-                                                             student_bandwidth_list, student_complexity_list,
+    net_measure_util.plot_bottleneck_data_size_vs_complexity(teacher_data_size_list, teacher_complexity_list,
+                                                             student_data_size_list, student_complexity_list,
                                                              model_type_list)
 
 
