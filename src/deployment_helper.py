@@ -25,7 +25,8 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
                          head_output_file_path, tail_output_file_path):
     print('Splitting an original DNN model')
     modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to('cuda'), modules)
+    z = torch.rand(1, *input_shape).to('cuda')
+    module_util.extract_decomposable_modules(model, z, modules)
     head_module_list = list()
     tail_module_list = list()
     if partition_idx < 0:
@@ -39,9 +40,11 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
         tail_module_list.extend(modules[partition_idx:])
 
     for head_module in head_module_list:
+        z = head_module(z)
         head_module.to(sensor_device)
 
     for tail_module in tail_module_list:
+        z = tail_module(z)
         tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
@@ -54,10 +57,11 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
                                partition_idx, head_output_file_path, tail_output_file_path):
     print('Splitting within a student DNN model')
     org_modules = list()
-    module_util.extract_decomposable_modules(model, torch.rand(1, *input_shape).to('cuda'), org_modules)
+    z = torch.rand(1, *input_shape).to('cuda')
+    module_util.extract_decomposable_modules(model, z, org_modules)
     student_model = mimic_util.load_student_model(config, teacher_model_type, 'cuda')
     student_modules = list()
-    module_util.extract_decomposable_modules(student_model, torch.rand(1, *input_shape).to('cuda'), student_modules)
+    module_util.extract_decomposable_modules(student_model, z, student_modules)
     head_module_list = list()
     tail_module_list = list()
     end_idx = config['teacher_model']['end_idx']
@@ -69,9 +73,11 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
 
     tail_module_list.extend(org_modules[end_idx:])
     for head_module in head_module_list:
+        z = head_module(z)
         head_module.to(sensor_device)
 
     for tail_module in tail_module_list:
+        z = tail_module(z)
         tail_module.to(edge_device)
 
     head_network = nn.Sequential(*head_module_list)
