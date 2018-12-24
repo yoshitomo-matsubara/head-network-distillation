@@ -15,27 +15,27 @@ def get_argparser():
     return parser
 
 
-def plot_bandwidth_vs_complexity(bandwidths_list, accumulated_op_counts_list, label_list):
-    for i in range(len(bandwidths_list)):
-        plt.scatter(bandwidths_list[i][1:], accumulated_op_counts_list[i], label=label_list[i])
+def plot_data_size_vs_complexity(data_sizes_list, accumulated_op_counts_list, label_list):
+    for i in range(len(data_sizes_list)):
+        plt.scatter(data_sizes_list[i][1:], accumulated_op_counts_list[i], label=label_list[i])
     plt.legend()
-    plt.xlabel('Bandwidth [kB]')
+    plt.xlabel('Data Size [kB]')
     plt.ylabel('Accumulated Complexity')
     plt.show()
 
 
 def plot(input_shape, first_param_range, second_param_range):
-    op_counts_list, bandwidths_list, accumulated_op_counts_list, label_list = list(), list(), list(), list()
+    op_counts_list, data_sizes_list, accumulated_op_counts_list, label_list = list(), list(), list(), list()
     for first_param in first_param_range:
         for second_param in second_param_range:
             model = MyNet(first_conv_channel=first_param, second_conv_channel=second_param)
-            op_counts, bandwidths, accumulated_op_counts =\
-                net_measure_util.calc_model_complexity_and_bandwidth(model, input_shape, False)
+            op_counts, data_sizes, accumulated_op_counts =\
+                net_measure_util.calc_model_complexity_and_data_size(model, input_shape, False)
             op_counts_list.append(op_counts)
-            bandwidths_list.append(bandwidths)
+            data_sizes_list.append(data_sizes)
             accumulated_op_counts_list.append(accumulated_op_counts)
             label_list.append('1st: ' + str(first_param) + ', 2nd: ' + str(second_param))
-    plot_bandwidth_vs_complexity(bandwidths_list, accumulated_op_counts_list, label_list)
+    plot_data_size_vs_complexity(data_sizes_list, accumulated_op_counts_list, label_list)
 
 
 def run(args):

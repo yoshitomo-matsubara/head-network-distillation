@@ -107,3 +107,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
         module_list.append(parent_module)
         output_size_list.append([*expected_z.size()])
     return expected_z, True
+
+
+def count_params(model):
+    return sum(param.numel() for param in model.parameters())
