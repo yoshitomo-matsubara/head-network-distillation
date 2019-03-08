@@ -111,7 +111,6 @@ class MobileNetV2(nn.Module):
             for stride in strides:
                 layers.append(Block(in_planes, out_planes, expansion, stride))
                 in_planes = out_planes
-                print(layers)
         return nn.Sequential(*layers)
 
     def forward(self, x):
