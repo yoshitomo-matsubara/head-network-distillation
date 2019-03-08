@@ -124,7 +124,7 @@ class MobileNetV2(nn.Module):
 
 def mobilenet_model(model_type, param_config):
     if model_type == 'mobilenet_v1':
-        return MobileNetV1(param_config)
+        return MobileNetV1(**param_config)
     elif model_type == 'mobilenet_v2':
-        return MobileNetV2(param_config)
+        return MobileNetV2(**param_config)
     return None
