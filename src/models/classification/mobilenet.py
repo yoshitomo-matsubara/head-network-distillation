@@ -66,6 +66,7 @@ class Block(nn.Module):
             nn.BatchNorm2d(out_planes)
         )
 
+        self.shortcut = None
         if stride == 1 and in_planes != out_planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False),
@@ -74,7 +75,7 @@ class Block(nn.Module):
 
     def forward(self, x):
         z = self.seq(x)
-        return z + self.shortcut(x) if self.stride == 1 else z
+        return z + self.shortcut(x) if self.shortcut is not None else z
 
 
 class MobileNetV2(nn.Module):
