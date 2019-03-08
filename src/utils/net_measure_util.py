@@ -191,7 +191,6 @@ def compute_layerwise_complexity_and_data_size(model, model_name, input_shape, s
                 net.register_forward_hook(simple_hook)
             else:
                 print('Non-registered instance:', type(net))
-                print(net)
             return
 
         for child in children:
