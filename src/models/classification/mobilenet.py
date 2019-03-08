@@ -15,7 +15,6 @@ def conv_dw(inp, oup, stride):
         nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
         nn.BatchNorm2d(inp),
         nn.ReLU(inplace=True),
-
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
         nn.BatchNorm2d(oup),
         nn.ReLU(inplace=True),
@@ -67,7 +66,6 @@ class Block(nn.Module):
             nn.BatchNorm2d(out_planes)
         )
 
-        self.shortcut = nn.Sequential()
         if stride == 1 and in_planes != out_planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False),
@@ -112,6 +110,7 @@ class MobileNetV2(nn.Module):
             for stride in strides:
                 layers.append(Block(in_planes, out_planes, expansion, stride))
                 in_planes = out_planes
+                print(layers)
         return nn.Sequential(*layers)
 
     def forward(self, x):
