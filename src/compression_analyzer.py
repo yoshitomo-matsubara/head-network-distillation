@@ -23,14 +23,21 @@ def get_argparser():
     return parser
 
 
-def resume_from_ckpt(model, model_config):
+def resume_from_ckpt(model, model_config, device):
     ckpt_file_path = model_config['ckpt']
     if not file_util.check_if_exists(ckpt_file_path):
         return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
+    model_state_dict = checkpoint['model']
+    if device == 'cpu':
+        for key in list(model_state_dict.keys()):
+            if key.startswith('module.'):
+                val = model_state_dict.pop(key)
+                model_state_dict[key[7:]] = val
+
+    model.load_state_dict(model_state_dict)
     model_type = checkpoint['type']
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
@@ -215,7 +222,7 @@ def run(args):
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):
         model = module_util.get_model(config, device)
-        resume_from_ckpt(model, config['model'])
+        resume_from_ckpt(model, config['model'], device)
     else:
         model = file_util.load_pickle(pickle_file_path).to(device)
 
