@@ -16,7 +16,6 @@ def get_argparser():
     parser = argparse.ArgumentParser(description='Compression Analyzer')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--pkl', help='model pickle file path')
-    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     parser.add_argument('-cpu', action='store_true', help='use CPU')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
     parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
