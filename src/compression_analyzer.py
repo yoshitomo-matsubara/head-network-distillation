@@ -7,7 +7,6 @@ import torch.backends.cudnn as cudnn
 
 import ae_runner
 from myutils.common import file_util, yaml_util
-from myutils.pytorch import func_util
 from structure.wrapper import *
 from utils import misc_util, module_util, module_wrap_util
 from utils.dataset import general_util
@@ -17,7 +16,6 @@ def get_argparser():
     parser = argparse.ArgumentParser(description='Compression Analyzer')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--pkl', help='model pickle file path')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     parser.add_argument('-cpu', action='store_true', help='use CPU')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
@@ -26,9 +24,9 @@ def get_argparser():
     return parser
 
 
-def resume_from_ckpt(model, model_config, init):
+def resume_from_ckpt(model, model_config):
     ckpt_file_path = model_config['ckpt']
-    if init or not file_util.check_if_exists(ckpt_file_path):
+    if not file_util.check_if_exists(ckpt_file_path):
         return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
@@ -48,28 +46,6 @@ def load_autoencoder(ae_config_file_path, device):
     ae_model = module_util.get_autoencoder(ae_config, device)
     ae_runner.resume_from_ckpt(ae_model, ae_config, False)
     return ae_model
-
-
-def train(model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: %d' % epoch)
-    model.train()
-    train_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
-        if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                           100.0 * batch_idx / len(train_loader), loss.item()))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -240,16 +216,7 @@ def run(args):
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):
         model = module_util.get_model(config, device)
-        model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
-        if not args.evaluate:
-            criterion_config = train_config['criterion']
-            criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
-            optim_config = train_config['optimizer']
-            optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
-            interval = train_config['interval']
-            for epoch in range(start_epoch, start_epoch + train_config['epoch']):
-                train(model, train_loader, optimizer, criterion, epoch, device, interval)
-                best_acc = validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model_type)
+        resume_from_ckpt(model, config['model'])
     else:
         model = file_util.load_pickle(pickle_file_path).to(device)
 
