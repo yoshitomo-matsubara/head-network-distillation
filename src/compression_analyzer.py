@@ -19,6 +19,7 @@ def get_argparser():
     parser.add_argument('--pkl', help='model pickle file path')
     parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     parser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    parser.add_argument('-cpu', action='store_true', help='use CPU')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
     parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
                                                                    ' (starts from 1, no compression if 0 is given)')
@@ -220,7 +221,7 @@ def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device
 
 
 def run(args):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
 
