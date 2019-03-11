@@ -12,6 +12,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 
+from structure.dataset import AdvImageFolder
 from utils.dataset import imagenet_util
 
 
@@ -79,12 +80,11 @@ def get_training_dataset(train_dir, valid_dir, args):
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
     valid_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valid_dir, transforms.Compose([
-            transforms.Resize(256),
+        AdvImageFolder(valid_dir, 256, transforms.Compose([
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
-        ])),
+        ]), jpeg_quality=args.jpeg_quality),
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
     return train_loader, valid_loader, train_sampler

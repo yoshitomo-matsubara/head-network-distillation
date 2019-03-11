@@ -63,6 +63,8 @@ def get_argparser():
                         help='url used to set up distributed training')
     parser.add_argument('--dist-backend', default='gloo', type=str,
                         help='distributed backend')
+    parser.add_argument('--jpeg_quality', default=0, type=int,
+                        help='JPEG compression quality')
     return parser
 
 
