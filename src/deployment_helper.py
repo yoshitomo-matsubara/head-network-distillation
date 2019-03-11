@@ -103,13 +103,16 @@ def run(args):
     head_output_file_path = args.head
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
-    model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
-    if args.org and head_output_file_path is not None and tail_output_file_path is not None:
-        split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
-                             head_output_file_path, tail_output_file_path)
-    elif head_output_file_path is not None and tail_output_file_path is not None:
-        split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
-                                   partition_idx, head_output_file_path, tail_output_file_path)
+    if 'teacher_model' not in config:
+        model = module_util.get_model(config)
+    else:
+        model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
+        if args.org and head_output_file_path is not None and tail_output_file_path is not None:
+            split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
+                                 head_output_file_path, tail_output_file_path)
+        elif head_output_file_path is not None and tail_output_file_path is not None:
+            split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
+                                       partition_idx, head_output_file_path, tail_output_file_path)
 
     if args.model is not None and args.device is not None:
         convert_model(model, args.device, args.model)

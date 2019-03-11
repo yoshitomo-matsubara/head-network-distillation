@@ -4,7 +4,7 @@ from autoencoders.ae import *
 from models.classification import *
 
 
-def get_model(config, device):
+def get_model(config, device=None):
     model = None
     model_config = config['model']
     model_type = model_config['type']
@@ -25,6 +25,8 @@ def get_model(config, device):
 
     if model is None:
         raise ValueError('model_type `{}` is not expected'.format(model_type))
+    elif device is None:
+        return model
 
     model = model.to(device)
     if device == 'cuda':
