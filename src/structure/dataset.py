@@ -1,10 +1,10 @@
 from io import BytesIO
 
 import numpy as np
-from torchvision.datasets import ImageFolder
-from torchvision.datasets.folder import default_loader
 import torchvision.transforms.functional as functional
 from PIL import Image
+from torchvision.datasets import ImageFolder
+from torchvision.datasets.folder import default_loader
 
 from myutils.pytorch.vision.dataset import RgbImageDataset
 
