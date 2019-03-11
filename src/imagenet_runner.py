@@ -121,19 +121,17 @@ def main(args):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     best_prec1 = resume_from_ckpt(model, optimizer, args)
-
     cudnn.benchmark = True
 
     # Data loading code
     train_dir = os.path.join(args.data, 'train')
     valid_dir = os.path.join(args.data, 'val')
     train_loader, valid_loader, train_sampler = get_training_dataset(train_dir, valid_dir, args)
+    if not args.evaluate:
+        train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
-    if args.evaluate:
-        imagenet_util.validate(valid_loader, model, criterion, args)
-        return
-
-    train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
+    imagenet_util.validate(valid_loader, model, criterion, args)
+    valid_loader.dataset.compute_compression_rate()
 
 
 if __name__ == '__main__':
