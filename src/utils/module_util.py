@@ -5,6 +5,7 @@ from models.classification import *
 
 
 def get_model(config, device):
+    model = None
     model_config = config['model']
     model_type = model_config['type']
     if model_type == 'alexnet':
@@ -15,11 +16,14 @@ def get_model(config, device):
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):
         model = resnet_model(model_type, model_config['params'])
+    elif model_type.startswith('mobilenet'):
+        model = mobilenet_model(model_type, model_config['params'])
     elif model_type.startswith('inception_v3'):
         model = inception_v3(**model_config['params'])
     elif model_type in torchvision.models.__dict__:
         model = torchvision.models.__dict__[model_type](**model_config['params'])
-    else:
+
+    if model is None:
         raise ValueError('model_type `{}` is not expected'.format(model_type))
 
     model = model.to(device)
@@ -107,3 +111,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
         module_list.append(parent_module)
         output_size_list.append([*expected_z.size()])
     return expected_z, True
+
+
+def count_params(model):
+    return sum(param.numel() for param in model.parameters())

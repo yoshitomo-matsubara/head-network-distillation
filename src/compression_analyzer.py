@@ -7,7 +7,6 @@ import torch.backends.cudnn as cudnn
 
 import ae_runner
 from myutils.common import file_util, yaml_util
-from myutils.pytorch import func_util
 from structure.wrapper import *
 from utils import misc_util, module_util, module_wrap_util
 from utils.dataset import general_util
@@ -17,22 +16,28 @@ def get_argparser():
     parser = argparse.ArgumentParser(description='Compression Analyzer')
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--pkl', help='model pickle file path')
-    parser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    parser.add_argument('-evaluate', action='store_true', help='evaluation option')
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
     parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
                                                                    ' (starts from 1, no compression if 0 is given)')
+    parser.add_argument('-cpu', action='store_true', help='use CPU')
     return parser
 
 
-def resume_from_ckpt(model, model_config, init):
+def resume_from_ckpt(model, model_config, device):
     ckpt_file_path = model_config['ckpt']
-    if init or not file_util.check_if_exists(ckpt_file_path):
+    if not file_util.check_if_exists(ckpt_file_path):
         return model_config['type'], 0, 1, ckpt_file_path
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
+    model_state_dict = checkpoint['model']
+    if device == 'cpu':
+        for key in list(model_state_dict.keys()):
+            if key.startswith('module.'):
+                val = model_state_dict.pop(key)
+                model_state_dict[key[7:]] = val
+
+    model.load_state_dict(model_state_dict)
     model_type = checkpoint['type']
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
@@ -47,28 +52,6 @@ def load_autoencoder(ae_config_file_path, device):
     ae_model = module_util.get_autoencoder(ae_config, device)
     ae_runner.resume_from_ckpt(ae_model, ae_config, False)
     return ae_model
-
-
-def train(model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: %d' % epoch)
-    model.train()
-    train_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
-        if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                           100.0 * batch_idx / len(train_loader), loss.item()))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -87,14 +70,14 @@ def test(model, test_loader, device, data_type='Test'):
     model.eval()
     correct = 0
     total = 0
-    bandwidth = 0
-    compressed_bandwidth = 0
+    data_size = 0
+    compressed_data_size = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             np_input = inputs.clone().cpu().detach().numpy()
-            bandwidth += np_input.nbytes
+            data_size += np_input.nbytes
             compressed_input = zlib.compress(np_input, 9)
-            compressed_bandwidth += sys.getsizeof(compressed_input)
+            compressed_data_size += sys.getsizeof(compressed_input)
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             _, predicted = outputs.max(1)
@@ -103,7 +86,7 @@ def test(model, test_loader, device, data_type='Test'):
 
     acc = 100.0 * correct / total
     print('\n{} set: Accuracy: {}/{} ({:.4f}%)\n'.format(data_type, correct, total, acc))
-    return acc, bandwidth / total, compressed_bandwidth / total
+    return acc, data_size / total, compressed_data_size / total
 
 
 def validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model_type):
@@ -114,40 +97,40 @@ def validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model
     return best_acc
 
 
-def extract_compression_rates(parent_module, org_bandwidth_list, compressed_bandwidth_list, name_list):
+def extract_compression_rates(parent_module, org_data_size_list, compressed_data_size_list, name_list):
     for name, child_module in parent_module.named_children():
         if isinstance(child_module, CompressionWrapper):
-            org_bandwidth_list.append(child_module.get_average_org_bandwidth())
-            compressed_bandwidth_list.append(child_module.get_average_compressed_bandwidth())
+            org_data_size_list.append(child_module.get_average_org_data_size())
+            compressed_data_size_list.append(child_module.get_average_compressed_data_size())
             name_list.append(type(child_module.org_module).__name__)
         elif list(child_module.children()):
-            extract_compression_rates(child_module, org_bandwidth_list, compressed_bandwidth_list, name_list)
+            extract_compression_rates(child_module, org_data_size_list, compressed_data_size_list, name_list)
         else:
             print('CompressionWrapper is missing for {}: {}'.format(name, type(child_module).__name__))
 
 
-def plot_compression_rates(model, avg_input_bandwidth, avg_compressed_input_bandwidth):
-    org_bandwidth_list = list()
-    compressed_bandwidth_list = list()
+def plot_compression_rates(model, avg_input_data_size, avg_compressed_input_data_size):
+    org_data_size_list = list()
+    compressed_data_size_list = list()
     name_list = list()
-    org_bandwidth_list.append(avg_input_bandwidth)
-    compressed_bandwidth_list.append(avg_compressed_input_bandwidth)
+    org_data_size_list.append(avg_input_data_size)
+    compressed_data_size_list.append(avg_compressed_input_data_size)
     name_list.append('Input')
-    extract_compression_rates(model, org_bandwidth_list, compressed_bandwidth_list, name_list)
-    xs = list(range(len(org_bandwidth_list)))
+    extract_compression_rates(model, org_data_size_list, compressed_data_size_list, name_list)
+    xs = list(range(len(org_data_size_list)))
     if not misc_util.check_if_plottable():
-        print('Average Input Bandwidth: {}\tCompressed: {}'.format(avg_input_bandwidth,avg_compressed_input_bandwidth))
-        print('Layer\tOriginal Bandwidth\tCompressed Bandwidth')
+        print('Average Input Data Size: {}\tCompressed: {}'.format(avg_input_data_size,avg_compressed_input_data_size))
+        print('Layer\tOriginal Data Size\tCompressed Data Size')
         for i in range(len(xs)):
-            print('{}\t{}\t{}'.format(name_list[i], org_bandwidth_list[i], compressed_bandwidth_list[i]))
+            print('{}\t{}\t{}'.format(name_list[i], org_data_size_list[i], compressed_data_size_list[i]))
         return
 
-    plt.plot(xs, [avg_input_bandwidth for _ in range(len(name_list))], label='Input')
-    plt.plot(xs, org_bandwidth_list, label='Original')
-    plt.plot(xs, compressed_bandwidth_list, label='Compressed')
+    plt.plot(xs, [avg_input_data_size for _ in range(len(name_list))], label='Input')
+    plt.plot(xs, org_data_size_list, label='Original')
+    plt.plot(xs, compressed_data_size_list, label='Compressed')
     plt.xticks(xs, name_list, rotation=90)
     plt.xlabel('Layer')
-    plt.ylabel('Average Bandwidth [Bytes]')
+    plt.ylabel('Average Data Size [Bytes]')
     plt.legend()
     plt.show()
 
@@ -155,8 +138,8 @@ def plot_compression_rates(model, avg_input_bandwidth, avg_compressed_input_band
 def analyze_compression_rate(model, input_shape, test_loader, device):
     input_batch = torch.rand(input_shape).unsqueeze(0).to(device)
     module_wrap_util.wrap_decomposable_modules(model, CompressionWrapper, input_batch)
-    _, avg_input_bandwidth, avg_compressed_input_bandwidth = test(model, test_loader, device)
-    plot_compression_rates(model, avg_input_bandwidth, avg_compressed_input_bandwidth)
+    _, avg_input_data_size, avg_compressed_input_data_size = test(model, test_loader, device)
+    plot_compression_rates(model, avg_input_data_size, avg_compressed_input_data_size)
 
 
 def extract_running_times(wrapped_modules):
@@ -215,12 +198,12 @@ def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device
     elif 0 < comp_layer_idx <= len(wrapped_modules):
         wrapped_modules[comp_layer_idx - 1].is_compressed = True
 
-    _, avg_input_bandwidth, _ = test(model, test_loader, device)
+    _, avg_input_data_size, _ = test(model, test_loader, device)
     plot_running_time(wrapped_modules)
 
 
 def run(args):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
 
@@ -239,16 +222,7 @@ def run(args):
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):
         model = module_util.get_model(config, device)
-        model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
-        if not args.evaluate:
-            criterion_config = train_config['criterion']
-            criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
-            optim_config = train_config['optimizer']
-            optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
-            interval = train_config['interval']
-            for epoch in range(start_epoch, start_epoch + train_config['epoch']):
-                train(model, train_loader, optimizer, criterion, epoch, device, interval)
-                best_acc = validate(model, valid_loader, epoch, device, best_acc, ckpt_file_path, model_type)
+        resume_from_ckpt(model, config['model'], device)
     else:
         model = file_util.load_pickle(pickle_file_path).to(device)
 
