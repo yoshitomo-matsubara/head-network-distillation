@@ -39,18 +39,10 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
         head_module_list.extend(modules[:partition_idx])
         tail_module_list.extend(modules[partition_idx:])
 
-    for head_module in head_module_list:
-        z = head_module(z)
-        head_module.to(sensor_device)
-
-    for tail_module in tail_module_list:
-        z = tail_module(z)
-        tail_module.to(edge_device)
-
     head_network = nn.Sequential(*head_module_list)
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
-    file_util.save_pickle(head_network, head_output_file_path)
-    file_util.save_pickle(tail_network, tail_output_file_path)
+    file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
+    file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
 
 
 def split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
@@ -72,18 +64,10 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
         tail_module_list.extend(student_modules[partition_idx:])
 
     tail_module_list.extend(org_modules[end_idx:])
-    for head_module in head_module_list:
-        z = head_module(z)
-        head_module.to(sensor_device)
-
-    for tail_module in tail_module_list:
-        z = tail_module(z)
-        tail_module.to(edge_device)
-
     head_network = nn.Sequential(*head_module_list)
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
-    file_util.save_pickle(head_network, head_output_file_path)
-    file_util.save_pickle(tail_network, tail_output_file_path)
+    file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
+    file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
 
 
 def convert_model(model, device, output_file_path):
