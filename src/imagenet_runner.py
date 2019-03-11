@@ -66,7 +66,7 @@ def get_training_dataset(train_dir, valid_dir, args):
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            normalize,
+            normalize
         ]))
 
     if args.distributed:
@@ -83,7 +83,7 @@ def get_training_dataset(train_dir, valid_dir, args):
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            normalize,
+            normalize
         ])),
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
