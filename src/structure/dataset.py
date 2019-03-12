@@ -117,10 +117,6 @@ class AdvImageFolder(ImageFolder):
         return data.reshape(len(self.targets), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
-        if len(self.compression_rates) == 0:
-            print('No compression rate')
-            return
-
         self.compression_rates = []
         for i in range(len(self.targets)):
             _, _ = self.__getitem__(i)
