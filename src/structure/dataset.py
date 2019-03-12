@@ -89,10 +89,7 @@ class AdvImageFolder(ImageFolder):
 
     def __getitem__(self, idx):
         file_path, target = self.samples[idx]
-        img = Image.open(file_path)
-        if img.mode == 'L':
-            img = img.convert('RGB')
-
+        img = Image.open(file_path).convert('RGB')
         img = functional.resize(img, self.size, interpolation=2)
         if 1 <= self.jpeg_quality <= 95:
             img, compression_rate = self.compress_img(img)
@@ -120,6 +117,10 @@ class AdvImageFolder(ImageFolder):
         return data.reshape(len(self.targets), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
+        if len(self.compression_rates) == 0:
+            print('No compression rate')
+            return
+
         self.compression_rates = []
         for i in range(len(self.targets)):
             _, _ = self.__getitem__(i)
