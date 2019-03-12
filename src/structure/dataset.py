@@ -119,7 +119,7 @@ class AdvImageFolder(ImageFolder):
     def compute_compression_rate(self):
         self.compression_rates = []
         for i in range(len(self.targets)):
-            _, _ = self.__getitem__(i)
+            self.__getitem__(i)
 
         self.avg_compression_rate = np.average(self.compression_rates)
         self.sd_compression_rate = np.std(self.compression_rates)
