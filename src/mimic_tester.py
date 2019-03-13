@@ -12,6 +12,7 @@ from utils.dataset import general_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Tester')
     argparser.add_argument('--config', required=True, help='yaml file path')
+    argparser.add_argument('--gpu', type=int, help='gpu number')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
@@ -69,6 +70,9 @@ def run(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
+        gpu_number = args.gpu
+        if gpu_number is not None and gpu_number >= 0:
+            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     teacher_model_config = config['teacher_model']

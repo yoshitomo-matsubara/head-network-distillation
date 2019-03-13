@@ -19,6 +19,7 @@ def get_argparser():
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
     parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
                                                                    ' (starts from 1, no compression if 0 is given)')
+    parser.add_argument('--gpu', type=int, help='gpu number')
     parser.add_argument('-cpu', action='store_true', help='use CPU')
     return parser
 
@@ -206,6 +207,9 @@ def run(args):
     device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
+        gpu_number = args.gpu
+        if gpu_number is not None and gpu_number >= 0:
+            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']

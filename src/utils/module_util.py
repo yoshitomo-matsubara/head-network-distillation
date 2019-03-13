@@ -29,7 +29,7 @@ def get_model(config, device=None):
         return model
 
     model = model.to(device)
-    if device == 'cuda':
+    if device.startswith('cuda'):
         model = torch.nn.DataParallel(model)
     return model
 
