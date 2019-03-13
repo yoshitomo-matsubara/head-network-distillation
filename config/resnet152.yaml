@@ -5,6 +5,9 @@ dataset:
         train: !join [*data_dir, 'train.txt']
         valid: !join [*data_dir, 'valid.txt']
         test: !join [*data_dir, 'test.txt']
+    normalizerer:
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
 
 input_shape: [3, 224, 224]
 

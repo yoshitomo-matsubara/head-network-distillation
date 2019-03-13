@@ -217,7 +217,8 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                       compress_config['type'], compress_config['size'], ae_model=ae_model,
-                                      reshape_size=input_shape[1:3], compression_quality=test_config['jquality'])
+                                      reshape_size=input_shape[1:3], jpeg_quality=test_config['jquality'],
+                                      **dataset_config['normalizer'])
 
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):

@@ -44,7 +44,7 @@ def get_data_loaders(config):
                                              compress_config['type'], compress_config['size'], ae_model=None,
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             compression_quality=test_config['jquality'])
+                                             jpeg_quality=test_config['jquality'], **dataset_config['normalizer'])
     elif dataset_name.startswith('cifar'):
         return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                            compress_config['type'], compress_config['size'], train_config['valid_rate'],

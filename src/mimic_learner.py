@@ -90,7 +90,7 @@ def run(args):
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
-                                      reshape_size=input_shape[1:3], compression_quality=-1)
+                                      reshape_size=input_shape[1:3], jpeg_quality=-1, **dataset_config['normalizer'])
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']
