@@ -11,7 +11,7 @@ input_shape: [3, 224, 224]
 model:
     type: &model_type 'resnet152'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
-    pretrained: True
+    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
