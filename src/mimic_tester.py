@@ -25,6 +25,7 @@ def predict(inputs, targets, model):
 
 
 def test(mimic_model, org_model, test_loader, device):
+    print('Testing..')
     mimic_model.eval()
     org_model.eval()
     mimic_correct_count = 0
