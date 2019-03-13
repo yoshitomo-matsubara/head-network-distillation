@@ -32,7 +32,8 @@ def get_data_loaders(data_config, batch_size=100, compression_type=None, compres
     valid_file_path = data_config['valid']
     test_file_path = data_config['test']
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size)
-    normalizer = data_util.build_normalizer(train_dataset.load_all_data(), mean, std) if normalized else None
+    normalizer = data_util.build_normalizer(train_dataset.load_all_data() if mean is None or std is None else None,
+                                            mean, std) if normalized else None
     train_comp_list = [transforms.Resize(rough_size), transforms.RandomCrop(reshape_size)]\
         if rough_size is not None else list()
     train_comp_list.extend([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
