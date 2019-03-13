@@ -13,7 +13,6 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Tester')
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--gpu', type=int, help='gpu number')
-    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
 
