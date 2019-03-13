@@ -11,7 +11,7 @@ def get_model(config, device=None):
     if model_type == 'alexnet':
         model = AlexNet(**model_config['params'])
     elif model_type.startswith('densenet'):
-        model = DenseNet(**model_config['params'])
+        model = densenet_model(model_type, model_config['params'], model_config['pretrained'])
     elif model_type == 'lenet5':
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):

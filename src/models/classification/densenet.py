@@ -1,7 +1,17 @@
 from collections import OrderedDict
 
 import torch.nn as nn
+import re
+import torch.utils.model_zoo as model_zoo
 from torchvision.models.densenet import _DenseBlock, _Transition
+
+
+MODEL_URLS = {
+    'densenet121': 'https://download.pytorch.org/models/densenet121-a639ec97.pth',
+    'densenet169': 'https://download.pytorch.org/models/densenet169-b2777c0a.pth',
+    'densenet201': 'https://download.pytorch.org/models/densenet201-c1103571.pth',
+    'densenet161': 'https://download.pytorch.org/models/densenet161-8d451a50.pth',
+}
 
 
 class DenseNet(nn.Module):
@@ -58,3 +68,19 @@ class DenseNet(nn.Module):
         out = self.avg_pool2d(out)
         out = self.classifier(out.view(features.size(0), -1))
         return out
+
+
+def densenet_model(model_type, param_config, pretrained=False):
+    model = DenseNet(**param_config)
+    if pretrained:
+        pattern = re.compile(
+            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+        state_dict = model_zoo.load_url(MODEL_URLS[model_type])
+        for key in list(state_dict.keys()):
+            res = pattern.match(key)
+            if res:
+                new_key = res.group(1) + res.group(2)
+                state_dict[new_key] = state_dict[key]
+                del state_dict[key]
+        model.load_state_dict(state_dict)
+    return model

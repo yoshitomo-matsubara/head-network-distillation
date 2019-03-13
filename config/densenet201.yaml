@@ -5,12 +5,16 @@ dataset:
         train: !join [*data_dir, 'train.txt']
         valid: !join [*data_dir, 'valid.txt']
         test: !join [*data_dir, 'test.txt']
+    normalizer:
+        mean:
+        std:
 
 input_shape: [3, 224, 224]
 
 model:
     type: &model_type 'densenet201'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
+    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         growth_rate: 32
