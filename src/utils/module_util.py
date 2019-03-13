@@ -19,7 +19,7 @@ def get_model(config, device=None):
     elif model_type.startswith('mobilenet'):
         model = mobilenet_model(model_type, model_config['params'])
     elif model_type.startswith('inception_v3'):
-        model = inception_v3(**model_config['params'])
+        model = inception_v3(model_config['pretrained'], **model_config['params'])
     elif model_type in torchvision.models.__dict__:
         model = torchvision.models.__dict__[model_type](**model_config['params'])
 

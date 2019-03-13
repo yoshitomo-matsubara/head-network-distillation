@@ -11,6 +11,7 @@ input_shape: [3, 299, 299]
 model:
     type: &model_type 'inception_v3'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
+    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
