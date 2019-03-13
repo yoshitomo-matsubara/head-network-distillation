@@ -51,7 +51,7 @@ def convert_caltech_dataset(input_dir_path, val_rate, test_rate, rgb_only, outpu
 
 def convert_imagenet_dataset(input_dir_path, output_dir_path):
     dataset_dict = dict()
-    for key in ['train', 'val', 'test']:
+    for key in ['train', 'val']:
         pair_list = list()
         sub_dir_path_list = file_util.get_dir_path_list(os.path.join(input_dir_path, key), is_sorted=True)
         for sub_dir_path in sub_dir_path_list:
@@ -63,7 +63,7 @@ def convert_imagenet_dataset(input_dir_path, output_dir_path):
 
     write_converted_dataset(dataset_dict['train'], False, os.path.join(output_dir_path, 'train.txt'))
     write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'valid.txt'))
-    write_converted_dataset(dataset_dict['test'], False, os.path.join(output_dir_path, 'test.txt'))
+    write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'test.txt'))
 
 
 def run(args):
