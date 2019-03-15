@@ -88,9 +88,7 @@ def run(args):
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
     if 'teacher_model' not in config:
-        model = module_util.get_model(config)
-        if next(model.parameters()).is_cuda:
-            model = nn.DataParallel(model)
+        model = module_util.get_model(config, 'cuda' if torch.cuda.is_available() else None)
         module_util.resume_from_ckpt(model, config['model'], False)
     else:
         model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
