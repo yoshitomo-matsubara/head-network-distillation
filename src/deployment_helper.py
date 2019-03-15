@@ -89,7 +89,7 @@ def run(args):
     input_shape = config['input_shape']
     if 'teacher_model' not in config:
         model = module_util.get_model(config)
-        module_util.resume_from_ckpt(config['model']['ckpt'], model)
+        module_util.resume_from_ckpt(config['model']['ckpt'], model, False)
     else:
         model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
