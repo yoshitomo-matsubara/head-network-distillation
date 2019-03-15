@@ -20,20 +20,6 @@ def get_argparser():
     return argparser
 
 
-def resume_from_ckpt(model, model_config, init):
-    ckpt_file_path = model_config['ckpt']
-    if init or not file_util.check_if_exists(ckpt_file_path):
-        return model_config['type'], 0, 1, ckpt_file_path
-
-    print('Resuming from checkpoint..')
-    checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
-    model_type = checkpoint['type']
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
-    return model_type, best_acc, start_epoch, ckpt_file_path
-
-
 def get_data_loaders(config):
     dataset_config = config['dataset']
     train_config = config['train']
@@ -132,7 +118,7 @@ def run(args):
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config)
     model = module_util.get_model(config, device)
-    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
+    model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, config['model'], args.init)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])

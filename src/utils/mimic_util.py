@@ -1,5 +1,3 @@
-import os
-
 import torch
 
 from models.classification.inception import Inception3
@@ -7,12 +5,12 @@ from models.mimic.densenet_mimic import *
 from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
-from myutils.common import yaml_util
+from myutils.common import file_util, yaml_util
 from utils import module_util
 
 
 def resume_from_ckpt(ckpt_file_path, model, is_student=False):
-    if not os.path.exists(ckpt_file_path):
+    if not file_util.check_if_exists(ckpt_file_path):
         print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
         if is_student:
             return 1, 1e60
