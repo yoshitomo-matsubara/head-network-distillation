@@ -16,7 +16,7 @@ teacher_model:
 
 student_model:
     type: &smodel_type 'densenet201_head_mimic'
-    version: &ver '2'
+    version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
 
