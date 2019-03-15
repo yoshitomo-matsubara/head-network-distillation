@@ -1,5 +1,15 @@
 import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
 from torchvision.models.resnet import BasicBlock, Bottleneck
+
+
+MODEL_URLS = {
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+}
 
 
 class ResNet(nn.Module):
@@ -81,15 +91,21 @@ def resnet152(param_config):
     return ResNet(Bottleneck, [3, 8, 36, 3], **param_config)
 
 
-def resnet_model(model_type, param_config):
+def resnet_model(model_type, param_config, pretrained=False):
+    model = None
     if model_type == 'resnet18':
-        return resnet18(param_config)
+        model = resnet18(param_config)
     elif model_type == 'resnet34':
-        return resnet34(param_config)
+        model = resnet34(param_config)
     elif model_type == 'resnet50':
-        return resnet50(param_config)
+        model = resnet50(param_config)
     elif model_type == 'resnet101':
-        return resnet101(param_config)
+        model = resnet101(param_config)
     elif model_type == 'resnet152':
-        return resnet152(param_config)
-    return None
+        model = resnet152(param_config)
+
+    if model is None:
+        raise ValueError('model_type `{}` is not expected'.format(model_type))
+    elif pretrained:
+        model.load_state_dict(model_zoo.load_url(MODEL_URLS[model_type]))
+    return model

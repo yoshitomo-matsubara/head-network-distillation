@@ -14,6 +14,7 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
+    argparser.add_argument('--gpu', type=int, help='gpu number')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
@@ -76,6 +77,9 @@ def run(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
+        gpu_number = args.gpu
+        if gpu_number is not None and gpu_number >= 0:
+            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     input_shape = config['input_shape']
@@ -90,7 +94,7 @@ def run(args):
     dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
-                                      reshape_size=input_shape[1:3], compression_quality=-1)
+                                      reshape_size=input_shape[1:3], jpeg_quality=-1, **dataset_config['normalizer'])
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']

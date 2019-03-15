@@ -55,6 +55,8 @@ def get_argparser():
                         help='path to latest checkpoint (default: none)')
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                         help='evaluate model on validation set')
+    parser.add_argument('--skip_print', action='store_true',
+                        help='skip progress print statements')
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
     parser.add_argument('--world-size', default=1, type=int,
@@ -63,6 +65,8 @@ def get_argparser():
                         help='url used to set up distributed training')
     parser.add_argument('--dist-backend', default='gloo', type=str,
                         help='distributed backend')
+    parser.add_argument('--jpeg_quality', default=0, type=int,
+                        help='JPEG compression quality')
     return parser
 
 
@@ -118,7 +122,6 @@ def validate(val_loader, model, criterion, args):
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-
     # switch to evaluate mode
     model.eval()
 
@@ -141,8 +144,8 @@ def validate(val_loader, model, criterion, args):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % args.print_freq == 0:
-                print('Test: [{0}/{1}]\t'
+            if i % args.print_freq == 0 and not args.skip_print:
+                print('Batch: [{0}/{1}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
@@ -150,7 +153,7 @@ def validate(val_loader, model, criterion, args):
                        i, len(val_loader), batch_time=batch_time, loss=losses,
                        top1=top1, top5=top5))
 
-        print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
+        print('Total: Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
     return top1.avg

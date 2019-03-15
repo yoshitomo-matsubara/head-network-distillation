@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
 
-model_urls = {
+MODEL_URLS = {
     # Inception v3 ported from TensorFlow
     'inception_v3_google': 'https://download.pytorch.org/models/inception_v3_google-1a9a5a14.pth',
 }
@@ -20,7 +20,7 @@ def inception_v3(pretrained=False, **kwargs):
         if 'transform_input' not in kwargs:
             kwargs['transform_input'] = True
         model = Inception3(**kwargs)
-        model.load_state_dict(model_zoo.load_url(model_urls['inception_v3_google']))
+        model.load_state_dict(model_zoo.load_url(MODEL_URLS['inception_v3_google']))
         return model
 
     return Inception3(**kwargs)

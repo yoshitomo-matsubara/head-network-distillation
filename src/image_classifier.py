@@ -14,6 +14,7 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
+    argparser.add_argument('--gpu', type=int, help='gpu number')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return argparser
@@ -44,7 +45,7 @@ def get_data_loaders(config):
                                              compress_config['type'], compress_config['size'], ae_model=None,
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             compression_quality=test_config['jquality'])
+                                             jpeg_quality=test_config['jquality'], **dataset_config['normalizer'])
     elif dataset_name.startswith('cifar'):
         return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                            compress_config['type'], compress_config['size'], train_config['valid_rate'],
@@ -124,6 +125,9 @@ def run(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
+        gpu_number = args.gpu
+        if gpu_number is not None and gpu_number >= 0:
+            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config)

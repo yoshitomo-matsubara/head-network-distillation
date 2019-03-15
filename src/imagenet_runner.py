@@ -12,6 +12,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
 
+from structure.dataset import AdvImageFolder
 from utils.dataset import imagenet_util
 
 
@@ -66,7 +67,7 @@ def get_training_dataset(train_dir, valid_dir, args):
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            normalize,
+            normalize
         ]))
 
     if args.distributed:
@@ -79,12 +80,11 @@ def get_training_dataset(train_dir, valid_dir, args):
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
     valid_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valid_dir, transforms.Compose([
-            transforms.Resize(256),
+        AdvImageFolder(valid_dir, 256, transforms.Compose([
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            normalize,
-        ])),
+            normalize
+        ]), jpeg_quality=args.jpeg_quality),
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
     return train_loader, valid_loader, train_sampler
@@ -121,19 +121,17 @@ def main(args):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     best_prec1 = resume_from_ckpt(model, optimizer, args)
-
     cudnn.benchmark = True
 
     # Data loading code
     train_dir = os.path.join(args.data, 'train')
     valid_dir = os.path.join(args.data, 'val')
     train_loader, valid_loader, train_sampler = get_training_dataset(train_dir, valid_dir, args)
+    if not args.evaluate:
+        train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
-    if args.evaluate:
-        imagenet_util.validate(valid_loader, model, criterion, args)
-        return
-
-    train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
+    imagenet_util.validate(valid_loader, model, criterion, args)
+    valid_loader.dataset.compute_compression_rate()
 
 
 if __name__ == '__main__':

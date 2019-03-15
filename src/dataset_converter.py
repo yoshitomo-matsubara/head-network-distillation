@@ -49,6 +49,23 @@ def convert_caltech_dataset(input_dir_path, val_rate, test_rate, rgb_only, outpu
     write_converted_dataset(dataset_dict['test'], rgb_only, os.path.join(output_dir_path, 'test.txt'))
 
 
+def convert_imagenet_dataset(input_dir_path, output_dir_path):
+    dataset_dict = dict()
+    for key in ['train', 'val']:
+        pair_list = list()
+        sub_dir_path_list = file_util.get_dir_path_list(os.path.join(input_dir_path, key), is_sorted=True)
+        for sub_dir_path in sub_dir_path_list:
+            label_name = os.path.basename(sub_dir_path)
+            image_file_paths = file_util.get_file_path_list(sub_dir_path, is_sorted=True)
+            random.shuffle(image_file_paths)
+            pair_list.append((label_name, image_file_paths))
+        dataset_dict[key] = pair_list
+
+    write_converted_dataset(dataset_dict['train'], False, os.path.join(output_dir_path, 'train.txt'))
+    write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'valid.txt'))
+    write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'test.txt'))
+
+
 def run(args):
     input_dir_path = args.input
     dataset_type = args.dataset
@@ -58,6 +75,8 @@ def run(args):
     rgb_only = args.rgb
     if dataset_type == 'caltech':
         convert_caltech_dataset(input_dir_path, valid_rate, test_rate, rgb_only, output_dir_path)
+    elif dataset_type == 'imagenet':
+        convert_imagenet_dataset(input_dir_path, output_dir_path)
     else:
         raise ValueError('dataset_type `{}` is not expected'.format(dataset_type))
 

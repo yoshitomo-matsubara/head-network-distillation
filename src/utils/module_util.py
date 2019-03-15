@@ -4,26 +4,32 @@ from autoencoders.ae import *
 from models.classification import *
 
 
-def get_model(config, device):
+def get_model(config, device=None):
+    model = None
     model_config = config['model']
     model_type = model_config['type']
     if model_type == 'alexnet':
         model = AlexNet(**model_config['params'])
     elif model_type.startswith('densenet'):
-        model = DenseNet(**model_config['params'])
+        model = densenet_model(model_type, model_config['params'], model_config['pretrained'])
     elif model_type == 'lenet5':
         model = LeNet5(**model_config['params'])
     elif model_type.startswith('resnet'):
-        model = resnet_model(model_type, model_config['params'])
+        model = resnet_model(model_type, model_config['params'], model_config['pretrained'])
+    elif model_type.startswith('mobilenet'):
+        model = mobilenet_model(model_type, model_config['params'])
     elif model_type.startswith('inception_v3'):
-        model = inception_v3(**model_config['params'])
+        model = inception_v3(model_config['pretrained'], **model_config['params'])
     elif model_type in torchvision.models.__dict__:
         model = torchvision.models.__dict__[model_type](**model_config['params'])
-    else:
+
+    if model is None:
         raise ValueError('model_type `{}` is not expected'.format(model_type))
+    elif device is None:
+        return model
 
     model = model.to(device)
-    if device == 'cuda':
+    if device.startswith('cuda'):
         model = torch.nn.DataParallel(model)
     return model
 

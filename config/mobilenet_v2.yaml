@@ -12,18 +12,11 @@ dataset:
 input_shape: [3, 224, 224]
 
 model:
-    type: &model_type 'resnet152'
+    type: &model_type 'mobilenet_v2'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
-    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
-        num_init_features: 64
-        first_conv2d_ksize: 7
-        first_conv2d_stride: 2
-        first_conv2d_padding: 3
-        last_avgpool2d_ksize: 7
-        last_avgpool2d_stride: 1
 
 train:
     epoch: 50

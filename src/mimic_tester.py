@@ -12,7 +12,7 @@ from utils.dataset import general_util
 def get_argparser():
     argparser = argparse.ArgumentParser(description='Mimic Tester')
     argparser.add_argument('--config', required=True, help='yaml file path')
-    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
+    argparser.add_argument('--gpu', type=int, help='gpu number')
     return argparser
 
 
@@ -25,6 +25,7 @@ def predict(inputs, targets, model):
 
 
 def test(mimic_model, org_model, test_loader, device):
+    print('Testing..')
     mimic_model.eval()
     org_model.eval()
     mimic_correct_count = 0
@@ -69,6 +70,9 @@ def run(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if device == 'cuda':
         cudnn.benchmark = True
+        gpu_number = args.gpu
+        if gpu_number is not None and gpu_number >= 0:
+            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     teacher_model_config = config['teacher_model']
@@ -78,7 +82,8 @@ def run(args):
     dataset_config = config['dataset']
     _, _, test_loader =\
         general_util.get_data_loaders(dataset_config['data'], batch_size=test_config['batch_size'], ae_model=None,
-                                      reshape_size=tuple(config['input_shape'][1:3]), compression_quality=-1)
+                                      reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
+                                      **dataset_config['normalizer'])
     test(mimic_model, org_model, test_loader, device)
     file_util.save_pickle(mimic_model, config['mimic_model']['ckpt'])
 
