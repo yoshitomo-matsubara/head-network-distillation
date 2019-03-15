@@ -16,7 +16,7 @@ model:
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
-        num_classes: 1000
+        num_classes: 101
 
 train:
     epoch: 50
