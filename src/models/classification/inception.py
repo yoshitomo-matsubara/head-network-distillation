@@ -33,7 +33,6 @@ def inception_v3(pretrained=False, **kwargs):
 
 
 class Inception3(nn.Module):
-
     def __init__(self, num_classes=1000, aux_logits=True, transform_input=False):
         super(Inception3, self).__init__()
         self.aux_logits = aux_logits
