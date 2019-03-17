@@ -16,14 +16,20 @@ def inception_v3(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    model = Inception3(**kwargs)
     if pretrained:
         if 'transform_input' not in kwargs:
             kwargs['transform_input'] = True
-        model = Inception3(**kwargs)
-        model.load_state_dict(model_zoo.load_url(MODEL_URLS['inception_v3_google']))
-        return model
 
-    return Inception3(**kwargs)
+        state_dict = model_zoo.load_url(MODEL_URLS['inception_v3_google'])
+        if 'aux_logits' in kwargs and not kwargs['aux_logits']:
+            for key in list(state_dict.keys()):
+                if key.startswith('AuxLogits.'):
+                    state_dict.pop(key)
+
+        model.load_state_dict(state_dict)
+        return model
+    return model
 
 
 class Inception3(nn.Module):
