@@ -98,10 +98,11 @@ def get_tail_network(config, tail_modules):
 
 
 def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
+    target_model = org_model.module if isinstance(org_model, nn.DataParallel) else org_model
     student_model = load_student_model(config, teacher_model_type, device)
     org_modules = list()
     input_batch = torch.rand(config['input_shape']).unsqueeze(0).to(device)
-    module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
+    module_util.extract_decomposable_modules(target_model, input_batch, org_modules)
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
     mimic_modules.extend(org_modules[end_idx:])
