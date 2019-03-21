@@ -73,6 +73,7 @@ class DenseNet(nn.Module):
 def densenet_model(model_type, param_config, pretrained=False):
     model = DenseNet(**param_config)
     if pretrained:
+        print('Loading pretrained weights..')
         pattern = re.compile(
             r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
         state_dict = model_zoo.load_url(MODEL_URLS[model_type])

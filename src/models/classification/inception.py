@@ -18,6 +18,7 @@ def inception_v3(pretrained=False, **kwargs):
     """
     model = Inception3(**kwargs)
     if pretrained:
+        print('Loading pretrained weights..')
         if 'transform_input' not in kwargs:
             kwargs['transform_input'] = True
 

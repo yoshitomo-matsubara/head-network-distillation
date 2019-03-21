@@ -107,5 +107,6 @@ def resnet_model(model_type, param_config, pretrained=False):
     if model is None:
         raise ValueError('model_type `{}` is not expected'.format(model_type))
     elif pretrained:
+        print('Loading pretrained weights..')
         model.load_state_dict(model_zoo.load_url(MODEL_URLS[model_type]))
     return model
