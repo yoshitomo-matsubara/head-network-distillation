@@ -18,7 +18,6 @@ from utils.dataset import imagenet_util
 
 def setup_model(args):
     args.distributed = args.world_size > 1
-
     if args.distributed:
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url, world_size=args.world_size)
 
@@ -131,7 +130,8 @@ def main(args):
         train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
     imagenet_util.validate(valid_loader, model, criterion, args)
-    valid_loader.dataset.compute_compression_rate()
+    if args.jpeg_quality > 0:
+        valid_loader.dataset.compute_compression_rate()
 
 
 if __name__ == '__main__':
