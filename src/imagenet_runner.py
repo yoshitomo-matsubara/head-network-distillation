@@ -78,14 +78,25 @@ def get_training_dataset(train_dir, valid_dir, args):
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
-    valid_loader = torch.utils.data.DataLoader(
-        AdvImageFolder(valid_dir, 256, transforms.Compose([
+    if args.arch == 'inception_v3':
+        rough_size = 299
+        valid_transformer = transforms.Compose([
+            transforms.CenterCrop(299),
+            transforms.ToTensor(),
+            normalize
+        ])
+    else:
+        rough_size = 256
+        valid_transformer = transforms.Compose([
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
-        ]), jpeg_quality=args.jpeg_quality),
+        ])
+    valid_loader = torch.utils.data.DataLoader(
+        AdvImageFolder(valid_dir, rough_size, valid_transformer, jpeg_quality=args.jpeg_quality),
         batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
+        num_workers=args.workers, pin_memory=True
+    )
     return train_loader, valid_loader, train_sampler
 
 
