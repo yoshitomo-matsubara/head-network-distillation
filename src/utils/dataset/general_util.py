@@ -1,4 +1,3 @@
-import torch.utils.data as data
 import torchvision.transforms as transforms
 
 from autoencoders import *
@@ -6,8 +5,9 @@ from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size, org_size, ae_model=None):
-    normal_list = [transforms.ToTensor()]
+def get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, org_size, ae_model=None):
+    normal_list = [transforms.CenterCrop(org_size)] if dataset_name == 'imagenet' else []
+    normal_list.append(transforms.ToTensor())
     if ae_model is not None:
         normal_list.append(AETransformer(ae_model))
 
@@ -26,11 +26,16 @@ def get_test_transformer(normalizer, compression_type, compressed_size, org_size
     return normal_transformer
 
 
-def get_data_loaders(data_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     mean=None, std=None, ae_model=None, rough_size=None, reshape_size=(224, 224), jpeg_quality=0):
+def get_data_loaders(dataset_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
+                     ae_model=None, rough_size=None, reshape_size=(224, 224), jpeg_quality=0):
+    data_config = dataset_config['data']
+    dataset_name = dataset_config['name']
     train_file_path = data_config['train']
     valid_file_path = data_config['valid']
     test_file_path = data_config['test']
+    normalizer_config = dataset_config['normalizer']
+    mean = normalizer_config['mean']
+    std = normalizer_config['std']
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size)
     normalizer = data_util.build_normalizer(train_dataset.load_all_data() if mean is None or std is None else None,
                                             mean, std) if normalized else None
@@ -51,8 +56,10 @@ def get_data_loaders(data_config, batch_size=100, compression_type=None, compres
                                                num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=2, pin_memory=pin_memory)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size, reshape_size, ae_model)
-    test_dataset = AdvRgbImageDataset(test_file_path, reshape_size, test_transformer, jpeg_quality)
+    test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size,
+                                            reshape_size, ae_model)
+    test_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
+    test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
 
