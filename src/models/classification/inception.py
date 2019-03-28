@@ -29,7 +29,6 @@ def inception_v3(pretrained=False, **kwargs):
                     state_dict.pop(key)
 
         model.load_state_dict(state_dict)
-        return model
     return model
 
 
@@ -58,7 +57,7 @@ class Inception3(nn.Module):
         self.Mixed_7a = InceptionD(768)
         self.Mixed_7b = InceptionE(1280)
         self.Mixed_7c = InceptionE(2048)
-        self.avg_pool_2d = nn.AvgPool2d(kernel_size=8)
+        self.adaptive_avg_pool_2d = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout()
         self.fc = nn.Linear(2048, num_classes)
 
@@ -120,7 +119,7 @@ class Inception3(nn.Module):
         # 8 x 8 x 2048
         x = self.Mixed_7c(x)
         # 8 x 8 x 2048
-        x = self.avg_pool_2d(x)
+        x = self.adaptive_avg_pool_2d(x)
         # 1 x 1 x 2048
         x = self.dropout(x)
         # 1 x 1 x 2048
@@ -308,6 +307,7 @@ class InceptionAux(nn.Module):
         self.conv0 = BasicConv2d(in_channels, 128, kernel_size=1)
         self.conv1 = BasicConv2d(128, 768, kernel_size=5)
         self.conv1.stddev = 0.01
+        self.adaptive_avg_pool2d = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(768, num_classes)
         self.fc.stddev = 0.001
 
@@ -319,6 +319,7 @@ class InceptionAux(nn.Module):
         # 5 x 5 x 128
         x = self.conv1(x)
         # 1 x 1 x 768
+        x = self.adaptive_avg_pool2d(x)
         x = x.view(x.size(0), -1)
         # 768
         x = self.fc(x)
