@@ -78,10 +78,10 @@ def run(args):
     teacher_model_config = config['teacher_model']
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
-    test_config = config['test']
     dataset_config = config['dataset']
     _, _, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=test_config['batch_size'], ae_model=None,
+        general_util.get_data_loaders(dataset_config, batch_size=config['test']['batch_size'], ae_model=None,
+                                      rough_size=config['train']['rough_size'],
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
     test(mimic_model, org_model, test_loader, device)
     file_util.save_pickle(mimic_model, config['mimic_model']['ckpt'])
