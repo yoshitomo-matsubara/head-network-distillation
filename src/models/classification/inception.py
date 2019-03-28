@@ -27,7 +27,6 @@ def inception_v3(pretrained=False, **kwargs):
             for key in list(state_dict.keys()):
                 if key.startswith('AuxLogits.'):
                     state_dict.pop(key)
-
         model.load_state_dict(state_dict)
     return model
 
