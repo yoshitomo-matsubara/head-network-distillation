@@ -173,7 +173,7 @@ class InceptionB(nn.Module):
         self.branch3x3dbl_1 = BasicConv2d(in_channels, 64, kernel_size=1)
         self.branch3x3dbl_2 = BasicConv2d(64, 96, kernel_size=3, padding=1)
         self.branch3x3dbl_3 = BasicConv2d(96, 96, kernel_size=3, stride=2)
-        self.avg_pool2d = nn.AvgPool2d(kernel_size=3, stride=2)
+        self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2)
 
     def forward(self, x):
         branch3x3 = self.branch3x3(x)
@@ -182,7 +182,7 @@ class InceptionB(nn.Module):
         branch3x3dbl = self.branch3x3dbl_2(branch3x3dbl)
         branch3x3dbl = self.branch3x3dbl_3(branch3x3dbl)
 
-        branch_pool = self.avg_pool2d(x)
+        branch_pool = self.max_pool2d(x)
 
         outputs = [branch3x3, branch3x3dbl, branch_pool]
         return torch.cat(outputs, 1)
