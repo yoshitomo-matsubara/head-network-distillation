@@ -118,7 +118,7 @@ class AdvImageFolder(ImageFolder):
         for i in range(len(self.samples)):
             self.__getitem__(i)
 
-        self.avg_compression_rate = np.average(self.compression_rates)
-        self.sd_compression_rate = np.std(self.compression_rates)
+        self.avg_compression_rate = np.average(self.compression_rates) if len(self.compression_rates) > 0 else 1
+        self.sd_compression_rate = np.std(self.compression_rates) if len(self.compression_rates) > 0 else 0
         print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
 
