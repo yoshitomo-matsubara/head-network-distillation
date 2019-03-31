@@ -26,7 +26,7 @@ class AdvRgbImageDataset(RgbImageDataset):
         img.save(img_buffer, 'JPEG', quality=self.jpeg_quality)
         comp_file_size = img_buffer.tell()
         recon_img = Image.open(img_buffer)
-        return recon_img, comp_file_size / org_file_size
+        return recon_img, 1 - comp_file_size / org_file_size
 
     def __getitem__(self, idx):
         file_path, target = self.file_paths[idx], self.labels[idx]
