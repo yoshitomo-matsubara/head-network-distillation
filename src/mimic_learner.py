@@ -2,6 +2,7 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
+import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
@@ -62,9 +63,10 @@ def validate(student_model, teacher_model, valid_loader, criterion, device):
 
 def save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type):
     print('Saving..')
+    module = student_model.module if isinstance(student_model, nn.DataParallel) else student_model
     state = {
         'type': teacher_model_type,
-        'model': student_model.state_dict(),
+        'model': module.state_dict(),
         'epoch': epoch + 1,
         'best_avg_loss': best_avg_loss,
         'student': True
@@ -91,6 +93,10 @@ def run(args):
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                              is_student=True)
+    if device == 'cuda':
+        teacher_model = nn.DataParallel(teacher_model)
+        student_model = nn.DataParallel(student_model)
+
     train_config = config['train']
     train_loader, valid_loader, _ =\
         general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'], ae_model=None,
