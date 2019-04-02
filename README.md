@@ -1,4 +1,4 @@
-# Representation Learning for Network
+# Head Network Distillation
 ## Requirement
 - Python 3.6
 - PyTorch 0.41 >= (torch, torchvision)
