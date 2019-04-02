@@ -1,5 +1,3 @@
-import os
-
 import torch
 
 from models.classification.inception import Inception3
@@ -7,12 +5,12 @@ from models.mimic.densenet_mimic import *
 from models.mimic.inception_mimic import *
 from models.mimic.resnet_mimic import *
 from models.mimic.vgg_mimic import *
-from myutils.common import yaml_util
+from myutils.common import file_util, yaml_util
 from utils import module_util
 
 
 def resume_from_ckpt(ckpt_file_path, model, is_student=False):
-    if not os.path.exists(ckpt_file_path):
+    if not file_util.check_if_exists(ckpt_file_path):
         print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
         if is_student:
             return 1, 1e60
@@ -54,11 +52,11 @@ def get_teacher_model(teacher_model_config, input_shape, device):
     return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
 
 
-def get_student_model(teacher_model_type, student_model_config):
+def get_student_model(teacher_model_type, student_model_config, dataset_name):
     student_model_type = student_model_config['type']
     if teacher_model_type.startswith('densenet')\
             and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
-        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'])
+        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'], dataset_name)
     elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
         return InceptionHeadMimic(student_model_config['version'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
@@ -70,7 +68,7 @@ def get_student_model(teacher_model_type, student_model_config):
 
 def load_student_model(student_config, teacher_model_type, device):
     student_model_config = student_config['student_model']
-    student_model = get_student_model(teacher_model_type, student_model_config)
+    student_model = get_student_model(teacher_model_type, student_model_config, student_config['dataset']['name'])
     student_model = student_model.to(device)
     resume_from_ckpt(student_model_config['ckpt'], student_model, True)
     return student_model
@@ -100,10 +98,11 @@ def get_tail_network(config, tail_modules):
 
 
 def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
+    target_model = org_model.module if isinstance(org_model, nn.DataParallel) else org_model
     student_model = load_student_model(config, teacher_model_type, device)
     org_modules = list()
     input_batch = torch.rand(config['input_shape']).unsqueeze(0).to(device)
-    module_util.extract_decomposable_modules(org_model, input_batch, org_modules)
+    module_util.extract_decomposable_modules(target_model, input_batch, org_modules)
     end_idx = teacher_model_config['end_idx']
     mimic_modules = [student_model]
     mimic_modules.extend(org_modules[end_idx:])

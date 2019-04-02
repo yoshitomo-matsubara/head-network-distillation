@@ -18,7 +18,6 @@ from utils.dataset import imagenet_util
 
 def setup_model(args):
     args.distributed = args.world_size > 1
-
     if args.distributed:
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url, world_size=args.world_size)
 
@@ -59,8 +58,7 @@ def resume_from_ckpt(model, optimizer, args):
     return best_prec1
 
 
-def get_training_dataset(train_dir, valid_dir, args):
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+def get_training_data_loader_and_sampler(train_dir, args, normalize):
     train_dataset = datasets.ImageFolder(
         train_dir,
         transforms.Compose([
@@ -78,16 +76,29 @@ def get_training_dataset(train_dir, valid_dir, args):
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+    return train_loader, train_sampler
 
-    valid_loader = torch.utils.data.DataLoader(
-        AdvImageFolder(valid_dir, 256, transforms.Compose([
+
+def get_validation_data_loader(valid_dir, args, normalize):
+    if args.arch == 'inception_v3':
+        rough_size = 299
+        valid_transformer = transforms.Compose([
+            transforms.CenterCrop(299),
+            transforms.ToTensor(),
+            normalize
+        ])
+    else:
+        rough_size = 256
+        valid_transformer = transforms.Compose([
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
-        ]), jpeg_quality=args.jpeg_quality),
+        ])
+    return torch.utils.data.DataLoader(
+        AdvImageFolder(valid_dir, rough_size, valid_transformer, jpeg_quality=args.jpeg_quality),
         batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
-    return train_loader, valid_loader, train_sampler
+        num_workers=args.workers, pin_memory=True
+    )
 
 
 def train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, best_prec1, args):
@@ -121,17 +132,20 @@ def main(args):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     best_prec1 = resume_from_ckpt(model, optimizer, args)
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     cudnn.benchmark = True
 
     # Data loading code
     train_dir = os.path.join(args.data, 'train')
     valid_dir = os.path.join(args.data, 'val')
-    train_loader, valid_loader, train_sampler = get_training_dataset(train_dir, valid_dir, args)
+    valid_loader = get_validation_data_loader(valid_dir, args, normalize)
     if not args.evaluate:
+        train_loader, train_sampler = get_training_data_loader_and_sampler(train_dir, args, normalize)
         train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
     imagenet_util.validate(valid_loader, model, criterion, args)
-    valid_loader.dataset.compute_compression_rate()
+    if args.jpeg_quality > 0:
+        valid_loader.dataset.compute_compression_rate()
 
 
 if __name__ == '__main__':

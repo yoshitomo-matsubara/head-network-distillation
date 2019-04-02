@@ -12,11 +12,11 @@ teacher_model:
     config: './config/inception_v3.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 21 # 17, 21, 26 for vers. 1, 2, 3
+    end_idx: 17 # 17, 21, 26 for vers. 1, 2, 3
 
 student_model:
     type: &smodel_type 'inception_v3_head_mimic'
-    version: &ver '2'
+    version: &ver '1b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
 

@@ -2,6 +2,7 @@ import torchvision
 
 from autoencoders.ae import *
 from models.classification import *
+from myutils.common import file_util
 
 
 def get_model(config, device=None):
@@ -44,6 +45,20 @@ def get_autoencoder(config, device):
 
     ae_model = ae_model.to(device)
     return ae_model
+
+
+def resume_from_ckpt(model, model_config, init):
+    ckpt_file_path = model_config['ckpt']
+    if init or not file_util.check_if_exists(ckpt_file_path):
+        return model_config['type'], 0, 1, ckpt_file_path
+
+    print('Resuming from checkpoint..')
+    checkpoint = torch.load(ckpt_file_path)
+    model.load_state_dict(checkpoint['model'])
+    model_type = checkpoint['type']
+    best_acc = checkpoint['acc']
+    start_epoch = checkpoint['epoch']
+    return model_type, best_acc, start_epoch, ckpt_file_path
 
 
 def extract_target_modules(parent_module, target_class, module_list):

@@ -2,6 +2,7 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
+import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
@@ -62,9 +63,10 @@ def validate(student_model, teacher_model, valid_loader, criterion, device):
 
 def save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type):
     print('Saving..')
+    module = student_model.module if isinstance(student_model, nn.DataParallel) else student_model
     state = {
         'type': teacher_model_type,
-        'model': student_model.state_dict(),
+        'model': module.state_dict(),
         'epoch': epoch + 1,
         'best_avg_loss': best_avg_loss,
         'student': True
@@ -82,19 +84,23 @@ def run(args):
             device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
+    dataset_config = config['dataset']
     input_shape = config['input_shape']
     teacher_model_config = config['teacher_model']
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
-    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
+    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config, dataset_config['name'])
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                              is_student=True)
+    if device == 'cuda':
+        teacher_model = nn.DataParallel(teacher_model)
+        student_model = nn.DataParallel(student_model)
+
     train_config = config['train']
-    dataset_config = config['dataset']
     train_loader, valid_loader, _ =\
-        general_util.get_data_loaders(dataset_config['data'], batch_size=train_config['batch_size'], ae_model=None,
-                                      reshape_size=input_shape[1:3], jpeg_quality=-1, **dataset_config['normalizer'])
+        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'], ae_model=None,
+                                      reshape_size=input_shape[1:3], jpeg_quality=-1)
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']

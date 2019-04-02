@@ -20,20 +20,6 @@ def get_argparser():
     return argparser
 
 
-def resume_from_ckpt(model, model_config, init):
-    ckpt_file_path = model_config['ckpt']
-    if init or not file_util.check_if_exists(ckpt_file_path):
-        return model_config['type'], 0, 1, ckpt_file_path
-
-    print('Resuming from checkpoint..')
-    checkpoint = torch.load(ckpt_file_path)
-    model.load_state_dict(checkpoint['model'])
-    model_type = checkpoint['type']
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
-    return model_type, best_acc, start_epoch, ckpt_file_path
-
-
 def get_data_loaders(config):
     dataset_config = config['dataset']
     train_config = config['train']
@@ -41,11 +27,11 @@ def get_data_loaders(config):
     compress_config = test_config['compression']
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech'):
-        return general_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
+        return general_util.get_data_loaders(dataset_config, train_config['batch_size'],
                                              compress_config['type'], compress_config['size'], ae_model=None,
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             jpeg_quality=test_config['jquality'], **dataset_config['normalizer'])
+                                             jpeg_quality=test_config['jquality'])
     elif dataset_name.startswith('cifar'):
         return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                            compress_config['type'], compress_config['size'], train_config['valid_rate'],
@@ -132,7 +118,7 @@ def run(args):
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config)
     model = module_util.get_model(config, device)
-    model_type, best_acc, start_epoch, ckpt_file_path = resume_from_ckpt(model, config['model'], args.init)
+    model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, config['model'], args.init)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])

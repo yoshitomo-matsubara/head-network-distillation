@@ -25,9 +25,29 @@ def mimic_version1(make_bottleneck=False):
     )
 
 
-def mimic_version2(make_bottleneck=False):
+def mimic_version2(make_bottleneck=False, use_imagenet=False):
     if make_bottleneck:
         return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 2, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(2),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(2, 32, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 64, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 512, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 256, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2)
+        ) if use_imagenet else nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 3, kernel_size=2, stride=2, padding=1, bias=False),
@@ -147,7 +167,7 @@ def mimic_version3(teacher_model_type, make_bottleneck=False):
 
 class DenseNetHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
-    def __init__(self, teacher_model_type, version):
+    def __init__(self, teacher_model_type, version, dataset_name='caltech101'):
         super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
@@ -158,7 +178,7 @@ class DenseNetHeadMimic(BaseHeadMimic):
         if version in ['1', '1b']:
             self.module_seq = mimic_version1(version == '1b')
         elif version in ['2', '2b']:
-            self.module_seq = mimic_version2(version == '2b')
+            self.module_seq = mimic_version2(version == '2b', dataset_name == 'imagenet')
         elif version in ['3', '3b']:
             self.module_seq = mimic_version3(teacher_model_type, version == '3b')
         else:
