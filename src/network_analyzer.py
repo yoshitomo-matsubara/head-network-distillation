@@ -5,7 +5,6 @@ import numpy as np
 import torchvision
 
 from models.classification.lenet5 import MnistLeNet5
-from models.mock import *
 from myutils.common import file_util, yaml_util
 from utils import data_util, mimic_util, module_util, net_measure_util
 
@@ -26,10 +25,6 @@ def get_model(model_type):
     lower_model_type = model_type.lower()
     if lower_model_type == 'mnist':
         return MnistLeNet5()
-    elif lower_model_type == 'yolov2':
-        return YOLOv2()
-    elif lower_model_type == 'yolov3':
-        return YOLOv3()
     elif model_type in torchvision.models.__dict__:
         return torchvision.models.__dict__[model_type]()
     raise ValueError('model_type `{}` is not expected'.format(model_type))
