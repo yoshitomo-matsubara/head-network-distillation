@@ -20,7 +20,7 @@ def get_argparser():
     return argparser
 
 
-def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
+def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval, aux_weight=100.0):
     print('\nEpoch: %d' % epoch)
     student_model.train()
     teacher_model.eval()
@@ -33,7 +33,7 @@ def train(student_model, teacher_model, train_loader, optimizer, criterion, epoc
         teacher_outputs = teacher_model(inputs)
         if isinstance(student_outputs, tuple):
             student_outputs, aux = student_outputs[0], student_outputs[1]
-            loss = criterion(student_outputs, teacher_outputs) + nn.functional.cross_entropy(aux, targets)
+            loss = criterion(student_outputs, teacher_outputs) + aux_weight * nn.functional.cross_entropy(aux, targets)
         else:
             loss = criterion(student_outputs, teacher_outputs)
 
