@@ -193,8 +193,8 @@ class DenseNetHeadMimic(BaseHeadMimic):
 
 
 class DenseNetMimic(BaseMimic):
-    def __init__(self, modules):
-        super().__init__(modules)
+    def __init__(self, student_model, tail_modules):
+        super().__init__(student_model, tail_modules)
 
     def forward(self, sample_batch):
         return super().forward(sample_batch)
