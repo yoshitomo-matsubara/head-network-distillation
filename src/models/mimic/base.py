@@ -1,8 +1,22 @@
 import torch.nn as nn
 
 
+class SeqWithAux(nn.Module):
+    def __init__(self, modules, aux_idx, aux_input_size, aux_output_size):
+        super().__init__()
+        self.head_modules = nn.Sequential(modules[:aux_idx + 1])
+        self.linear = nn.Linear(aux_input_size, aux_output_size)
+        self.tail_modules = nn.Sequential(modules[aux_idx + 1:])
+
+    def forward(self, sample_batch):
+        zs = self.head_modules(sample_batch)
+        if self.training:
+            return self.tail_modules(zs), self.linear(zs.view(zs.size(0), -1))
+        return self.tail_modules(zs)
+
+
 class BaseHeadMimic(nn.Module):
-    def __init__(self, ):
+    def __init__(self):
         super().__init__()
 
     def initialize_weights(self):

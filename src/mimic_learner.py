@@ -32,6 +32,10 @@ def train(student_model, teacher_model, train_loader, optimizer, criterion, epoc
         student_outputs = student_model(inputs)
         teacher_outputs = teacher_model(inputs)
         loss = criterion(student_outputs, teacher_outputs)
+        if isinstance(student_outputs, tuple):
+            student_outputs, aux = student_outputs[0], student_outputs[1]
+            loss += nn.functional.cross_entropy(aux, targets)
+
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
