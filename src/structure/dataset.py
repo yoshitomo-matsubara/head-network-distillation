@@ -16,6 +16,10 @@ class AdvRgbImageDataset(RgbImageDataset):
         self.org_file_sizes = []
         self.comp_file_sizes = []
         self.compression_rates = []
+        self.avg_org_file_size = 0
+        self.sd_org_file_size = 0
+        self.avg_comp_file_size = 0
+        self.sd_comp_file_size = 0
         self.avg_compression_rate = 0
         self.sd_compression_rate = 0
 
@@ -55,18 +59,36 @@ class AdvRgbImageDataset(RgbImageDataset):
 
         data = np.concatenate(data)
         if len(self.compression_rates) > 0:
+            self.avg_org_file_size = np.average(self.org_file_sizes)
+            self.sd_org_file_size = np.std(self.org_file_sizes)
+            self.avg_comp_file_size = np.average(self.comp_file_sizes)
+            self.sd_comp_file_size = np.std(self.comp_file_sizes)
             self.avg_compression_rate = np.average(self.compression_rates)
             self.sd_compression_rate = np.std(self.compression_rates)
+            print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+            print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
             print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
         return data.reshape(len(self.labels), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
+        if self.jpeg_quality < 1 or self.jpeg_quality > 95:
+            print('Compression rate: 0 +- 0')
+            return
+
+        self.org_file_sizes = []
+        self.comp_file_sizes = []
         self.compression_rates = []
         for i in range(len(self.labels)):
             _, _ = self.__getitem__(i)
 
+        self.avg_org_file_size = np.average(self.org_file_sizes)
+        self.sd_org_file_size = np.std(self.org_file_sizes)
+        self.avg_comp_file_size = np.average(self.comp_file_sizes)
+        self.sd_comp_file_size = np.std(self.comp_file_sizes)
         self.avg_compression_rate = np.average(self.compression_rates)
         self.sd_compression_rate = np.std(self.compression_rates)
+        print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+        print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
         print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
 
 
