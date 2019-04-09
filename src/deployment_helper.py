@@ -106,7 +106,8 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     module_util.extract_decomposable_modules(student_model, z, student_modules)
     head_module_list = list()
     tail_module_list = list()
-    end_idx = config['teacher_model']['end_idx']
+    teacher_model_config = config['teacher_model']
+    end_idx = teacher_model_config['end_idx']
     if partition_idx < 0:
         head_module_list.extend(student_modules)
     else:
@@ -119,7 +120,9 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
     file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
     if require_test:
-        test_split_model(model, head_network, tail_network, sensor_device, edge_device, config)
+        device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
+        mimic_model = mimic_util.get_mimic_model(config, model, teacher_model_type, teacher_model_config, device)
+        test_split_model(mimic_model, head_network, tail_network, sensor_device, edge_device, config)
 
 
 def convert_model(model, device, output_file_path):
