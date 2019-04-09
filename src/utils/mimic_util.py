@@ -89,11 +89,11 @@ def get_tail_network(config, tail_modules):
     mimic_model_config = config['mimic_model']
     mimic_type = mimic_model_config['type']
     if mimic_type.startswith('densenet'):
-        return DenseNetMimic(tail_modules)
+        return DenseNetMimic(None, tail_modules)
     elif mimic_type.startswith('inception'):
-        return InceptionMimic(tail_modules)
+        return InceptionMimic(None, tail_modules)
     elif mimic_type.startswith('resnet'):
-        return ResNetMimic(tail_modules)
+        return ResNetMimic(None, tail_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 

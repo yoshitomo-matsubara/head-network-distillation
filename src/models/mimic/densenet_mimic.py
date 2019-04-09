@@ -190,9 +190,11 @@ class DenseNetMimic(BaseMimic):
 
     def forward(self, sample_batch):
         aux = None
-        zs = self.student_model(sample_batch)
-        if isinstance(zs, tuple):
-            zs, aux = zs[0], zs[1]
+        zs = sample_batch
+        if self.student_model is not None:
+            zs = self.student_model(zs)
+            if isinstance(zs, tuple):
+                zs, aux = zs[0], zs[1]
 
         zs = self.features(zs)
         zs = self.classifier(zs.view(zs.size(0), -1))

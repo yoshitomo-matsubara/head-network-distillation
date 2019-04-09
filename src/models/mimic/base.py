@@ -44,6 +44,9 @@ class BaseMimic(nn.Module):
         self.classifier = tail_modules[-1]
 
     def forward(self, sample_batch):
-        zs = self.student_model(sample_batch)
+        zs = sample_batch
+        if self.student_model is not None:
+            zs = self.student_model(zs)
+
         zs = self.features(zs)
         return self.classifier(zs.view(zs.size(0), -1))
