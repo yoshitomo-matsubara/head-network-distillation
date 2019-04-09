@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
 from utils import mimic_util, module_util
+from utils.dataset import general_util
 
 
 def get_argparser():
@@ -18,11 +19,58 @@ def get_argparser():
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
     argparser.add_argument('-scpu', action='store_true', help='option to make sensor-side model runnable without cuda')
     argparser.add_argument('-ecpu', action='store_true', help='option to make edge-server model runnable without cuda')
+    argparser.add_argument('-test', action='store_true', help='option to check if performance changes after splitting')
     return argparser
 
 
+def predict(preds, targets):
+    loss = nn.functional.cross_entropy(preds, targets)
+    _, pred_labels = preds.max(1)
+    correct_count = pred_labels.eq(targets).sum().item()
+    return correct_count, loss.item()
+
+
+def test_split_model(model, head_network, tail_network, sensor_device, edge_device, config):
+    dataset_config = config['dataset']
+    _, _, test_loader =\
+        general_util.get_data_loaders(dataset_config, batch_size=config['test']['batch_size'], ae_model=None,
+                                      rough_size=config['train']['rough_size'],
+                                      reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
+    print('Testing..')
+    device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
+    head_network.eval()
+    tail_network.eval()
+    model.eval()
+    split_correct_count = 0
+    split_test_loss = 0
+    org_correct_count = 0
+    org_test_loss = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(test_loader):
+            total += targets.size(0)
+            inputs, targets = inputs.to(sensor_device), targets.to(edge_device)
+            zs = head_network(inputs)
+            preds = tail_network(zs.to(edge_device))
+            sub_correct_count, sub_test_loss = predict(preds, targets)
+            split_correct_count += sub_correct_count
+            split_test_loss += sub_test_loss
+            inputs, targets = inputs.to(device), targets.to(device)
+            preds = model(inputs)
+            sub_correct_count, sub_test_loss = predict(preds, targets)
+            org_correct_count += sub_correct_count
+            org_test_loss += sub_test_loss
+
+    mimic_acc = 100.0 * split_correct_count / total
+    print('[Split]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+        split_test_loss / total, split_correct_count, total, mimic_acc))
+    org_acc = 100.0 * org_correct_count / total
+    print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+        org_test_loss / total, org_correct_count, total, org_acc))
+
+
 def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
-                         head_output_file_path, tail_output_file_path):
+                         head_output_file_path, tail_output_file_path, require_test):
     print('Splitting an original DNN model')
     modules = list()
     z = torch.rand(1, *input_shape).to('cuda')
@@ -43,10 +91,12 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
     file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
+    if require_test:
+        test_split_model(model, head_network, tail_network, sensor_device, edge_device, config)
 
 
 def split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
-                               partition_idx, head_output_file_path, tail_output_file_path):
+                               partition_idx, head_output_file_path, tail_output_file_path, require_test):
     print('Splitting within a student DNN model')
     org_modules = list()
     z = torch.rand(1, *input_shape).to('cuda')
@@ -68,6 +118,8 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     tail_network = mimic_util.get_tail_network(config, tail_module_list)
     file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
     file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
+    if require_test:
+        test_split_model(model, head_network, tail_network, sensor_device, edge_device, config)
 
 
 def convert_model(model, device, output_file_path):
@@ -94,10 +146,10 @@ def run(args):
         model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
             split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
-                                 head_output_file_path, tail_output_file_path)
+                                 head_output_file_path, tail_output_file_path, args.test)
         elif head_output_file_path is not None and tail_output_file_path is not None:
             split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
-                                       partition_idx, head_output_file_path, tail_output_file_path)
+                                       partition_idx, head_output_file_path, tail_output_file_path, args.test)
 
     if args.model is not None and args.device is not None:
         convert_model(model, args.device, args.model)
