@@ -61,12 +61,12 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
             org_correct_count += sub_correct_count
             org_test_loss += sub_test_loss
 
-    mimic_acc = 100.0 * split_correct_count / total
-    print('[Split]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        split_test_loss / total, split_correct_count, total, mimic_acc))
     org_acc = 100.0 * org_correct_count / total
-    print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    print('[Before splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
         org_test_loss / total, org_correct_count, total, org_acc))
+    split_acc = 100.0 * split_correct_count / total
+    print('[After splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+        split_test_loss / total, split_correct_count, total, split_acc))
 
 
 def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
