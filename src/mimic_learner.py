@@ -15,12 +15,13 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
+    argparser.add_argument('--aux', type=float, default=100.0, help='auxiliary weight')
     argparser.add_argument('--gpu', type=int, help='gpu number')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     return argparser
 
 
-def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval):
+def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval, aux_weight):
     print('\nEpoch: %d' % epoch)
     student_model.train()
     teacher_model.eval()
@@ -31,7 +32,12 @@ def train(student_model, teacher_model, train_loader, optimizer, criterion, epoc
         optimizer.zero_grad()
         student_outputs = student_model(inputs)
         teacher_outputs = teacher_model(inputs)
-        loss = criterion(student_outputs, teacher_outputs)
+        if isinstance(student_outputs, tuple):
+            student_outputs, aux = student_outputs[0], student_outputs[1]
+            loss = criterion(student_outputs, teacher_outputs) + aux_weight * nn.functional.cross_entropy(aux, targets)
+        else:
+            loss = criterion(student_outputs, teacher_outputs)
+
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
@@ -111,8 +117,9 @@ def run(args):
     interval = train_config['interval']
     ckpt_file_path = student_model_config['ckpt']
     end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
+    aux_weight = args.aux
     for epoch in range(start_epoch, end_epoch):
-        train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval)
+        train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval, aux_weight)
         avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
         if avg_valid_loss < best_avg_loss:
             best_avg_loss = avg_valid_loss
