@@ -115,6 +115,10 @@ def run(args):
 
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
+    if interval < 0:
+        num_batches = len(train_loader)
+        interval = num_batches // 100 if num_batches >= 100 else 1
+
     ckpt_file_path = student_model_config['ckpt']
     end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
     aux_weight = args.aux

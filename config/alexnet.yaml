@@ -28,7 +28,7 @@ train:
     epoch: 50
     batch_size: 20
     rough_size: [256, 256]
-    interval: 50
+    interval: -1
     optimizer:
         type: 'sgd'
         params:
