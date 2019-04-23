@@ -115,7 +115,7 @@ def run(args):
 
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
-    if interval < 0:
+    if interval <= 0:
         num_batches = len(train_loader)
         interval = num_batches // 100 if num_batches >= 100 else 1
 
