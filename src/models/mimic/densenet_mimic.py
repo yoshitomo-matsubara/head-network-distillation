@@ -35,7 +35,7 @@ def mimic_version2b_imagenet(aux_output_size=1000):
         nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(512), nn.ReLU(inplace=True),
         nn.Conv2d(512, 256, kernel_size=2, stride=1, bias=False), nn.AvgPool2d(kernel_size=2, stride=2)
     ]
-    return SeqWithAux(modules, aux_idx=4, aux_input_size=5046, aux_output_size=aux_output_size)
+    return SeqWithAux(modules, aux_idx=2, aux_input_size=5046, aux_output_size=aux_output_size)
 
 
 def mimic_version2(make_bottleneck=False, use_imagenet=False):
