@@ -1,16 +1,13 @@
+import torch
 import torchvision.transforms as transforms
 
-from autoencoders import *
 from structure.dataset import AdvRgbImageDataset
 from utils import data_util
 
 
-def get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, org_size, ae_model=None):
+def get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, org_size):
     normal_list = [transforms.CenterCrop(org_size)] if dataset_name == 'imagenet' else []
     normal_list.append(transforms.ToTensor())
-    if ae_model is not None:
-        normal_list.append(AETransformer(ae_model))
-
     if normalizer is not None:
         normal_list.append(normalizer)
 
@@ -27,7 +24,7 @@ def get_test_transformer(dataset_name, normalizer, compression_type, compressed_
 
 
 def get_data_loaders(dataset_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     ae_model=None, rough_size=None, reshape_size=(224, 224), jpeg_quality=0):
+                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0):
     data_config = dataset_config['data']
     dataset_name = dataset_config['name']
     train_file_path = data_config['train']
@@ -56,8 +53,7 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
                                                num_workers=2, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=2, pin_memory=pin_memory)
-    test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size,
-                                            reshape_size, ae_model)
+    test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, reshape_size)
     test_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
     test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
     if 1 <= test_dataset.jpeg_quality <= 95:

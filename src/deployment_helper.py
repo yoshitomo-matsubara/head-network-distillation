@@ -33,7 +33,7 @@ def predict(preds, targets):
 def test_split_model(model, head_network, tail_network, sensor_device, edge_device, config):
     dataset_config = config['dataset']
     _, _, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=config['test']['batch_size'], ae_model=None,
+        general_util.get_data_loaders(dataset_config, batch_size=config['test']['batch_size'],
                                       rough_size=config['train']['rough_size'],
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
     print('Testing..')

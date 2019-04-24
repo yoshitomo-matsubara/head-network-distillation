@@ -1,6 +1,5 @@
 import torchvision
 
-from autoencoders.ae import *
 from models.classification import *
 from myutils.common import file_util
 
@@ -33,18 +32,6 @@ def get_model(config, device=None):
     if device.startswith('cuda'):
         model = torch.nn.DataParallel(model)
     return model
-
-
-def get_autoencoder(config, device):
-    ae_config = config['autoencoder']
-    ae_type = ae_config['type']
-    if ae_type == 'vae':
-        ae_model = VAE(**ae_config['params'])
-    else:
-        raise ValueError('ae_type `{}` is not expected'.format(ae_type))
-
-    ae_model = ae_model.to(device)
-    return ae_model
 
 
 def resume_from_ckpt(model, model_config, init):

@@ -5,7 +5,6 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
-import ae_runner
 from myutils.common import file_util, yaml_util
 from structure.wrapper import *
 from utils import misc_util, module_util, module_wrap_util
@@ -43,16 +42,6 @@ def resume_from_ckpt(model, model_config, device):
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
     return model_type, best_acc, start_epoch, ckpt_file_path
-
-
-def load_autoencoder(ae_config_file_path, device):
-    if not file_util.check_if_exists(ae_config_file_path):
-        return None
-
-    ae_config = yaml_util.load_yaml_file(ae_config_file_path)
-    ae_model = module_util.get_autoencoder(ae_config, device)
-    ae_runner.resume_from_ckpt(ae_model, ae_config, False)
-    return ae_model
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -216,11 +205,10 @@ def run(args):
     train_config = config['train']
     test_config = config['test']
     compress_config = test_config['compression']
-    ae_model = load_autoencoder(test_config['autoencoder'], device)
     input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                      compress_config['type'], compress_config['size'], ae_model=ae_model,
+                                      compress_config['type'], compress_config['size'],
                                       reshape_size=input_shape[1:3], jpeg_quality=test_config['jquality'])
 
     pickle_file_path = args.pkl
