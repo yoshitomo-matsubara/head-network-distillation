@@ -160,4 +160,13 @@ class ResNetMimic(BaseMimic):
         super().__init__(student_model, tail_modules)
 
     def forward(self, sample_batch):
-        return super().forward(sample_batch)
+        aux = None
+        zs = sample_batch
+        if self.student_model is not None:
+            zs = self.student_model(zs)
+            if isinstance(zs, tuple):
+                zs, aux = zs[0], zs[1]
+
+        zs = self.features(zs)
+        zs = self.classifier(zs.view(zs.size(0), -1))
+        return zs if aux is None else (zs, aux)

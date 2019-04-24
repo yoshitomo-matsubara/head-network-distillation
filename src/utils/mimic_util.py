@@ -60,7 +60,7 @@ def get_student_model(teacher_model_type, student_model_config, dataset_name):
     elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
         return InceptionHeadMimic(student_model_config['version'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
-        return ResNet152HeadMimic(student_model_config['version'])
+        return ResNet152HeadMimic(student_model_config['version'], dataset_name)
     elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
