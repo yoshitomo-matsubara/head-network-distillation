@@ -28,8 +28,8 @@ def mimic_version1(make_bottleneck=False):
 def mimic_version2b_imagenet(aux_output_size=1000):
     modules = [
         nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, 6, kernel_size=2, stride=2, padding=1, bias=False), nn.BatchNorm2d(6), nn.ReLU(inplace=True),
-        nn.Conv2d(6, 64, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
+        nn.Conv2d(64, 9, kernel_size=2, stride=2, padding=1, bias=False), nn.BatchNorm2d(9), nn.ReLU(inplace=True),
+        nn.Conv2d(9, 64, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
         nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
         nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(256), nn.ReLU(inplace=True),
         nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(512), nn.ReLU(inplace=True),
