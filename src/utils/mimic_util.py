@@ -52,15 +52,15 @@ def get_teacher_model(teacher_model_config, input_shape, device):
     return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
 
 
-def get_student_model(teacher_model_type, student_model_config, dataset_name):
+def get_student_model(teacher_model_type, student_model_config):
     student_model_type = student_model_config['type']
     if teacher_model_type.startswith('densenet')\
             and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
-        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'], *student_model_config['params'])
+        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'], **student_model_config['params'])
     elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
         return InceptionHeadMimic(student_model_config['version'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
-        return ResNet152HeadMimic(student_model_config['version'], dataset_name)
+        return ResNet152HeadMimic(student_model_config['version'], **student_model_config['params'])
     elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
         return Vgg16HeadMimic()
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
@@ -68,7 +68,7 @@ def get_student_model(teacher_model_type, student_model_config, dataset_name):
 
 def load_student_model(student_config, teacher_model_type, device):
     student_model_config = student_config['student_model']
-    student_model = get_student_model(teacher_model_type, student_model_config, student_config['dataset']['name'])
+    student_model = get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
     resume_from_ckpt(student_model_config['ckpt'], student_model, True)
     return student_model

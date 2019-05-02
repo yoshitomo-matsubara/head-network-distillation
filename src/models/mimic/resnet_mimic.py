@@ -31,28 +31,31 @@ def mimic_version1(make_bottleneck=False):
     )
 
 
-def mimic_version2b_imagenet(aux_output_size=1000):
+def mimic_version2b_with_aux(bottleneck_channel, aux_output_size=1000):
+    aux_input_size = 841 * bottleneck_channel
     modules = [
         nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, 6, kernel_size=2, stride=2, padding=1, bias=False), nn.BatchNorm2d(6), nn.ReLU(inplace=True),
-        nn.Conv2d(6, 64, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
+        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(bottleneck_channel), nn.ReLU(inplace=True),
+        nn.Conv2d(bottleneck_channel, 64, kernel_size=2, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(64), nn.ReLU(inplace=True),
         nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
         nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(256), nn.ReLU(inplace=True),
         nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(512), nn.ReLU(inplace=True),
         nn.AvgPool2d(kernel_size=2, stride=1)
     ]
-    return SeqWithAux(modules, aux_idx=2, aux_input_size=5046, aux_output_size=aux_output_size)
+    return SeqWithAux(modules, aux_idx=2, aux_input_size=aux_input_size, aux_output_size=aux_output_size)
 
 
-def mimic_version2(make_bottleneck=False, use_imagenet=False):
+def mimic_version2(make_bottleneck, bottleneck_channel, use_aux=False):
     if make_bottleneck:
-        return mimic_version2b_imagenet() if use_imagenet else nn.Sequential(
+        return mimic_version2b_with_aux(bottleneck_channel) if use_aux else nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 3, kernel_size=2, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(3),
+            nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(bottleneck_channel),
             nn.ReLU(inplace=True),
-            nn.Conv2d(3, 64, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.Conv2d(bottleneck_channel, 64, kernel_size=2, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False),
@@ -78,15 +81,15 @@ def mimic_version2(make_bottleneck=False, use_imagenet=False):
     )
 
 
-def mimic_version3(make_bottleneck=False):
+def mimic_version3(make_bottleneck, bottleneck_channel):
     if make_bottleneck:
         return nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 3, kernel_size=2, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(3),
+            nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(bottleneck_channel),
             nn.ReLU(inplace=True),
-            nn.Conv2d(3, 64, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.Conv2d(bottleneck_channel, 64, kernel_size=2, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
@@ -132,7 +135,7 @@ def mimic_version3(make_bottleneck=False):
 
 class ResNet152HeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
-    def __init__(self, version, dataset_name='caltech101'):
+    def __init__(self, version, bottleneck_channel=3, use_aux=False):
         super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
@@ -141,11 +144,11 @@ class ResNet152HeadMimic(BaseHeadMimic):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
         if version in ['1', '1b']:
-            self.module_seq = mimic_version1(version == '1b')
+            self.module_seq = mimic_version1(version == '1b', bottleneck_channel)
         elif version in ['2', '2b']:
-            self.module_seq = mimic_version2(version == '2b', dataset_name == 'imagenet')
+            self.module_seq = mimic_version2(version == '2b', bottleneck_channel, use_aux)
         elif version in ['3', '3b']:
-            self.module_seq = mimic_version3(version == '3b')
+            self.module_seq = mimic_version3(version == '3b', bottleneck_channel)
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()

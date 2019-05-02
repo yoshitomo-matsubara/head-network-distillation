@@ -95,8 +95,7 @@ def analyze_multiple_models(config_file_paths, args):
 def get_teacher_and_student_models(mimic_config, input_shape):
     teacher_model_config = mimic_config['teacher_model']
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, 'cpu')
-    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'],
-                                                 mimic_config['dataset']['name'])
+    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'])
     return teacher_model_type, teacher_model, student_model
 
 

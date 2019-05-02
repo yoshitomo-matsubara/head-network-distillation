@@ -95,7 +95,7 @@ def run(args):
     teacher_model_config = config['teacher_model']
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
-    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config, dataset_config['name'])
+    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                              is_student=True)
