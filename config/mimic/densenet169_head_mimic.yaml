@@ -22,6 +22,9 @@ student_model:
     version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
+    params:
+        bottleneck_channel: 3
+        use_aux: False
 
 mimic_model:
     type: &mmodel_type 'densenet169_mimic'
