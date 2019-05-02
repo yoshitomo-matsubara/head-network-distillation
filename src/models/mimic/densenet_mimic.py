@@ -41,7 +41,7 @@ def mimic_version2b_with_aux(bottleneck_channel, aux_output_size=1000):
     return SeqWithAux(modules, aux_idx=2, aux_input_size=aux_input_size, aux_output_size=aux_output_size)
 
 
-def mimic_version2(make_bottleneck, bottleneck_channel, use_aux=False):
+def mimic_version2(make_bottleneck, bottleneck_channel, use_aux):
     if make_bottleneck:
         return mimic_version2b_with_aux(bottleneck_channel) if use_aux else nn.Sequential(
             nn.BatchNorm2d(64),
