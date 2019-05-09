@@ -1,5 +1,6 @@
 import argparse
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -48,6 +49,7 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
     org_correct_count = 0
     org_test_loss = 0
     total = 0
+    file_size_list = list()
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             total += targets.size(0)
@@ -57,10 +59,15 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
                 if spbit == '8bits':
                     # Quantization and dequantization
                     qzs = data_util.quantize_tensor(zs)
+                    file_size_list.append(file_util.get_binary_object_size(qzs))
                     zs = data_util.dequantize_tensor(qzs)
                 else:
                     # Casting and recasting
-                    zs = zs.half().float()
+                    zs = zs.half()
+                    file_size_list.append(file_util.get_binary_object_size(zs))
+                    zs = zs.float()
+            else:
+                file_size_list.append(file_util.get_binary_object_size(zs))
 
             preds = tail_network(zs.to(edge_device))
             sub_correct_count, sub_test_loss = predict(preds, targets)
@@ -78,6 +85,8 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
     split_acc = 100.0 * split_correct_count / total
     print('[After splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
         split_test_loss / total, split_correct_count, total, split_acc))
+    print('Output file size at splitting point [KB]: {} +- {}'.format(
+        np.average(file_size_list), np.std(file_size_list)))
 
 
 def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
