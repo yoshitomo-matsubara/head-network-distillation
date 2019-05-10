@@ -12,7 +12,7 @@ from utils import data_util, mimic_util, module_util, net_measure_util
 def get_argparser():
     parser = argparse.ArgumentParser(description=os.path.basename(__file__))
     parser.add_argument('--isize', default='3,224,224', help='input data shape (delimited by comma)')
-    parser.add_argument('--model', default='AlexNet', help='network model (default: alexnet)')
+    parser.add_argument('--model', default='alexnet', help='network model (default: alexnet)')
     parser.add_argument('--config', nargs='+', help='yaml file path')
     parser.add_argument('--pkl', help='pickle file path')
     parser.add_argument('-scale', action='store_true', help='data size scaling option')
