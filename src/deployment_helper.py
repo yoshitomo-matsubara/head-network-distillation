@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 import torch
+import torch.backends.cudnn as cudnn
 import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
@@ -41,6 +42,9 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
     print('Testing..')
     device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
+    if device == 'cuda':
+        cudnn.benchmark = True
+
     model = module_util.use_multiple_gpus_if_available(model, device)
     head_network = module_util.use_multiple_gpus_if_available(head_network, sensor_device)
     tail_network = module_util.use_multiple_gpus_if_available(tail_network, edge_device)
