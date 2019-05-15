@@ -59,6 +59,6 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
 
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=20, shuffle=True,
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True,
                                               num_workers=2, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
