@@ -4,6 +4,10 @@ from models.classification import *
 from myutils.common import file_util
 
 
+def use_multiple_gpus_if_available(model, device):
+    return nn.DataParallel(model) if device.startswith('cuda') else model
+
+
 def get_model(config, device=None):
     model = None
     model_config = config['model']
@@ -29,9 +33,7 @@ def get_model(config, device=None):
         return model
 
     model = model.to(device)
-    if device.startswith('cuda'):
-        model = torch.nn.DataParallel(model)
-    return model
+    return use_multiple_gpus_if_available(model, device)
 
 
 def resume_from_ckpt(model, model_config, init):
