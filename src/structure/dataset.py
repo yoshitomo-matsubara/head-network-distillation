@@ -6,7 +6,6 @@ from PIL import Image
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.folder import default_loader
 
-from myutils.common import file_util
 from myutils.pytorch.vision.dataset import RgbImageDataset
 
 
@@ -27,11 +26,11 @@ class AdvRgbImageDataset(RgbImageDataset):
     def compress_img(self, img):
         img_buffer = BytesIO()
         img.save(img_buffer, 'JPEG', quality=95)
-        org_file_size = file_util.get_binary_object_size(img_buffer)
+        org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
         img.save(img_buffer, 'JPEG', quality=self.jpeg_quality)
-        comp_file_size = file_util.get_binary_object_size(img_buffer)
+        comp_file_size = img_buffer.tell()
         recon_img = Image.open(img_buffer)
         return recon_img, org_file_size, comp_file_size
 
@@ -111,11 +110,11 @@ class AdvImageFolder(ImageFolder):
     def compress_img(self, img):
         img_buffer = BytesIO()
         img.save(img_buffer, 'JPEG', quality=95)
-        org_file_size = file_util.get_binary_object_size(img_buffer)
+        org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
         img.save(img_buffer, 'JPEG', quality=self.jpeg_quality)
-        comp_file_size = file_util.get_binary_object_size(img_buffer)
+        comp_file_size = img_buffer.tell()
         recon_img = Image.open(img_buffer)
         return recon_img, org_file_size, comp_file_size
 
