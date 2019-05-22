@@ -138,7 +138,7 @@ def analyze_teacher_student_models(mimic_config_file_paths, args):
 
 def run(args):
     config_file_paths = args.config
-    if config_file_paths is None or len(config_file_paths) <= 1:
+    if config_file_paths is None or (len(config_file_paths) <= 1 and not args.ts):
         analyze_single_model(None if config_file_paths is None else config_file_paths[0], args)
     elif not args.ts:
         analyze_multiple_models(config_file_paths, args)
