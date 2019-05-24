@@ -2,10 +2,18 @@ import torch.nn as nn
 
 
 class SeqWithAux(nn.Module):
-    def __init__(self, modules, aux_idx, aux_input_size, aux_output_size):
+    def __init__(self, modules, aux_idx, aux_input_channel, aux_output_size):
         super().__init__()
         self.head_modules = nn.Sequential(*modules[:aux_idx + 1])
-        self.linear = nn.Linear(aux_input_size, aux_output_size)
+        self.aux_seq = nn.Sequential(
+            nn.AvgPool2d(kernel_size=5, stride=3),
+            nn.Conv2d(aux_input_channel, 128, kernel_size=1, bias=False),
+            nn.BatchNorm2d(128, eps=0.001),
+            nn.Conv2d(128, 768, kernel_size=5, bias=False),
+            nn.BatchNorm2d(768, eps=0.001),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+        self.linear = nn.Linear(768, aux_output_size)
         self.tail_modules = nn.Sequential(*modules[aux_idx + 1:])
 
     def forward(self, sample_batch):

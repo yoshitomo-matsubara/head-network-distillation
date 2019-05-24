@@ -4,7 +4,6 @@ from .base import BaseHeadMimic, BaseMimic, SeqWithAux
 
 
 def mimic_version1b_with_aux(bottleneck_channel, aux_output_size=1000):
-    aux_input_size = 1369 * bottleneck_channel
     modules = [
         nn.BatchNorm2d(64), nn.ReLU(inplace=True),
         nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
@@ -15,7 +14,7 @@ def mimic_version1b_with_aux(bottleneck_channel, aux_output_size=1000):
         nn.Conv2d(128, 192, kernel_size=2, stride=1, bias=False),
         nn.AvgPool2d(kernel_size=2, stride=1)
     ]
-    return SeqWithAux(modules, aux_idx=2, aux_input_size=aux_input_size, aux_output_size=aux_output_size)
+    return SeqWithAux(modules, aux_idx=2, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
 
 
 def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
