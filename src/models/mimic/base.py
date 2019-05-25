@@ -19,7 +19,8 @@ class SeqWithAux(nn.Module):
     def forward(self, sample_batch):
         zs = self.head_modules(sample_batch)
         if self.training:
-            return self.tail_modules(zs), self.linear(zs.view(zs.size(0), -1))
+            zs_aux = self.aux_seq(zs)
+            return self.tail_modules(zs), self.linear(zs_aux.view(zs_aux.size(0), -1))
         return self.tail_modules(zs)
 
 
