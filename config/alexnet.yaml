@@ -14,6 +14,7 @@ input_shape: [3, 224, 224]
 model:
     type: &model_type 'alexnet'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
+    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
@@ -46,4 +47,3 @@ test:
     compression:
         type:
         size:
-    autoencoder:
