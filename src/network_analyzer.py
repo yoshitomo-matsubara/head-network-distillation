@@ -32,10 +32,6 @@ def get_model(model_type):
 
 def read_config(config_file_path):
     config = yaml_util.load_yaml_file(config_file_path)
-    dataset_name = config['dataset']['name']
-    if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
-        return None, None, None
-
     if config['model']['type'] == 'inception_v3':
         config['model']['params']['aux_logits'] = False
 
