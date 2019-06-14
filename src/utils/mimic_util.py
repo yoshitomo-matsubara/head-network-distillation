@@ -43,11 +43,11 @@ def extract_teacher_model(model, input_shape, device, teacher_model_config):
 
 def get_teacher_model(teacher_model_config, input_shape, device):
     teacher_config = yaml_util.load_yaml_file(teacher_model_config['config'])
-    if teacher_config['model']['type'] == 'inception_v3':
-        teacher_config['model']['params']['aux_logits'] = False
+    model_config = teacher_config['model']
+    if model_config['type'] == 'inception_v3':
+        model_config['params']['aux_logits'] = False
 
     model = module_util.get_model(teacher_config, device)
-    model_config = teacher_config['model']
     resume_from_ckpt(model_config['ckpt'], model)
     return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
 
