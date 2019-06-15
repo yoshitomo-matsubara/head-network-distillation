@@ -144,8 +144,9 @@ def run(args):
     ckpt_file_path = config['autoencoder']['ckpt']
     start_epoch, best_avg_loss = resume_from_ckpt(ckpt_file_path, autoencoder)
     if device.startswith('cuda'):
-        head_model = nn.DataParallel(head_model)
         autoencoder = nn.DataParallel(autoencoder)
+        if head_model is not None:
+            head_model = nn.DataParallel(head_model)
 
     train_config = config['train']
     train_loader, valid_loader, _ =\
