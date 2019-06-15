@@ -39,7 +39,7 @@ def get_head_model(config, input_shape, device):
         sub_model_config['params']['aux_logits'] = False
 
     model = module_util.get_model(model_config, device)
-    module_util.resume_from_ckpt(model, sub_model_config['ckpt'], False)
+    module_util.resume_from_ckpt(model, sub_model_config, False)
     return extract_head_model(model, input_shape, device, org_model_config['partition_idx'])
 
 
