@@ -23,11 +23,6 @@ autoencoder:
         input_channel: 3
         bottleneck_channel: 3
 
-mimic_model:
-    type: &mmodel_type 'densenet169_mimic'
-    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
-
 train:
     epoch: 100
     batch_size: 20
