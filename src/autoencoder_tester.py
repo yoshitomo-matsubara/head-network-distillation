@@ -40,7 +40,7 @@ def get_extended_model(autoencoder, config, input_shape, device):
 
     model = module_util.get_model(model_config, device)
     module_util.resume_from_ckpt(model, sub_model_config, False)
-    return extend_model(autoencoder, model, input_shape, device, org_model_config['partition_idx'])
+    return extend_model(autoencoder, model, input_shape, device, org_model_config['partition_idx']), model
 
 
 def resume_from_ckpt(ckpt_file_path, autoencoder):
@@ -158,7 +158,7 @@ def run(args):
     input_shape = config['input_shape']
     autoencoder, ae_type = get_autoencoder(config, device)
     resume_from_ckpt(config['autoencoder']['ckpt'], autoencoder)
-    extended_model = get_extended_model(autoencoder, config, input_shape, device)
+    extended_model, model = get_extended_model(autoencoder, config, input_shape, device)
     if device.startswith('cuda'):
         extended_model = nn.DataParallel(extended_model)
 
@@ -166,9 +166,7 @@ def run(args):
     _, _, test_loader =\
         general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       reshape_size=input_shape[1:3], jpeg_quality=-1)
-    criterion_config = train_config['criterion']
-    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
-    test(extended_model, test_loader, criterion, device)
+    test(extended_model, model, test_loader, device)
 
 
 if __name__ == '__main__':
