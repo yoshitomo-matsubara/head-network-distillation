@@ -33,12 +33,13 @@ def extract_head_model(model, input_shape, device, partition_idx):
 
 def get_head_model(config, input_shape, device):
     org_model_config = config['org_model']
-    model_config = yaml_util.load_yaml_file(org_model_config['config'])['model']
-    if model_config['type'] == 'inception_v3':
-        model_config['params']['aux_logits'] = False
+    model_config = yaml_util.load_yaml_file(org_model_config['config'])
+    sub_model_config = model_config['model']
+    if sub_model_config['type'] == 'inception_v3':
+        sub_model_config['params']['aux_logits'] = False
 
     model = module_util.get_model(model_config, device)
-    module_util.resume_from_ckpt(model_config['ckpt'], model, False)
+    module_util.resume_from_ckpt(sub_model_config['ckpt'], model, False)
     return extract_head_model(model, input_shape, device, org_model_config['partition_idx'])
 
 
