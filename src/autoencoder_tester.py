@@ -124,7 +124,7 @@ def test(extended_model, org_model, test_loader, device):
             org_test_loss += sub_test_loss
 
     mimic_acc = 100.0 * mimic_correct_count / total
-    print('[Mimic]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    print('[Extended]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
         mimic_test_loss / total, mimic_correct_count, total, mimic_acc))
     org_acc = 100.0 * org_correct_count / total
     print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
