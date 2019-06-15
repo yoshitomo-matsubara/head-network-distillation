@@ -33,7 +33,7 @@ def extract_head_model(model, input_shape, device, partition_idx):
 
 def get_head_model(config, input_shape, device):
     org_model_config = config['org_model']
-    model_config = yaml_util.load_yaml_file(org_model_config['config'])
+    model_config = yaml_util.load_yaml_file(org_model_config['config'])['model']
     if model_config['type'] == 'inception_v3':
         model_config['params']['aux_logits'] = False
 
