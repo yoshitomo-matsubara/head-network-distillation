@@ -23,7 +23,7 @@ def get_argparser():
 
 def extract_head_model(model, input_shape, device, partition_idx):
     if partition_idx is None or partition_idx == 0:
-        return None
+        return nn.Sequential()
 
     modules = list()
     module = model.module if isinstance(model, nn.DataParallel) else model
@@ -66,7 +66,6 @@ def get_autoencoder(config, device=None):
     if autoencoder is None:
         raise ValueError('ae_type `{}` is not expected'.format(ae_type))
 
-    resume_from_ckpt(ae_config['ckpt'], autoencoder)
     if device is None:
         return autoencoder, ae_type
 
@@ -83,7 +82,7 @@ def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, de
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
-        head_outputs = head_model(inputs) if head_model is not None else inputs
+        head_outputs = head_model(inputs)
         ae_outputs = autoencoder(head_outputs)
         loss = criterion(ae_outputs, head_outputs)
         loss.backward()
@@ -145,8 +144,7 @@ def run(args):
     start_epoch, best_avg_loss = resume_from_ckpt(ckpt_file_path, autoencoder)
     if device.startswith('cuda'):
         autoencoder = nn.DataParallel(autoencoder)
-        if head_model is not None:
-            head_model = nn.DataParallel(head_model)
+        head_model = nn.DataParallel(head_model)
 
     train_config = config['train']
     train_loader, valid_loader, _ =\
