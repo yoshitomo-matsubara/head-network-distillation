@@ -5,6 +5,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 
 from models.autoencoder.input_ae import InputAutoencoder
+from models.autoencoder.middle_ae import MiddleAutoencoder
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
@@ -63,6 +64,8 @@ def get_autoencoder(config, device=None):
     ae_type = ae_config['type']
     if ae_type == 'input':
         autoencoder = InputAutoencoder(**ae_config['params'])
+    elif ae_type == 'middle':
+        autoencoder = MiddleAutoencoder(**ae_config['params'])
 
     if autoencoder is None:
         raise ValueError('ae_type `{}` is not expected'.format(ae_type))
