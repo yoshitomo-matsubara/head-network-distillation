@@ -71,7 +71,7 @@ def get_autoencoder(config, device=None):
         return autoencoder, ae_type
 
     autoencoder = autoencoder.to(device)
-    return module_util.use_multiple_gpus_if_available(autoencoder, device), ae_type
+    return autoencoder, ae_type
 
 
 def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
