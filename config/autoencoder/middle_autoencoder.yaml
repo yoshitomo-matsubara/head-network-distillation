@@ -36,7 +36,7 @@ train:
     criterion:
         type: 'MSELoss'
         params:
-            reduction: 'sum'
+            reduction: 'mean'
 
 test:
     batch_size: 1
