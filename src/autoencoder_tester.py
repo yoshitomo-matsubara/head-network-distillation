@@ -6,7 +6,6 @@ import torch.nn as nn
 
 from models.autoencoder.input_ae import InputAutoencoder
 from myutils.common import file_util, yaml_util
-from myutils.pytorch import func_util
 from utils import module_util
 from utils.dataset import general_util
 
