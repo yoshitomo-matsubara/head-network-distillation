@@ -236,7 +236,7 @@ def run(args):
         head_model = None
 
     extended_model, model = get_extended_model(autoencoder, config, input_shape, device)
-    module_util.use_multiple_gpus_if_available(extend_model, device)
+    module_util.use_multiple_gpus_if_available(extended_model, device)
     module_util.use_multiple_gpus_if_available(model, device)
     test(extended_model, model, test_loader, device)
 
