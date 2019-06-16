@@ -232,7 +232,7 @@ def run(args):
                 best_avg_loss = avg_valid_loss
                 save_ckpt(autoencoder, epoch, best_avg_loss, ckpt_file_path, ae_type)
 
-        if device.startswith('cuda'):
+        if isinstance(autoencoder, nn.DataParallel):
             autoencoder = autoencoder.module
 
         resume_from_ckpt(ckpt_file_path, autoencoder)
