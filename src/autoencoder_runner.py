@@ -139,7 +139,7 @@ def extend_model(autoencoder, model, input_shape, device, partition_idx):
     modules = list()
     module = model.module if isinstance(model, nn.DataParallel) else model
     module_util.extract_decomposable_modules(module, torch.rand(1, *input_shape).to(device), modules)
-    return BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:-1]).to(device)
+    return BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:]).to(device)
 
 
 def get_extended_model(autoencoder, config, input_shape, device):
