@@ -20,3 +20,18 @@ class BaseAutoencoder(nn.Module):
 
     def forward(self, sample_batch):
         raise NotImplementedError
+
+
+class BaseExtendedModel(nn.Module):
+    def __init__(self, head_modules, autoencoder, tail_modules):
+        super().__init__()
+        self.head_model = nn.Sequential(*head_modules)
+        self.autoencoder = autoencoder
+        self.tail_model = nn.Sequential(*tail_modules[:-1])
+        self.linear = tail_modules[-1]
+
+    def forward(self, sample_batch):
+        zs = self.head_model(sample_batch)
+        zs = self.autoencoder(zs)
+        zs = self.tail_model(zs)
+        return self.linear(zs.view(zs.size(0), -1))
