@@ -123,7 +123,7 @@ class InputVAE(BaseAutoencoder):
         # see Appendix B from VAE paper:
         # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
         # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-        kld = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+        kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return bce + kld
 
     def forward(self, sample_batch):
