@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from models.autoencoder.base import BaseExtendedModel
-from models.autoencoder.input_ae import InputAutoencoder
+from models.autoencoder.input_ae import InputAutoencoder, InputVAE
 from models.autoencoder.middle_ae import MiddleAutoencoder
 from myutils.common import yaml_util
 from utils import module_util
@@ -12,9 +12,11 @@ def get_autoencoder(config, device=None):
     autoencoder = None
     ae_config = config['autoencoder']
     ae_type = ae_config['type']
-    if ae_type == 'input':
+    if ae_type == 'input_ae':
         autoencoder = InputAutoencoder(**ae_config['params'])
-    elif ae_type == 'middle':
+    elif ae_type == 'input_vae':
+        autoencoder = InputVAE(**ae_config['params'])
+    elif ae_type == 'middle_ae':
         autoencoder = MiddleAutoencoder(**ae_config['params'])
 
     if autoencoder is None:

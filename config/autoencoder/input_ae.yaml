@@ -12,16 +12,15 @@ dataset:
 input_shape: [3, 224, 224]
 
 org_model:
-    type: &org_type 'densenet169'
-    config: !join ['./config/', *org_type, '.yaml']
-    partition_idx: 3
+    config: './config/densenet169.yaml'
+    partition_idx: 0
 
 autoencoder:
-    type: &ae_type 'middle'
-    experiment: &ae_experiment !join [*dataset_name, '-', *ae_type, '-', *org_type]
+    type: &ae_type 'input_ae'
+    experiment: &ae_experiment !join [*dataset_name, '-', *ae_type]
     ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.ckpt']
     params:
-        input_channel: 64
+        input_channel: 3
         bottleneck_channel: 3
 
 train:

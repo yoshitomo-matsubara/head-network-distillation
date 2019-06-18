@@ -67,7 +67,7 @@ def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, de
         optimizer.zero_grad()
         head_outputs = head_model(inputs)
         ae_outputs = autoencoder(head_outputs)
-        loss = criterion(ae_outputs, head_outputs)
+        loss = criterion(ae_outputs, head_outputs) if not isinstance(ae_outputs, tuple) else ae_outputs[1]
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
