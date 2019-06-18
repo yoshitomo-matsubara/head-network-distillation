@@ -6,7 +6,7 @@ import torchvision
 
 from models.classification.lenet5 import MnistLeNet5
 from myutils.common import file_util, yaml_util
-from utils import data_util, mimic_util, module_util, net_measure_util
+from utils import ae_util, data_util, mimic_util, module_util, net_measure_util
 
 
 def get_argparser():
@@ -57,6 +57,9 @@ def analyze_single_model(config_file_path, args, plot=True):
             org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, 'cpu')
             model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
             model_type = config['mimic_model']['type']
+            input_shape = config['input_shape']
+        elif 'autoencoder' in config:
+            model, model_type = ae_util.get_autoencoder(config, 'cpu')
             input_shape = config['input_shape']
         else:
             model, model_type, input_shape = read_config(config_file_path)

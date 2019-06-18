@@ -4,12 +4,9 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 
-from models.autoencoder.input_ae import InputAutoencoder
-from models.autoencoder.middle_ae import MiddleAutoencoder
-from models.autoencoder.base import BaseExtendedModel
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
-from utils import module_util
+from utils import ae_util, module_util
 from utils.dataset import general_util
 
 
@@ -57,25 +54,6 @@ def resume_from_ckpt(ckpt_file_path, autoencoder):
     autoencoder.load_state_dict(state_dict)
     start_epoch = checkpoint['epoch']
     return start_epoch, checkpoint['best_avg_loss']
-
-
-def get_autoencoder(config, device=None):
-    autoencoder = None
-    ae_config = config['autoencoder']
-    ae_type = ae_config['type']
-    if ae_type == 'input':
-        autoencoder = InputAutoencoder(**ae_config['params'])
-    elif ae_type == 'middle':
-        autoencoder = MiddleAutoencoder(**ae_config['params'])
-
-    if autoencoder is None:
-        raise ValueError('ae_type `{}` is not expected'.format(ae_type))
-
-    if device is None:
-        return autoencoder, ae_type
-
-    autoencoder = autoencoder.to(device)
-    return autoencoder, ae_type
 
 
 def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -132,28 +110,6 @@ def save_ckpt(autoencoder, epoch, best_avg_loss, ckpt_file_path, ae_type):
     torch.save(state, ckpt_file_path)
 
 
-def extend_model(autoencoder, model, input_shape, device, partition_idx):
-    if partition_idx is None or partition_idx == 0:
-        return nn.Sequential(autoencoder, model)
-
-    modules = list()
-    module = model.module if isinstance(model, nn.DataParallel) else model
-    module_util.extract_decomposable_modules(module, torch.rand(1, *input_shape).to(device), modules)
-    return BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:]).to(device)
-
-
-def get_extended_model(autoencoder, config, input_shape, device):
-    org_model_config = config['org_model']
-    model_config = yaml_util.load_yaml_file(org_model_config['config'])
-    sub_model_config = model_config['model']
-    if sub_model_config['type'] == 'inception_v3':
-        sub_model_config['params']['aux_logits'] = False
-
-    model = module_util.get_model(model_config, device)
-    module_util.resume_from_ckpt(model, sub_model_config, False)
-    return extend_model(autoencoder, model, input_shape, device, org_model_config['partition_idx']), model
-
-
 def predict(inputs, targets, model):
     preds = model(inputs)
     loss = nn.functional.cross_entropy(preds, targets)
@@ -202,7 +158,7 @@ def run(args):
     config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']
     input_shape = config['input_shape']
-    autoencoder, ae_type = get_autoencoder(config, device)
+    autoencoder, ae_type = ae_util.get_autoencoder(config, device)
     ckpt_file_path = config['autoencoder']['ckpt']
     start_epoch, best_avg_loss = resume_from_ckpt(ckpt_file_path, autoencoder)
     train_config = config['train']
@@ -239,7 +195,7 @@ def run(args):
         resume_from_ckpt(ckpt_file_path, autoencoder)
         head_model = None
 
-    extended_model, model = get_extended_model(autoencoder, config, input_shape, device)
+    extended_model, model = ae_util.get_extended_model(autoencoder, config, input_shape, device)
     module_util.use_multiple_gpus_if_available(extended_model, device)
     module_util.use_multiple_gpus_if_available(model, device)
     test(extended_model, model, test_loader, device)
