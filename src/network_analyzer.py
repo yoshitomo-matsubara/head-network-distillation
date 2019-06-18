@@ -59,7 +59,7 @@ def analyze_single_model(config_file_path, args, plot=True):
             model_type = config['mimic_model']['type']
             input_shape = config['input_shape']
         elif 'autoencoder' in config:
-            model, model_type = ae_util.get_autoencoder(config, 'cpu')
+            model, model_type = ae_util.get_autoencoder(config, 'cpu', True)
             input_shape = config['input_shape']
         else:
             model, model_type, input_shape = read_config(config_file_path)

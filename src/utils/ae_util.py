@@ -8,14 +8,14 @@ from myutils.common import yaml_util
 from utils import module_util
 
 
-def get_autoencoder(config, device=None):
+def get_autoencoder(config, device=None, is_static=False):
     autoencoder = None
     ae_config = config['autoencoder']
     ae_type = ae_config['type']
     if ae_type == 'input_ae':
         autoencoder = InputAutoencoder(**ae_config['params'])
     elif ae_type == 'input_vae':
-        autoencoder = InputVAE(**ae_config['params'])
+        autoencoder = InputVAE(**ae_config['params'], is_static=is_static)
     elif ae_type == 'middle_ae':
         autoencoder = MiddleAutoencoder(**ae_config['params'])
 

@@ -60,18 +60,19 @@ class UnFlatter(nn.Module):
 
 
 class Bottleneck(nn.Module):
-    def __init__(self, h_dim, z_dim):
+    def __init__(self, h_dim, z_dim, is_static):
         super().__init__()
         self.flatter = Flatter()
         self.fc1 = nn.Linear(h_dim, z_dim)
         self.fc2 = nn.Linear(h_dim, z_dim)
         self.fc3 = nn.Linear(z_dim, h_dim)
         self.unflatter = UnFlatter(h_dim)
+        self.is_static = is_static
 
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
         # return torch.normal(mu, std)
-        esp = torch.randn(*mu.size()).to(mu.device)
+        esp = torch.randn(*mu.size()).to(mu.device) if not self.is_static else 1
         z = mu + std * esp
         return z
 
@@ -85,7 +86,7 @@ class Bottleneck(nn.Module):
 
 
 class InputVAE(BaseAutoencoder):
-    def __init__(self, input_channel=3, h_dim=2048, z_dim=512):
+    def __init__(self, input_channel=3, h_dim=2048, z_dim=512, is_static=False):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(input_channel, 32, kernel_size=7, stride=2),
@@ -99,7 +100,7 @@ class InputVAE(BaseAutoencoder):
             nn.Conv2d(256, 512, kernel_size=3, stride=2),
             nn.ReLU()
         )
-        self.bottleneck = Bottleneck(h_dim, z_dim)
+        self.bottleneck = Bottleneck(h_dim, z_dim, is_static)
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(h_dim, 512, kernel_size=5, stride=3),
             nn.ReLU(),
