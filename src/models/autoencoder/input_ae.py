@@ -89,7 +89,7 @@ class InputVAE(BaseAutoencoder):
     def __init__(self, input_channel=3, h_dim=18432, z_dim=512, is_static=False):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(image_channels, 32, kernel_size=3, stride=2),
+            nn.Conv2d(input_channel, 32, kernel_size=3, stride=2),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
             nn.ReLU(),
