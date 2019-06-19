@@ -13,7 +13,7 @@ class InputAutoencoder(BaseAutoencoder):
             nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
             nn.Conv2d(16, 8, kernel_size=4), nn.BatchNorm2d(8),
             nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(8, bottleneck_channel, kernel_size=2), nn.BatchNorm2d(8), nn.ReLU(inplace=True)
+            nn.Conv2d(8, bottleneck_channel, kernel_size=2), nn.BatchNorm2d(bottleneck_channel), nn.ReLU(inplace=True)
         )
 
         self.decoder = nn.Sequential(
