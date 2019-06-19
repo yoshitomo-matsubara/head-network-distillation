@@ -21,7 +21,7 @@ autoencoder:
     ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.ckpt']
     params:
         input_channel: 3
-        h_dim: 2048
+        h_dim: 73728
         z_dim: 512
 
 train:

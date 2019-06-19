@@ -86,35 +86,36 @@ class Bottleneck(nn.Module):
 
 
 class InputVAE(BaseAutoencoder):
-    def __init__(self, input_channel=3, h_dim=2048, z_dim=512, is_static=False):
+    def __init__(self, input_channel=3, h_dim=73728, z_dim=512, is_static=False):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 32, kernel_size=7, stride=2),
+            nn.Conv2d(input_channel, 32, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=5, stride=3),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=5, stride=3),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=3, stride=2),
+            nn.Conv2d(128, 256, kernel_size=2, stride=2),
             nn.ReLU(),
-            nn.Conv2d(256, 512, kernel_size=3, stride=2),
+            nn.Conv2d(256, 512, kernel_size=2, stride=1),
             nn.ReLU()
         )
         self.bottleneck = Bottleneck(h_dim, z_dim, is_static)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(h_dim, 512, kernel_size=5, stride=3),
+            nn.ConvTranspose2d(h_dim, 512, kernel_size=4, stride=3),
             nn.ReLU(),
-            nn.ConvTranspose2d(512, 256, kernel_size=5, stride=3),
+            nn.ConvTranspose2d(512, 256, kernel_size=4, stride=3),
             nn.ReLU(),
-            nn.ConvTranspose2d(256, 128, kernel_size=5, stride=3),
+            nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2),
+            nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2),
+            nn.ConvTranspose2d(64, 32, kernel_size=2, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, input_channel, kernel_size=4, stride=1),
+            nn.ConvTranspose2d(32, input_channel, kernel_size=2, stride=2),
             nn.Sigmoid()
         )
+        self.initialize_weights()
 
     def representation(self, x):
         return self.bottleneck(self.encoder(x))[0]
