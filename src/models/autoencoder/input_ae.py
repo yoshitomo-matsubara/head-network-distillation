@@ -86,18 +86,18 @@ class Bottleneck(nn.Module):
 
 
 class InputVAE(BaseAutoencoder):
-    def __init__(self, input_channel=3, h_dim=73728, z_dim=512, is_static=False):
+    def __init__(self, input_channel=3, h_dim=18432, z_dim=512, is_static=False):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 32, kernel_size=3, stride=2),
+            nn.Conv2d(image_channels, 32, kernel_size=3, stride=2),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
             nn.ReLU(),
             nn.Conv2d(64, 128, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=2, stride=2),
+            nn.Conv2d(128, 256, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(256, 512, kernel_size=2, stride=1),
+            nn.Conv2d(256, 512, kernel_size=3, stride=2),
             nn.ReLU()
         )
         self.bottleneck = Bottleneck(h_dim, z_dim, is_static)
