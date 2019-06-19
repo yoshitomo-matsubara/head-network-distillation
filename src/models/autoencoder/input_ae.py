@@ -16,10 +16,10 @@ class InputAutoencoder(BaseAutoencoder):
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(bottleneck_channel, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
             nn.ConvTranspose2d(6, 12, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=3), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(12, 18, kernel_size=5, stride=2), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(18, 24, kernel_size=4), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(24, 18, kernel_size=4), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(18, 12, kernel_size=3), nn.ReLU(inplace=True),
             nn.ConvTranspose2d(12, 6, kernel_size=3), nn.ReLU(inplace=True),
             nn.ConvTranspose2d(6, input_channel, kernel_size=2), nn.Sigmoid()
         )
