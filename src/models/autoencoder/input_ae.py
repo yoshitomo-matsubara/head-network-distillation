@@ -114,7 +114,7 @@ class InputVAE(BaseAutoencoder):
         return self.bottleneck(self.encoder(x))[0]
 
     def loss_function(self, outputs, sample_batch, mu, logvar):
-        bce = nn.functional.binary_cross_entropy(outputs, sample_batch, reduction='sum')
+        bce = nn.functional.mse_loss(outputs, sample_batch, reduction='sum')
         # see Appendix B from VAE paper:
         # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
         # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
