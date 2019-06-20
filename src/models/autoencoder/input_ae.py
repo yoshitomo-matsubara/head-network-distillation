@@ -6,22 +6,20 @@ from .base import BaseAutoencoder
 class InputAutoencoder(BaseAutoencoder):
     def __init__(self, input_channel=3, bottleneck_channel=3):
         super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 32, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(32, 16, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(16, 8, kernel_size=4), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(8, bottleneck_channel, kernel_size=2), nn.ReLU(inplace=True)
-        )
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(bottleneck_channel, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, input_channel, kernel_size=2), nn.Sigmoid()
-        )
+        self.sub_encoder1 = nn.Sequential(nn.Conv2d(input_channel, 6, kernel_size=5), nn.ReLU(inplace=True))
+        self.maxpool2d1 = nn.MaxPool2d(kernel_size=2, return_indices=True)
+        self.sub_encoder2 = nn.Sequential(nn.Conv2d(6, 12, kernel_size=5), nn.ReLU(inplace=True))
+        self.maxpool2d2 = nn.MaxPool2d(kernel_size=2, return_indices=True)
+        self.sub_encoder3 = nn.Sequential(nn.Conv2d(12, 6, kernel_size=4), nn.ReLU(inplace=True))
+        self.maxpool2d3 = nn.MaxPool2d(kernel_size=2, return_indices=True)
+        self.sub_encoder4 = nn.Sequential(nn.Conv2d(6, bottleneck_channel, kernel_size=2), nn.ReLU(inplace=True))
+        self.sub_decoder4 = nn.ConvTranspose2d(bottleneck_channel, 6, kernel_size=2)
+        self.maxunpool2d3 = nn.MaxUnpool2d(kernel_size=2)
+        self.sub_decoder3 = nn.ConvTranspose2d(6, 12, kernel_size=4)
+        self.maxunpool2d2 = nn.MaxUnpool2d(kernel_size=2)
+        self.sub_decoder2 = nn.ConvTranspose2d(12, 6, kernel_size=5)
+        self.maxunpool2d1 = nn.MaxUnpool2d(kernel_size=2)
+        self.sub_decoder1 = nn.ConvTranspose2d(6, input_channel, kernel_size=5)
         self.initialize_weights()
 
     def forward(self, sample_batch):
