@@ -41,3 +41,32 @@ class MiddleAutoencoder(BaseAutoencoder):
         zs = self.maxunpool2d1(zs, indices1)
         zs = self.sub_decoder1(zs)
         return zs
+
+
+class Autoencoder4DenseNet(nn.Module):
+    def __init__(self, input_channel=128, bottleneck_channel=3):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channel, 64, kernel_size=2), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
+            nn.Conv2d(64, 32, kernel_size=2), nn.BatchNorm2d(32), nn.ReLU(inplace=True),
+            nn.Conv2d(32, 16, kernel_size=2), nn.BatchNorm2d(16), nn.ReLU(inplace=True),
+            nn.Conv2d(16, 8, kernel_size=2), nn.BatchNorm2d(8), nn.ReLU(inplace=True),
+            nn.Conv2d(8, bottleneck_channel, kernel_size=2), nn.BatchNorm2d(bottleneck_channel), nn.ReLU(inplace=True)
+        )
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(bottleneck_channel, 8, kernel_size=4), nn.BatchNorm2d(8), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(8, 16, kernel_size=4), nn.BatchNorm2d(16), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(16, 32, kernel_size=3), nn.BatchNorm2d(32), nn.ReLU(inplace=True),
+            nn.Conv2d(32, 16, kernel_size=2), nn.BatchNorm2d(16), nn.ReLU(inplace=True),
+            nn.Conv2d(16, 8, kernel_size=2), nn.BatchNorm2d(8), nn.ReLU(inplace=True),
+            nn.Conv2d(8, input_channel, kernel_size=2), nn.Sigmoid()
+        )
+
+    def forward(self, sample_batch):
+        # Encoding
+        zs = self.encoder(sample_batch)
+        print(zs.shape)
+        # Decoding
+        zs = self.decoder(zs)
+        return zs
