@@ -66,7 +66,7 @@ class Autoencoder4DenseNet(nn.Module):
     def forward(self, sample_batch):
         # Encoding
         zs = self.encoder(sample_batch)
-        print(zs.shape)
+        
         # Decoding
         zs = self.decoder(zs)
         return zs
