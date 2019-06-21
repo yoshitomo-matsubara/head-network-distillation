@@ -176,6 +176,8 @@ def run(args):
             optim_config['params']['lr'] = args.lr
 
         optimizer = func_util.get_optimizer(autoencoder, optim_config['type'], optim_config['params'])
+        scheduler_config = train_config['scheduler']
+        scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
         interval = train_config['interval']
         if interval <= 0:
             num_batches = len(train_loader)
@@ -188,6 +190,7 @@ def run(args):
             if avg_valid_loss < best_avg_loss:
                 best_avg_loss = avg_valid_loss
                 save_ckpt(autoencoder, epoch, best_avg_loss, ckpt_file_path, ae_type)
+            scheduler.step()
 
         if isinstance(autoencoder, nn.DataParallel):
             autoencoder = autoencoder.module
