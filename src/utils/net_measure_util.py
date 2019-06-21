@@ -136,6 +136,7 @@ def plot_model_complexity_and_data_size(op_count_list, accum_complexities, data_
 
 def compute_layerwise_complexity_and_data_size(model, model_name, input_shape, scaled=False, plot=True):
     # Referred to https://zhuanlan.zhihu.com/p/33992733
+    #  and https://github.com/sovrasov/flops-counter.pytorch/blob/master/ptflops/flops_counter.py
     multiply_adds = False
     op_count_list = list()
     data_size_list = list()
@@ -149,6 +150,26 @@ def compute_layerwise_complexity_and_data_size(model, model_name, input_shape, s
         bias_ops = 1 if self.bias is not None else 0
         params = output_channels * (kernel_ops + bias_ops)
         op_size = batch_size * params * output_height * output_width
+        op_count_list.append(op_size)
+        data_size_list.append(np.prod(output_batch[0].size()))
+        layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
+
+    def deconv_hook(self, input_batch, output_batch):
+        batch_size, input_channels, input_height, input_width = input_batch[0].size()
+        kernel_height, kernel_width = self.kernel_size
+        in_channels = self.in_channels
+        out_channels = self.out_channels
+        groups = self.groups
+        filters_per_channel = out_channels // groups
+        conv_per_position_flops = kernel_height * kernel_width * in_channels * filters_per_channel
+        active_elements_count = batch_size * input_height * input_width
+        overall_conv_flops = conv_per_position_flops * active_elements_count
+        bias_flops = 0
+        if self.bias is not None:
+            output_height, output_width = output_batch.shape[2:]
+            bias_flops = out_channels * batch_size * output_height * output_height
+
+        op_size = overall_conv_flops + bias_flops
         op_count_list.append(op_size)
         data_size_list.append(np.prod(output_batch[0].size()))
         layer_list.append('{}: {}'.format(type(self).__name__, len(layer_list)))
@@ -183,11 +204,14 @@ def compute_layerwise_complexity_and_data_size(model, model_name, input_shape, s
         if not children:
             if isinstance(net, nn.Conv2d):
                 net.register_forward_hook(conv_hook)
+            elif isinstance(net, nn.ConvTranspose2d):
+                net.register_forward_hook(deconv_hook)
             elif isinstance(net, nn.Linear):
                 net.register_forward_hook(linear_hook)
             elif isinstance(net, (nn.MaxPool2d, nn.AvgPool2d)):
                 net.register_forward_hook(pooling_hook)
-            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
+            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.Sigmoid,
+                                  nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
                 net.register_forward_hook(simple_hook)
             else:
                 print('Non-registered instance:', type(net))

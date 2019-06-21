@@ -20,6 +20,7 @@ def build_normalizer(dataset, mean=None, std=None):
 
 
 # Referred to https://github.com/eladhoffer/utils.pytorch/blob/master/quantize.py
+#  and http://openaccess.thecvf.com/content_cvpr_2018/papers/Jacob_Quantization_and_Training_CVPR_2018_paper.pdf
 def quantize_tensor(x, num_bits=8):
     qmin = 0.0
     qmax = 2.0 ** num_bits - 1.0

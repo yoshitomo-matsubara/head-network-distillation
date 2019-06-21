@@ -1,8 +1,11 @@
 import torchvision
 
-from autoencoders.ae import *
 from models.classification import *
 from myutils.common import file_util
+
+
+def use_multiple_gpus_if_available(model, device):
+    return nn.DataParallel(model) if device.startswith('cuda') else model
 
 
 def get_model(config, device=None):
@@ -30,21 +33,7 @@ def get_model(config, device=None):
         return model
 
     model = model.to(device)
-    if device.startswith('cuda'):
-        model = torch.nn.DataParallel(model)
-    return model
-
-
-def get_autoencoder(config, device):
-    ae_config = config['autoencoder']
-    ae_type = ae_config['type']
-    if ae_type == 'vae':
-        ae_model = VAE(**ae_config['params'])
-    else:
-        raise ValueError('ae_type `{}` is not expected'.format(ae_type))
-
-    ae_model = ae_model.to(device)
-    return ae_model
+    return use_multiple_gpus_if_available(model, device)
 
 
 def resume_from_ckpt(model, model_config, init):
@@ -106,7 +95,6 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
             resized_z = z.view(z.size(0), exception_size)
             expected_z = parent_module(resized_z)
             z = resized_z
-
         except RuntimeError:
             ValueError('Error\t', type(parent_module).__name__)
             return z, False

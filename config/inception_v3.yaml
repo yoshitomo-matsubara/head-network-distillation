@@ -25,7 +25,7 @@ train:
     epoch: 50
     batch_size: 20
     rough_size: [327, 327]
-    interval: 50
+    interval: -1
     optimizer:
         type: 'sgd'
         params:
@@ -43,4 +43,3 @@ test:
     compression:
         type:
         size:
-    autoencoder:

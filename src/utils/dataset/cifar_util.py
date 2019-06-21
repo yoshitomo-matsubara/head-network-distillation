@@ -1,9 +1,9 @@
 import numpy as np
+import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-from autoencoders import *
 from utils import data_util
 
 
@@ -45,11 +45,8 @@ def get_train_and_valid_loaders(data_dir_path, batch_size, normalized, valid_rat
     return train_loader, valid_loader, normalizer
 
 
-def get_test_transformer(normalizer, compression_type, compressed_size, org_size=(32, 32), ae_model=None):
+def get_test_transformer(normalizer, compression_type, compressed_size, org_size=(32, 32)):
     normal_list = [transforms.ToTensor()]
-    if ae_model is not None:
-        normal_list.append(AETransformer(ae_model))
-
     if normalizer is not None:
         normal_list.append(normalizer)
 
@@ -66,11 +63,11 @@ def get_test_transformer(normalizer, compression_type, compressed_size, org_size
 
 
 def get_data_loaders(data_dir_path, batch_size=128, compression_type=None, compressed_size=None,
-                     valid_rate=0.1, normalized=True, is_cifar100=False, ae_model=None):
+                     valid_rate=0.1, normalized=True, is_cifar100=False):
     train_loader, valid_loader, normalizer =\
         get_train_and_valid_loaders(data_dir_path, batch_size=batch_size, normalized=normalized,
                                     valid_rate=valid_rate, is_cifar100=is_cifar100)
-    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size, ae_model=ae_model)
+    test_transformer = get_test_transformer(normalizer, compression_type, compressed_size)
     test_dataset =\
         torchvision.datasets.CIFAR10(root=data_dir_path, train=False, download=True, transform=test_transformer)\
             if not is_cifar100 else torchvision.datasets.CIFAR100(root=data_dir_path, train=False,

@@ -43,6 +43,5 @@ test:
     batch_size: 1
     jquality: 0
     compression:
-        type: None
-        size: None
-    autoencoder: None
+        type:
+        size:

@@ -28,14 +28,14 @@ def get_data_loaders(config):
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech'):
         return general_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                             compress_config['type'], compress_config['size'], ae_model=None,
+                                             compress_config['type'], compress_config['size'],
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
                                              jpeg_quality=test_config['jquality'])
     elif dataset_name.startswith('cifar'):
         return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
                                            compress_config['type'], compress_config['size'], train_config['valid_rate'],
-                                           is_cifar100=dataset_name == 'cifar100', ae_model=None)
+                                           is_cifar100=dataset_name == 'cifar100')
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
@@ -129,6 +129,10 @@ def run(args):
 
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
         interval = train_config['interval']
+        if interval <= 0:
+            num_batches = len(train_loader)
+            interval = num_batches // 100 if num_batches >= 100 else 1
+
         end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
         for epoch in range(start_epoch, end_epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, interval)

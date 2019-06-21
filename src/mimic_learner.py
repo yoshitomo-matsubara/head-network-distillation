@@ -95,7 +95,7 @@ def run(args):
     teacher_model_config = config['teacher_model']
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
     student_model_config = config['student_model']
-    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config, dataset_config['name'])
+    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
     start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                              is_student=True)
@@ -105,7 +105,7 @@ def run(args):
 
     train_config = config['train']
     train_loader, valid_loader, _ =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'], ae_model=None,
+        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       reshape_size=input_shape[1:3], jpeg_quality=-1)
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
@@ -115,6 +115,10 @@ def run(args):
 
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     interval = train_config['interval']
+    if interval <= 0:
+        num_batches = len(train_loader)
+        interval = num_batches // 100 if num_batches >= 100 else 1
+
     ckpt_file_path = student_model_config['ckpt']
     end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
     aux_weight = args.aux

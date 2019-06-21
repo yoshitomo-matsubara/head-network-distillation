@@ -11,21 +11,17 @@ dataset:
 
 input_shape: [3, 224, 224]
 
-teacher_model:
-    config: './config/vgg16.yaml'
-    extract_designed_module: False
-    start_idx: 0
-    end_idx: 8
+org_model:
+    config: './config/densenet169.yaml'
+    partition_idx: 0
 
-student_model:
-    type: &smodel_type 'vgg16_head_mimic'
-    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type]
-    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
-
-mimic_model:
-    type: &mmodel_type 'vgg16_mimic'
-    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type]
-    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
+autoencoder:
+    type: &ae_type 'input_ae'
+    experiment: &ae_experiment !join [*dataset_name, '-', *ae_type]
+    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.ckpt']
+    params:
+        input_channel: 3
+        bottleneck_channel: 3
 
 train:
     epoch: 100
@@ -36,10 +32,15 @@ train:
         type: 'Adam'
         params:
             lr: 0.001
+    scheduler:
+        type: 'MultiStepLR'
+        params:
+            milestones: [50, 100]
+            gamma: 0.1
     criterion:
         type: 'MSELoss'
         params:
-            reduction: 'sum'
+            reduction: 'mean'
 
 test:
     batch_size: 1

@@ -6,13 +6,13 @@ import torchvision
 
 from models.classification.lenet5 import MnistLeNet5
 from myutils.common import file_util, yaml_util
-from utils import data_util, mimic_util, module_util, net_measure_util
+from utils import ae_util, data_util, mimic_util, module_util, net_measure_util
 
 
 def get_argparser():
     parser = argparse.ArgumentParser(description=os.path.basename(__file__))
     parser.add_argument('--isize', default='3,224,224', help='input data shape (delimited by comma)')
-    parser.add_argument('--model', default='AlexNet', help='network model (default: alexnet)')
+    parser.add_argument('--model', default='alexnet', help='network model (default: alexnet)')
     parser.add_argument('--config', nargs='+', help='yaml file path')
     parser.add_argument('--pkl', help='pickle file path')
     parser.add_argument('-scale', action='store_true', help='data size scaling option')
@@ -32,10 +32,6 @@ def get_model(model_type):
 
 def read_config(config_file_path):
     config = yaml_util.load_yaml_file(config_file_path)
-    dataset_name = config['dataset']['name']
-    if not dataset_name.startswith('cifar') and not dataset_name.startswith('caltech'):
-        return None, None, None
-
     if config['model']['type'] == 'inception_v3':
         config['model']['params']['aux_logits'] = False
 
@@ -61,6 +57,9 @@ def analyze_single_model(config_file_path, args, plot=True):
             org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, 'cpu')
             model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
             model_type = config['mimic_model']['type']
+            input_shape = config['input_shape']
+        elif 'autoencoder' in config:
+            model, model_type = ae_util.get_autoencoder(config, 'cpu', True)
             input_shape = config['input_shape']
         else:
             model, model_type, input_shape = read_config(config_file_path)
@@ -95,8 +94,7 @@ def analyze_multiple_models(config_file_paths, args):
 def get_teacher_and_student_models(mimic_config, input_shape):
     teacher_model_config = mimic_config['teacher_model']
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, 'cpu')
-    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'],
-                                                 mimic_config['dataset']['name'])
+    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'])
     return teacher_model_type, teacher_model, student_model
 
 
@@ -139,7 +137,7 @@ def analyze_teacher_student_models(mimic_config_file_paths, args):
 
 def run(args):
     config_file_paths = args.config
-    if config_file_paths is None or len(config_file_paths) <= 1:
+    if config_file_paths is None or (len(config_file_paths) <= 1 and not args.ts):
         analyze_single_model(None if config_file_paths is None else config_file_paths[0], args)
     elif not args.ts:
         analyze_multiple_models(config_file_paths, args)
