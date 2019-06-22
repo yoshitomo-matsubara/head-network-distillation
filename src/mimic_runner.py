@@ -151,6 +151,8 @@ def run(args):
             optim_config['params']['lr'] = args.lr
 
         optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
+        scheduler_config = train_config['scheduler']
+        scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
         interval = train_config['interval']
         if interval <= 0:
             num_batches = len(train_loader)
@@ -165,6 +167,7 @@ def run(args):
             if avg_valid_loss < best_avg_loss:
                 best_avg_loss = avg_valid_loss
                 save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type)
+            scheduler.step()
 
         del teacher_model
         del student_model

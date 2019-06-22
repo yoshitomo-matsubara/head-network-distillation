@@ -36,6 +36,11 @@ train:
         type: 'Adam'
         params:
             lr: 0.001
+    scheduler:
+        type: 'MultiStepLR'
+        params:
+            milestones: [50, 150]
+            gamma: 0.1
     criterion:
         type: 'MSELoss'
         params:
