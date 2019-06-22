@@ -14,14 +14,14 @@ class InputAutoencoder(BaseAutoencoder):
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(bottleneck_channel, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=5, stride=2), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=4), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, 12, kernel_size=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(12, 6, kernel_size=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(6, input_channel, kernel_size=2), nn.Sigmoid()
+            nn.ConvTranspose2d(bottleneck_channel, 32, kernel_size=5, stride=3), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(32, 64, kernel_size=5, stride=3), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(64, 128, kernel_size=3, stride=1), nn.ReLU(inplace=True),
+            nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+            nn.Conv2d(64, 32, kernel_size=2, padding=1), nn.ReLU(inplace=True),
+            nn.Conv2d(32, 16, kernel_size=2), nn.ReLU(inplace=True),
+            nn.Conv2d(16, 8, kernel_size=2), nn.ReLU(inplace=True),
+            nn.Conv2d(8, 3, kernel_size=2)
         )
         self.initialize_weights()
 
