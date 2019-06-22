@@ -22,7 +22,7 @@ model:
         transform_input: False
 
 train:
-    epoch: 50
+    epoch: 200
     batch_size: 20
     rough_size: [327, 327]
     interval: -1
