@@ -196,11 +196,11 @@ def run(args):
             autoencoder = autoencoder.module
 
         resume_from_ckpt(ckpt_file_path, autoencoder)
-        head_model = None
+        del head_model
 
     extended_model, model = ae_util.get_extended_model(autoencoder, config, input_shape, device)
-    module_util.use_multiple_gpus_if_available(extended_model, device)
-    module_util.use_multiple_gpus_if_available(model, device)
+    extended_model = module_util.use_multiple_gpus_if_available(extended_model, device)
+    model = module_util.use_multiple_gpus_if_available(model, device)
     test(extended_model, model, test_loader, device)
 
 
