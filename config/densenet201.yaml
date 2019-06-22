@@ -38,11 +38,16 @@ train:
     rough_size: [256, 256]
     interval: -1
     optimizer:
-        type: 'sgd'
+        type: 'SGD'
         params:
-            lr: 0.01
+            lr: 0.1
             momentum: 0.9
             weight_decay: 0.0005
+    scheduler:
+        type: 'MultiStepLR'
+        params:
+            milestones: [50, 50, 50, 50]
+            gamma: 0.1
     criterion:
         type: 'CrossEntropyLoss'
         params:
