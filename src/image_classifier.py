@@ -40,7 +40,7 @@ def get_data_loaders(config):
 
 
 def train(model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: %d' % epoch)
+    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups['lr']))
     model.train()
     train_loss = 0
     correct = 0
