@@ -7,10 +7,10 @@ class InputAutoencoder(BaseAutoencoder):
     def __init__(self, input_channel=3, bottleneck_channel=3):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 32, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(32, 16, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(16, 8, kernel_size=4), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(8, bottleneck_channel, kernel_size=2), nn.ReLU(inplace=True)
+            nn.Conv2d(input_channel, 64, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 64, kernel_size=5), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 32, kernel_size=4), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(32, bottleneck_channel, kernel_size=2), nn.ReLU(inplace=True)
         )
 
         self.decoder = nn.Sequential(
