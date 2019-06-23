@@ -57,7 +57,7 @@ def resume_from_ckpt(ckpt_file_path, autoencoder):
 
 
 def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups['lr']))
+    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     autoencoder.train()
     head_model.eval()
     train_loss = 0

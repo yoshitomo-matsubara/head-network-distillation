@@ -23,7 +23,7 @@ def get_argparser():
 
 
 def train(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval, aux_weight):
-    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups['lr']))
+    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     student_model.train()
     teacher_model.eval()
     train_loss = 0
