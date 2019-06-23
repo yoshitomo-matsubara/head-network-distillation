@@ -1,3 +1,5 @@
+import multiprocessing
+
 import torch
 import torchvision.transforms as transforms
 
@@ -45,14 +47,16 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
         valid_comp_list.append(normalizer)
 
     pin_memory = torch.cuda.is_available()
+    num_cpus = multiprocessing.cpu_count()
+    num_workers = 0 if num_cpus == 1 else min(num_cpus, 8)
     train_transformer = transforms.Compose(train_comp_list)
     valid_transformer = transforms.Compose(valid_comp_list)
     train_dataset = AdvRgbImageDataset(train_file_path, reshape_size, train_transformer)
     valid_dataset = AdvRgbImageDataset(valid_file_path, reshape_size, valid_transformer)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                                               num_workers=2, pin_memory=pin_memory)
+                                               num_workers=num_workers, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
-                                               num_workers=2, pin_memory=pin_memory)
+                                               num_workers=num_workers, pin_memory=pin_memory)
     test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, reshape_size)
     test_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
     test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
@@ -60,5 +64,5 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
         test_dataset.compute_compression_rate()
 
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True,
-                                              num_workers=2, pin_memory=pin_memory)
+                                              num_workers=num_workers, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
