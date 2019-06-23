@@ -47,10 +47,9 @@ class Autoencoder4DenseNet(nn.Module):
     def __init__(self, input_channel=128, bottleneck_channel=3):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 128, kernel_size=2), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(128, 64, kernel_size=2), nn.BatchNorm2d(64), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(64, 32, kernel_size=2), nn.BatchNorm2d(32), nn.ReLU(inplace=True),
+            nn.Conv2d(input_channel, 128, kernel_size=2), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(128, 64, kernel_size=2), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 32, kernel_size=2), nn.ReLU(inplace=True),
             nn.Conv2d(32, bottleneck_channel, kernel_size=2)
         )
 
