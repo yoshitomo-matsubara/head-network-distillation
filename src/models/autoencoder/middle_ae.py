@@ -66,7 +66,7 @@ class Autoencoder4DenseNet(BaseAutoencoder):
             nn.BatchNorm2d(256), nn.ReLU(inplace=True),
             nn.Conv2d(256, 512, kernel_size=3, stride=2),
             nn.BatchNorm2d(512), nn.ReLU(inplace=True),
-            nn.Conv2d(512, input_channel, kernel_size=2), nn.Sigmoid()
+            nn.Conv2d(512, input_channel, kernel_size=2)
         )
         self.initialize_weights()
 
