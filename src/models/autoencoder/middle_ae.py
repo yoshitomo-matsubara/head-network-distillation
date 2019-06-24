@@ -43,24 +43,32 @@ class MiddleAutoencoder(BaseAutoencoder):
         return zs
 
 
-class Autoencoder4DenseNet(nn.Module):
+class Autoencoder4DenseNet(BaseAutoencoder):
     def __init__(self, input_channel=128, bottleneck_channel=3):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channel, 128, kernel_size=2), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(128, 64, kernel_size=2), nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
-            nn.Conv2d(64, 32, kernel_size=2), nn.ReLU(inplace=True),
-            nn.Conv2d(32, bottleneck_channel, kernel_size=2)
+            nn.Conv2d(input_channel, 128, kernel_size=2), nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(128, 64, kernel_size=2), nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True), nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 32, kernel_size=2), nn.BatchNorm2d(32), nn.ReLU(inplace=True),
+            nn.Conv2d(32, bottleneck_channel, kernel_size=2), nn.BatchNorm2d(bottleneck_channel)
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(bottleneck_channel, 32, kernel_size=4, stride=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(32, 64, kernel_size=4, stride=3), nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(64, 128, kernel_size=4, stride=3), nn.ReLU(inplace=True),
-            nn.Conv2d(128, 256, kernel_size=3, stride=2), nn.ReLU(inplace=True),
-            nn.Conv2d(256, 512, kernel_size=3, stride=2), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(bottleneck_channel, 32, kernel_size=4, stride=3),
+            nn.BatchNorm2d(32), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(32, 64, kernel_size=4, stride=3),
+            nn.BatchNorm2d(64), nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(64, 128, kernel_size=4, stride=3),
+            nn.BatchNorm2d(128), nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, kernel_size=3, stride=2),
+            nn.BatchNorm2d(256), nn.ReLU(inplace=True),
+            nn.Conv2d(256, 512, kernel_size=3, stride=2),
+            nn.BatchNorm2d(512), nn.ReLU(inplace=True),
             nn.Conv2d(512, input_channel, kernel_size=2), nn.Sigmoid()
         )
+        self.initialize_weights()
 
     def forward(self, sample_batch):
         # Encoding
