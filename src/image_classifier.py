@@ -42,6 +42,7 @@ def get_data_loaders(config):
 def train(model, train_loader, optimizer, criterion, epoch, device, interval):
     print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     model.train()
+    train_size = len(train_loader.sampler)
     train_loss = 0
     correct = 0
     total = 0
@@ -58,12 +59,10 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
-            progress = 100.0 * batch_idx / len(train_loader)
+            progress = 100.0 * total / train_size
             train_accuracy = correct / total
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(batch_idx * len(inputs),
-                                                                                      len(train_loader.sampler),
-                                                                                      progress, loss.item(),
-                                                                                      train_accuracy))
+            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(total, train_size, progress,
+                                                                                      loss.item(), train_accuracy))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):

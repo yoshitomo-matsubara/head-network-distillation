@@ -60,6 +60,7 @@ def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, de
     print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     autoencoder.train()
     head_model.eval()
+    train_size = len(train_loader.sampler)
     train_loss = 0
     total = 0
     for batch_idx, (inputs, targets) in enumerate(train_loader):
@@ -73,8 +74,7 @@ def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, de
         train_loss += loss.item()
         total += targets.size(0)
         if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tAvg Loss: {:.6f}'.format(batch_idx * len(inputs), len(train_loader.sampler),
-                                                               100.0 * batch_idx / len(train_loader),
+            print('[{}/{} ({:.0f}%)]\tAvg Loss: {:.6f}'.format(total, train_size, 100.0 * total / train_size,
                                                                loss.item() / targets.size(0)))
 
 
