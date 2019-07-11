@@ -42,7 +42,7 @@ class BaseHeadMimic(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, sample_batch):
-        raise NotImplementedError
+        raise NotImplementedError('forward function must be implemented')
 
 
 class BaseMimic(nn.Module):
