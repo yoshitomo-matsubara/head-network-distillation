@@ -134,8 +134,8 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       reshape_size=input_shape[1:3], jpeg_quality=-1)
+    teacher_model_config = config['teacher_model']
     if not args.evaluate:
-        teacher_model_config = config['teacher_model']
         teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
         student_model_config = config['student_model']
         student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
