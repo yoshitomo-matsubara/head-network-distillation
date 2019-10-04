@@ -139,7 +139,7 @@ def test(extended_model, org_model, test_loader, device):
             org_test_loss += sub_test_loss
 
     ext_acc = 100.0 * ext_correct_count / total
-    print('[Extended]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    print('[Extended]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
         ext_correct_count / total, ext_correct_count, total, ext_acc))
     org_acc = 100.0 * org_correct_count / total
     print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
