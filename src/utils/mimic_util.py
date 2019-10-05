@@ -108,9 +108,11 @@ def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
     mimic_model_config = config['mimic_model']
     mimic_type = mimic_model_config['type']
     if mimic_type.startswith('densenet'):
-        return DenseNetMimic(student_model, tail_modules)
+        mimic_model = DenseNetMimic(student_model, tail_modules)
     elif mimic_type.startswith('inception'):
-        return InceptionMimic(student_model, tail_modules)
+        mimic_model = InceptionMimic(student_model, tail_modules)
     elif mimic_type.startswith('resnet'):
-        return ResNetMimic(student_model, tail_modules)
-    raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
+        mimic_model = ResNetMimic(student_model, tail_modules)
+    else:
+        raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
+    return mimic_model.to(device)
