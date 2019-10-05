@@ -107,7 +107,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
         if not decomposable:
             break
 
-    if decomposable and expected_z.size() == z.size() and expected_z.isclose(z).all().item() == 1:
+    if decomposable and expected_z.size() == z.size() and expected_z.cpu().isclose(z.cpu()).all().item() == 1:
         module_list.extend(submodule_list)
         output_size_list.extend(sub_output_size_list)
         return expected_z, True
