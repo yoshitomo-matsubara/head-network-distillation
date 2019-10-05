@@ -46,6 +46,7 @@ class BaseExtendedModel(nn.Module):
         z = self.head_model(x)
         modules = list()
         module_util.extract_decomposable_modules(self.autoencoder, z, modules)
+        modules = [module.to(x.device) for module in modules]
         org_size = np.prod(x.size())
         min_rate = None
         bo = None
