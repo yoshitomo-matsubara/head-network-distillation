@@ -37,8 +37,11 @@ def extend_model(autoencoder, model, input_shape, device, partition_idx):
 
     modules = list()
     module = model.module if isinstance(model, nn.DataParallel) else model
-    module_util.extract_decomposable_modules(module, torch.rand(1, *input_shape).to(device), modules)
-    return BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:]).to(device)
+    x = torch.rand(1, *input_shape).to(device)
+    module_util.extract_decomposable_modules(module, x, modules)
+    extended_model = BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:]).to(device)
+    extended_model.compute_ae_bottleneck_size(x, True)
+    return extended_model
 
 
 def get_extended_model(autoencoder, config, input_shape, device):

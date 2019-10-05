@@ -1,4 +1,10 @@
+import pickle
+import sys
+
+import numpy as np
 import torch.nn as nn
+
+from utils import data_util, module_util
 
 
 class BaseAutoencoder(nn.Module):
@@ -35,3 +41,31 @@ class BaseExtendedModel(nn.Module):
         zs = self.autoencoder(zs)
         zs = self.tail_model(zs)
         return self.linear(zs.view(zs.size(0), -1))
+
+    def compute_ae_bottleneck_size(self, x, print_info=False):
+        z = self.head_model(x)
+        modules = list()
+        module_util.extract_decomposable_modules(self.autoencoder, x, modules)
+        org_size = np.prod(x.size())
+        min_rate = None
+        bo = None
+        bqo = None
+        for i in range(len(modules)):
+            if isinstance(modules[i], nn.Linear):
+                z = z.view(z.size(0), -1)
+
+            z = modules[i](z)
+            rate = np.prod(z.size()) / org_size
+            if min_rate is None or rate < min_rate:
+                min_rate = rate
+                bo = pickle.dumps(z)
+                bqo = pickle.dumps(data_util.quantize_tensor(z))
+
+        output_data_size = sys.getsizeof(bo) / 1024
+        quantized_output_data_size = sys.getsizeof(bqo) / 1024
+        if print_info:
+            print('Scaled output size: {} [%]'.format(min_rate * 100.0))
+            print('Output data size: {} [KB]'.format(output_data_size))
+            print('Quantized output data size: {} [KB]'.format(quantized_output_data_size))
+        # Scaled output size, Output data size [KB], Quantized output data size [KB]
+        return min_rate, output_data_size, quantized_output_data_size
