@@ -45,7 +45,7 @@ class BaseExtendedModel(nn.Module):
     def compute_ae_bottleneck_size(self, x, print_info=False):
         z = self.head_model(x)
         modules = list()
-        module_util.extract_decomposable_modules(self.autoencoder, x, modules)
+        module_util.extract_decomposable_modules(self.autoencoder, z, modules)
         org_size = np.prod(x.size())
         min_rate = None
         bo = None
@@ -64,8 +64,9 @@ class BaseExtendedModel(nn.Module):
         output_data_size = sys.getsizeof(bo) / 1024
         quantized_output_data_size = sys.getsizeof(bqo) / 1024
         if print_info:
-            print('Scaled output size: {} [%]'.format(min_rate * 100.0))
-            print('Output data size: {} [KB]'.format(output_data_size))
-            print('Quantized output data size: {} [KB]'.format(quantized_output_data_size))
+            print('[Autoencoder bottleneck]')
+            print('Scaled output size: {} [%]\tOutput data size: {} [KB]\tQuantized output data size: {} [KB]'.format(
+                min_rate * 100.0, output_data_size, quantized_output_data_size)
+            )
         # Scaled output size, Output data size [KB], Quantized output data size [KB]
         return min_rate, output_data_size, quantized_output_data_size
