@@ -65,9 +65,8 @@ class BaseExtendedModel(nn.Module):
         output_data_size = sys.getsizeof(bo) / 1024
         quantized_output_data_size = sys.getsizeof(bqo) / 1024
         if print_info:
-            print('[Autoencoder bottleneck]')
-            print('Scaled output size: {} [%]\tOutput data size: {} [KB]\tQuantized output data size: {} [KB]'.format(
-                min_rate * 100.0, output_data_size, quantized_output_data_size)
-            )
+            print('[Autoencoder bottleneck]\tScaled output size: {} [%]\tOutput data size: {} [KB]'
+                  '\tQuantized output data size: {} [KB]'.format(min_rate * 100.0, output_data_size,
+                                                                 quantized_output_data_size))
         # Scaled output size, Output data size [KB], Quantized output data size [KB]
         return min_rate, output_data_size, quantized_output_data_size
