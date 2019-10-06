@@ -68,5 +68,5 @@ class BaseExtendedModel(nn.Module):
             print('[Autoencoder bottleneck]\tScaled output size: {} [%]\tOutput data size: {} [KB]'
                   '\tQuantized output data size: {} [KB]'.format(min_rate * 100.0, output_data_size,
                                                                  quantized_output_data_size))
-        # Scaled output size, Output data size [KB], Quantized output data size [KB]
+        # Scaled bottleneck size, bottleneck data size [KB], Quantized bottleneck data size [KB]
         return min_rate, output_data_size, quantized_output_data_size
