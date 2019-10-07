@@ -71,7 +71,8 @@ def extract_all_child_modules(parent_module, module_list, extract_designed_modul
 
 
 def extract_decomposable_modules(parent_module, z, module_list, output_size_list=list(), first=True, exception_size=-1):
-    parent_module.eval()
+    parent_module = parent_module.eval().cpu()
+    z = z.cpu()
     child_modules = list(parent_module.children())
     if not child_modules:
         module_list.append(parent_module)
@@ -107,7 +108,7 @@ def extract_decomposable_modules(parent_module, z, module_list, output_size_list
         if not decomposable:
             break
 
-    if decomposable and expected_z.size() == z.size() and expected_z.isclose(z).all().item() == 1:
+    if decomposable and expected_z.size() == z.size() and expected_z.allclose(z):
         module_list.extend(submodule_list)
         output_size_list.extend(sub_output_size_list)
         return expected_z, True

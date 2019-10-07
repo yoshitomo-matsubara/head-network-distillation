@@ -25,7 +25,7 @@ autoencoder:
         bottleneck_channel: 3
 
 train:
-    epoch: 100
+    epoch: 150
     batch_size: 20
     rough_size: [256, 256]
     interval: -1
@@ -36,7 +36,7 @@ train:
     scheduler:
         type: 'MultiStepLR'
         params:
-            milestones: [50, 100]
+            milestones: [50, 150]
             gamma: 0.1
     criterion:
         type: 'MSELoss'

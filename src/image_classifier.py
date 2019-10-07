@@ -40,8 +40,9 @@ def get_data_loaders(config):
 
 
 def train(model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: %d' % epoch)
+    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     model.train()
+    train_size = len(train_loader.sampler)
     train_loss = 0
     correct = 0
     total = 0
@@ -58,12 +59,10 @@ def train(model, train_loader, optimizer, criterion, epoch, device, interval):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         if batch_idx > 0 and batch_idx % interval == 0:
-            progress = 100.0 * batch_idx / len(train_loader)
+            progress = 100.0 * total / train_size
             train_accuracy = correct / total
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(batch_idx * len(inputs),
-                                                                                      len(train_loader.sampler),
-                                                                                      progress, loss.item(),
-                                                                                      train_accuracy))
+            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(total, train_size, progress,
+                                                                                      loss.item(), train_accuracy))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -128,6 +127,8 @@ def run(args):
             optim_config['params']['lr'] = args.lr
 
         optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
+        scheduler_config = train_config['scheduler']
+        scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
         interval = train_config['interval']
         if interval <= 0:
             num_batches = len(train_loader)
@@ -137,6 +138,7 @@ def run(args):
         for epoch in range(start_epoch, end_epoch):
             train(model, train_loader, optimizer, criterion, epoch, device, interval)
             best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
+            scheduler.step()
     test(model, test_loader, criterion, device)
 
 

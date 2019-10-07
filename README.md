@@ -4,6 +4,7 @@
 - PyTorch 0.41 >= (torch, torchvision)
 - Matplotlib
 - Numpy
+- PyYAML
 - [myutils](https://github.com/yoshitomo-matsubara/myutils)
 
 
