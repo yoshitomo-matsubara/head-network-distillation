@@ -1,7 +1,7 @@
 # Head Network Distillation
 ## Requirement
 - Python 3.6
-- PyTorch 0.41 >= (torch, torchvision)
+- PyTorch 1.2 >= (torch, torchvision)
 - Matplotlib
 - Numpy
 - PyYAML
