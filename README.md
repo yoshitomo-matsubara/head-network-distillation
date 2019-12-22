@@ -1,10 +1,7 @@
 # Head Network Distillation
-## Requirement
+## Requirements
 - Python 3.6
-- PyTorch 1.2 >= (torch, torchvision)
-- Matplotlib
-- Numpy
-- PyYAML
+- pipenv
 - [myutils](https://github.com/yoshitomo-matsubara/myutils)
 
 
@@ -14,4 +11,5 @@ git clone https://github.com/yoshitomo-matsubara/head-network-distillation.git
 cd head-network-distillation/
 git submodule init
 git submodule update --recursive --remote
+pipenv install
 ```
