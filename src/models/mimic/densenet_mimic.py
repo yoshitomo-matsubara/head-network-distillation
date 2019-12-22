@@ -160,6 +160,31 @@ def mimic_version3(teacher_model_type, make_bottleneck, bottleneck_channel):
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
+def mimic_version_test(bottleneck_channel):
+    return nn.Sequential(
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, 32, kernel_size=3, stride=2, bias=False),
+        nn.BatchNorm2d(32),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(32, bottleneck_channel, kernel_size=3, stride=2, bias=False),
+        nn.BatchNorm2d(bottleneck_channel),
+        nn.ReLU(inplace=True),
+        nn.ConvTranspose2d(bottleneck_channel, 256, kernel_size=3, stride=2, bias=False),
+        nn.BatchNorm2d(256),
+        nn.ReLU(inplace=True),
+        nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 512, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 256, kernel_size=2, stride=2, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True)
+    )
+
+
 class DenseNetHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
     def __init__(self, teacher_model_type, version, bottleneck_channel=3, use_aux=False):
@@ -176,6 +201,8 @@ class DenseNetHeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel, use_aux)
         elif version in ['3', '3b']:
             self.module_seq = mimic_version3(teacher_model_type, version == '3b', bottleneck_channel)
+        elif version == 'test':
+            self.module_seq = mimic_version_test(bottleneck_channel)
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()
