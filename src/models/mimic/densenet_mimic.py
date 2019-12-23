@@ -180,7 +180,7 @@ def mimic_version_test(bottleneck_channel):
         nn.BatchNorm2d(512),
         nn.ReLU(inplace=True),
         nn.Conv2d(512, 256, kernel_size=2, stride=2, bias=False),
-        nn.BatchNorm2d(512),
+        nn.BatchNorm2d(256),
         nn.ReLU(inplace=True)
     )
 
