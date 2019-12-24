@@ -41,8 +41,8 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
                                       rough_size=config['train']['rough_size'],
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
     print('Testing..')
-    device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
-    if device == 'cuda':
+    device = torch.devie('cuda' if next(model.parameters()).is_cuda else 'cpu')
+    if device.type == 'cuda':
         cudnn.benchmark = True
 
     model = module_util.use_multiple_gpus_if_available(model, device)
@@ -147,13 +147,13 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     file_util.save_pickle(head_network.to(sensor_device), head_output_file_path)
     file_util.save_pickle(tail_network.to(edge_device), tail_output_file_path)
     if require_test:
-        device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
+        device = torch.device('cuda' if next(model.parameters()).is_cuda else 'cpu')
         mimic_model = mimic_util.get_mimic_model(config, model, teacher_model_type, teacher_model_config, device)
         test_split_model(mimic_model, head_network, tail_network, sensor_device, edge_device, spbit, config)
 
 
 def convert_model(model, device, output_file_path):
-    if device == 'cpu' and isinstance(model, nn.parallel.DataParallel):
+    if device.type == 'cpu' and isinstance(model, nn.parallel.DataParallel):
         model = model.module
 
     for module in model.modules():
@@ -163,14 +163,14 @@ def convert_model(model, device, output_file_path):
 
 def run(args):
     config = yaml_util.load_yaml_file(args.config)
-    sensor_device = 'cpu' if args.scpu else 'cuda'
-    edge_device = 'cpu' if args.ecpu else 'cuda'
+    sensor_device = torch.device('cpu' if args.scpu else 'cuda')
+    edge_device = torch.device('cpu' if args.ecpu else 'cuda')
     partition_idx = args.partition
     head_output_file_path = args.head
     tail_output_file_path = args.tail
     input_shape = config['input_shape']
     if 'teacher_model' not in config:
-        model = module_util.get_model(config, 'cuda' if torch.cuda.is_available() else None)
+        model = module_util.get_model(config, torch.device('cuda') if torch.cuda.is_available() else None)
         module_util.resume_from_ckpt(model, config['model'], False)
     else:
         model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')

@@ -5,7 +5,7 @@ from myutils.common import file_util
 
 
 def use_multiple_gpus_if_available(model, device):
-    return nn.DataParallel(model) if device.startswith('cuda') else model
+    return nn.DataParallel(model) if device.type == 'cuda' else model
 
 
 def get_model(config, device=None):

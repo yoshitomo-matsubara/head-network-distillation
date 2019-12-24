@@ -14,7 +14,6 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
-    argparser.add_argument('--gpu', type=int, help='gpu number')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
     return argparser
@@ -107,12 +106,9 @@ def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_
 
 
 def run(args):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    if device == 'cuda':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if device.type == 'cuda':
         cudnn.benchmark = True
-        gpu_number = args.gpu
-        if gpu_number is not None and gpu_number >= 0:
-            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config)
