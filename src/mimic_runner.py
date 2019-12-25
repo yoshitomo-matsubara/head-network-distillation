@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -8,6 +9,7 @@ from torch.nn.parallel.distributed import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util, module_util
+from structure.logger import MetricLogger, SmoothedValue
 from utils import main_util, mimic_util
 from utils.dataset import general_util
 
@@ -18,25 +20,25 @@ def get_argparser():
     argparser.add_argument('--device', default='cuda', help='device')
     argparser.add_argument('--aux', type=float, default=100.0, help='auxiliary weight')
     argparser.add_argument('-test_only', action='store_true', help='only test model')
+    argparser.add_argument('-student_only', action='store_true', help='test student model only')
     # distributed training parameters
     argparser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
     argparser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     return argparser
 
 
-# TODO: add metric logger
-def distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion, epoch, device, interval, aux_weight):
-    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
-    student_model.train()
-    teacher_model.eval()
-    train_size = len(train_loader.sampler)
-    train_loss = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
+def distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
+                      epoch, device, interval, aux_weight):
+    metric_logger = MetricLogger(delimiter='  ')
+    metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value}'))
+    metric_logger.add_meter('img/s', SmoothedValue(window_size=10, fmt='{value}'))
+    header = 'Epoch: [{}]'.format(epoch)
+    for sample_batch, targets in metric_logger.log_every(train_loader, interval, header):
+        start_time = time.time()
+        sample_batch, targets = sample_batch.to(device), targets.to(device)
         optimizer.zero_grad()
-        student_outputs = student_model(inputs)
-        teacher_outputs = teacher_model(inputs)
+        student_outputs = student_model(sample_batch)
+        teacher_outputs = teacher_model(sample_batch)
         if isinstance(student_outputs, tuple):
             student_outputs, aux = student_outputs[0], student_outputs[1]
             loss = criterion(student_outputs, teacher_outputs) + aux_weight * nn.functional.cross_entropy(aux, targets)
@@ -45,36 +47,67 @@ def distill_one_epoch(student_model, teacher_model, train_loader, optimizer, cri
 
         loss.backward()
         optimizer.step()
-        train_loss += loss.item()
-        total += targets.size(0)
-        if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tAvg Loss: {:.6f}'.format(total, train_size, 100.0 * total / train_size,
-                                                               loss.item() / targets.size(0)))
+        batch_size = sample_batch.shape[0]
+        metric_logger.update(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
+        metric_logger.meters['img/s'].update(batch_size / (time.time() - start_time))
 
 
-# TODO: 1) add metric logger \
-#  and 2) temporarily build mimic model to compute validation accuracy (and detach the tail at the end of this function
+def compute_accuracy(output, target, topk=(1,)):
+    maxk = max(topk)
+    batch_size = target.size(0)
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(target[None])
+    acc_list = []
+    for k in topk:
+        correct_k = correct[:k].flatten().sum(dtype=torch.float32)
+        acc_list.append(correct_k * (100.0 / batch_size))
+    return acc_list
+
+
 @torch.no_grad()
-def validate(student_model, teacher_model, valid_loader, criterion, device):
-    student_model.eval()
-    teacher_model.eval()
-    valid_loss = 0
-    total = 0
+def evaluate(model, data_loader, device, log_freq=1000, split_name='Test', title=None):
+    if title is not None:
+        print(title)
+
+    num_threads = torch.get_num_threads()
+    torch.set_num_threads(1)
+    model.eval()
+    metric_logger = MetricLogger(delimiter='  ')
+    header = '{}:'.format(split_name)
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(valid_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            student_outputs = student_model(inputs)
-            teacher_outputs = teacher_model(inputs)
-            loss = criterion(student_outputs, teacher_outputs)
-            valid_loss += loss.item()
-            total += targets.size(0)
+        for image, target in metric_logger.log_every(data_loader, log_freq, header):
+            image = image.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
+            output = model(image)
 
-    avg_valid_loss = valid_loss / total
-    print('Validation Loss: {:.6f}\tAvg Loss: {:.6f}'.format(valid_loss, avg_valid_loss))
-    return avg_valid_loss
+            acc1, acc5 = compute_accuracy(output, target, topk=(1, 5))
+            # FIXME need to take into account that the datasets
+            # could have been padded in distributed setup
+            batch_size = image.shape[0]
+            metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+            metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    top1_accuracy = metric_logger.acc1.global_avg
+    top5_accuracy = metric_logger.acc5.global_avg
+    print(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
+    torch.set_num_threads(num_threads)
+    return metric_logger.acc1.global_avg
 
 
-def save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type):
+def validate(student_model_without_ddp, data_loader, config, device, distributed, device_ids):
+    teacher_model_config = config['teacher_model']
+    org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
+    mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
+                                             device, head_model=student_model_without_ddp)
+    if distributed:
+        mimic_model = DistributedDataParallel(mimic_model, device_ids=device_ids)
+    return evaluate(mimic_model, data_loader, device, split_name='Validation')
+
+
+def save_ckpt(student_model, epoch, best_valid_value, ckpt_file_path, teacher_model_type):
     print('Saving..')
     module =\
         student_model.module if isinstance(student_model, (DataParallel, DistributedDataParallel)) else student_model
@@ -82,19 +115,11 @@ def save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model
         'type': teacher_model_type,
         'model': module.state_dict(),
         'epoch': epoch + 1,
-        'best_avg_loss': best_avg_loss,
+        'best_valid_value': best_valid_value,
         'student': True
     }
     file_util.make_parent_dirs(ckpt_file_path)
     torch.save(state, ckpt_file_path)
-
-
-def predict(inputs, targets, model):
-    preds = model(inputs)
-    loss = nn.functional.cross_entropy(preds, targets)
-    _, pred_labels = preds.max(1)
-    correct_count = pred_labels.eq(targets).sum().item()
-    return correct_count, loss.item()
 
 
 def distill(train_loader, valid_loader, input_shape, aux_weight, config, device, distributed, device_ids):
@@ -104,8 +129,8 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     student_model_config = config['student_model']
     student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
     student_model = student_model.to(device)
-    start_epoch, best_avg_loss = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
-                                                             is_student=True)
+    start_epoch, best_valid_acc = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
+                                                              is_student=True)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
@@ -119,52 +144,25 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
         num_batches = len(train_loader)
         interval = num_batches // 100 if num_batches >= 100 else 1
 
+    student_model_without_ddp = student_model
     if distributed:
         teacher_model = DataParallel(teacher_model, device_ids=device_ids)
         student_model = DistributedDataParallel(student_model, device_ids=device_ids)
+        student_model_without_ddp = student_model.module
 
     ckpt_file_path = student_model_config['ckpt']
     end_epoch = start_epoch + train_config['epoch']
     for epoch in range(start_epoch, end_epoch):
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
-        avg_valid_loss = validate(student_model, teacher_model, valid_loader, criterion, device)
-        if avg_valid_loss < best_avg_loss and main_util.is_main_process():
-            best_avg_loss = avg_valid_loss
-            save_ckpt(student_model, epoch, best_avg_loss, ckpt_file_path, teacher_model_type)
+        valid_acc = validate(student_model, teacher_model, valid_loader, device, distributed, device_ids)
+        if valid_acc < best_valid_acc and main_util.is_main_process():
+            best_valid_acc = valid_acc
+            save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
         scheduler.step()
 
     del teacher_model
     del student_model
-
-
-def test(mimic_model, org_model, test_loader, device):
-    print('Testing..')
-    mimic_model.eval()
-    org_model.eval()
-    mimic_correct_count = 0
-    mimic_test_loss = 0
-    org_correct_count = 0
-    org_test_loss = 0
-    total = 0
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(test_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            total += targets.size(0)
-            sub_correct_count, sub_test_loss = predict(inputs, targets, mimic_model)
-            mimic_correct_count += sub_correct_count
-            mimic_test_loss += sub_test_loss
-            sub_correct_count, sub_test_loss = predict(inputs, targets, org_model)
-            org_correct_count += sub_correct_count
-            org_test_loss += sub_test_loss
-
-    mimic_acc = 100.0 * mimic_correct_count / total
-    print('[Mimic]\t\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        mimic_test_loss / total, mimic_correct_count, total, mimic_acc))
-    org_acc = 100.0 * org_correct_count / total
-    print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        org_test_loss / total, org_correct_count, total, org_acc))
-    return mimic_acc, org_acc
 
 
 def run(args):
@@ -186,7 +184,10 @@ def run(args):
 
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
-    test(mimic_model, org_model, test_loader, device)
+    if not args.student_only:
+        evaluate(org_model, test_loader, device, title='[Original model]')
+
+    evaluate(mimic_model, test_loader, device, title='[Mimic model]')
     file_util.save_pickle(mimic_model, config['mimic_model']['ckpt'])
 
 

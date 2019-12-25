@@ -17,8 +17,8 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
         return 1
 
     print('Resuming from checkpoint..')
-    checkpoint = torch.load(ckpt_file_path)
-    state_dict = checkpoint['model']
+    ckpt = torch.load(ckpt_file_path)
+    state_dict = ckpt['model']
     if not is_student and isinstance(model, Inception3) or\
             (hasattr(model, 'module') and isinstance(model.module, Inception3)):
         for key in list(state_dict.keys()):
@@ -26,9 +26,9 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
                 state_dict.pop(key)
 
     model.load_state_dict(state_dict)
-    start_epoch = checkpoint['epoch']
+    start_epoch = ckpt['epoch']
     if is_student:
-        return start_epoch, checkpoint['best_avg_loss']
+        return start_epoch, ckpt['best_avg_loss'] if 'best_avg_loss' in ckpt else ckpt['best_valid_value']
     return start_epoch
 
 
@@ -97,9 +97,9 @@ def get_tail_network(config, tail_modules):
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 
-def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device):
+def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device, head_model=None):
     target_model = org_model.module if isinstance(org_model, nn.DataParallel) else org_model
-    student_model = load_student_model(config, teacher_model_type, device)
+    student_model = load_student_model(config, teacher_model_type, device) if head_model is None else head_model
     org_modules = list()
     input_batch = torch.rand(config['input_shape']).unsqueeze(0).to(device)
     module_util.extract_decomposable_modules(target_model, input_batch, org_modules)
