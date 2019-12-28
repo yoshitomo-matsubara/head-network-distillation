@@ -155,7 +155,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     for epoch in range(start_epoch, end_epoch):
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
-        valid_acc = validate(student_model, teacher_model, valid_loader, device, distributed, device_ids)
+        valid_acc = validate(student_model, valid_loader, config, device, distributed, device_ids)
         if valid_acc < best_valid_acc and main_util.is_main_process():
             best_valid_acc = valid_acc
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
