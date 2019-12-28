@@ -6,7 +6,7 @@ import torch.backends.cudnn as cudnn
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from utils import module_util
-from utils.dataset import general_util, cifar_util
+from utils.dataset import general_util
 
 
 def get_argparser():
@@ -31,10 +31,6 @@ def get_data_loaders(config):
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
                                              jpeg_quality=test_config['jquality'])
-    elif dataset_name.startswith('cifar'):
-        return cifar_util.get_data_loaders(dataset_config['data'], train_config['batch_size'],
-                                           compress_config['type'], compress_config['size'], train_config['valid_rate'],
-                                           is_cifar100=dataset_name == 'cifar100')
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
