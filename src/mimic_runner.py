@@ -157,6 +157,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
                           epoch, device, interval, aux_weight)
         valid_acc = validate(student_model, valid_loader, config, device, distributed, device_ids)
         if valid_acc < best_valid_acc and main_util.is_main_process():
+            print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_valid_acc, valid_acc))
             best_valid_acc = valid_acc
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
         scheduler.step()
