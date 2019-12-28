@@ -71,11 +71,11 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
     train_batch_sampler = BatchSampler(train_sampler, batch_size, drop_last=True)
     train_loader = DataLoader(train_dataset, sampler=train_batch_sampler,
                               num_workers=num_workers, pin_memory=pin_memory)
-    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
-                              sampler=valid_sampler, num_workers=num_workers, pin_memory=pin_memory)
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, sampler=valid_sampler,
+                              num_workers=num_workers, pin_memory=pin_memory)
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
 
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True,
-                             sampler=test_sampler, num_workers=num_workers, pin_memory=pin_memory)
+    test_loader = DataLoader(test_dataset, batch_size=1, sampler=test_sampler,
+                             num_workers=num_workers, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
