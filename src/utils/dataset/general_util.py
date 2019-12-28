@@ -2,6 +2,7 @@ import multiprocessing
 
 import torch
 from torch.utils.data import BatchSampler, DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 
 from structure.dataset import AdvRgbImageDataset
@@ -59,9 +60,9 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
     test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
 
     if distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-        valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset)
-        test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
+        train_sampler = DistributedSampler(train_dataset)
+        valid_sampler = DistributedSampler(valid_dataset)
+        test_sampler = DistributedSampler(test_dataset)
     else:
         train_sampler = RandomSampler(train_dataset)
         valid_sampler = SequentialSampler(valid_dataset)
