@@ -66,7 +66,7 @@ def compute_accuracy(output, target, topk=(1,)):
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, log_freq=1000, split_name='Test', title=None):
+def evaluate(model, data_loader, device, interval=1000, split_name='Test', title=None):
     if title is not None:
         print(title)
 
@@ -76,7 +76,7 @@ def evaluate(model, data_loader, device, log_freq=1000, split_name='Test', title
     metric_logger = MetricLogger(delimiter='  ')
     header = '{}:'.format(split_name)
     with torch.no_grad():
-        for image, target in metric_logger.log_every(data_loader, log_freq, header):
+        for image, target in metric_logger.log_every(data_loader, interval, header):
             image = image.to(device, non_blocking=True)
             target = target.to(device, non_blocking=True)
             output = model(image)
@@ -142,7 +142,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     interval = train_config['interval']
     if interval <= 0:
         num_batches = len(train_loader)
-        interval = num_batches // 100 if num_batches >= 100 else 1
+        interval = num_batches // 20 if num_batches >= 20 else 1
 
     student_model_without_ddp = student_model
     if distributed:
