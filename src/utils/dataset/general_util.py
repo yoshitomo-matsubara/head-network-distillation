@@ -69,7 +69,7 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
         test_sampler = SequentialSampler(test_dataset)
 
     train_batch_sampler = BatchSampler(train_sampler, batch_size, drop_last=True)
-    train_loader = DataLoader(train_dataset, shuffle=True, sampler=train_batch_sampler,
+    train_loader = DataLoader(train_dataset, sampler=train_batch_sampler,
                               num_workers=num_workers, pin_memory=pin_memory)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
                               sampler=valid_sampler, num_workers=num_workers, pin_memory=pin_memory)
