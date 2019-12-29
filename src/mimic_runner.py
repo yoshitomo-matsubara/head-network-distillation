@@ -178,7 +178,8 @@ def run(args):
     train_config = config['train']
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
-                                      reshape_size=input_shape[1:3], jpeg_quality=-1, distributed=distributed)
+                                      rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
+                                      jpeg_quality=-1, distributed=distributed)
     teacher_model_config = config['teacher_model']
     if not args.test_only:
         distill(train_loader, valid_loader, input_shape, args.aux, config, device, distributed, device_ids)
