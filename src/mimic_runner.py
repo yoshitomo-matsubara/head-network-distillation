@@ -134,7 +134,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
                                                               is_student=True)
     if best_valid_acc is None:
         best_valid_acc = 0.0
-    
+
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
@@ -160,7 +160,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
         valid_acc = validate(student_model, valid_loader, config, device, distributed, device_ids)
-        if valid_acc < best_valid_acc and main_util.is_main_process():
+        if valid_acc > best_valid_acc and main_util.is_main_process():
             print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_valid_acc, valid_acc))
             best_valid_acc = valid_acc
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
