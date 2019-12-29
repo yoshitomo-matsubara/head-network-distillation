@@ -13,7 +13,7 @@ def resume_from_ckpt(ckpt_file_path, model, is_student=False):
     if not file_util.check_if_exists(ckpt_file_path):
         print('{} checkpoint was not found at {}'.format("Student" if is_student else "Teacher", ckpt_file_path))
         if is_student:
-            return 1, 1e60
+            return 1, None
         return 1
 
     print('Resuming from checkpoint..')

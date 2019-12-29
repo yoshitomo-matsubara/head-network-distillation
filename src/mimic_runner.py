@@ -132,6 +132,9 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     student_model = student_model.to(device)
     start_epoch, best_valid_acc = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                               is_student=True)
+    if best_valid_acc is None:
+        best_valid_acc = 0.0
+    
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
