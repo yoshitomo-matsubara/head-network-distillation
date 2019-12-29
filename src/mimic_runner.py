@@ -195,9 +195,10 @@ def run(args):
     mimic_model_without_dp = mimic_model.module if isinstance(mimic_model, DataParallel) else mimic_model
     file_util.save_pickle(mimic_model_without_dp, config['mimic_model']['ckpt'])
     if not args.student_only:
+        org_model.to(device)
         if distributed:
             org_model = DataParallel(org_model, device_ids=device_ids)
-        evaluate(org_model.to(device), test_loader, device, title='[Original model]')
+        evaluate(org_model, test_loader, device, title='[Original model]')
 
     if distributed:
         mimic_model = DistributedDataParallel(mimic_model_without_dp, device_ids=device_ids)
