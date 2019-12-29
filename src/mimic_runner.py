@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import time
 
 import torch
@@ -156,6 +157,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
 
     ckpt_file_path = student_model_config['ckpt']
     end_epoch = start_epoch + train_config['epoch']
+    start_time = time.time()
     for epoch in range(start_epoch, end_epoch):
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
@@ -166,6 +168,9 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
         scheduler.step()
 
+    total_time = time.time() - start_time
+    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+    print('Training time {}'.format(total_time_str))
     del teacher_model
     del student_model
 
