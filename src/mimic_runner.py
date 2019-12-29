@@ -191,12 +191,12 @@ def run(args):
         distill(train_loader, valid_loader, input_shape, args.aux, config, device, distributed, device_ids)
 
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
+    if not args.student_only:
+        evaluate(org_model.to(device), test_loader, device, title='[Original model]')
+
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
     mimic_model_without_dp = mimic_model.module if isinstance(mimic_model, DataParallel) else mimic_model
     file_util.save_pickle(mimic_model_without_dp, config['mimic_model']['ckpt'])
-    if not args.student_only:
-        evaluate(org_model.to(device), test_loader, device, title='[Original model]')
-    
     if distributed:
         mimic_model = DistributedDataParallel(mimic_model_without_dp, device_ids=device_ids)
     evaluate(mimic_model, test_loader, device, title='[Mimic model]')
