@@ -102,8 +102,9 @@ def validate(student_model_without_ddp, data_loader, config, device, distributed
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
                                              device, head_model=student_model_without_ddp)
+    mimic_model_without_dp = mimic_model.module if isinstance(mimic_model, DataParallel) else mimic_model
     if distributed:
-        mimic_model = DistributedDataParallel(mimic_model, device_ids=device_ids)
+        mimic_model = DistributedDataParallel(mimic_model_without_dp, device_ids=device_ids)
     return evaluate(mimic_model, data_loader, device, split_name='Validation')
 
 
@@ -176,10 +177,12 @@ def run(args):
     dataset_config = config['dataset']
     input_shape = config['input_shape']
     train_config = config['train']
+    test_config = config['test']
     train_loader, valid_loader, test_loader =\
         general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
-                                      jpeg_quality=-1, distributed=distributed)
+                                      jpeg_quality=-1, test_batch_size=test_config['batch_size'],
+                                      distributed=distributed)
     teacher_model_config = config['teacher_model']
     if not args.test_only:
         distill(train_loader, valid_loader, input_shape, args.aux, config, device, distributed, device_ids)

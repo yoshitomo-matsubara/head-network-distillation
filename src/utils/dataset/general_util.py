@@ -1,7 +1,7 @@
 import multiprocessing
 
 import torch
-from torch.utils.data import BatchSampler, DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 
@@ -28,7 +28,7 @@ def get_test_transformer(dataset_name, normalizer, compression_type, compressed_
 
 
 def get_data_loaders(dataset_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0, distributed=False):
+                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0, test_batch_size=1, distributed=False):
     data_config = dataset_config['data']
     dataset_name = dataset_config['name']
     train_file_path = data_config['train']
@@ -75,6 +75,6 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
     if 1 <= test_dataset.jpeg_quality <= 95:
         test_dataset.compute_compression_rate()
 
-    test_loader = DataLoader(test_dataset, batch_size=1, sampler=test_sampler,
+    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, sampler=test_sampler,
                              num_workers=num_workers, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader
