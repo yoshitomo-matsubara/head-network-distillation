@@ -30,6 +30,8 @@ def get_argparser():
 
 def distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                       epoch, device, interval, aux_weight):
+    student_model.train()
+    teacher_model.eval()
     metric_logger = MetricLogger(delimiter='  ')
     metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value}'))
     metric_logger.add_meter('img/s', SmoothedValue(window_size=10, fmt='{value}'))
