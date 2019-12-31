@@ -53,11 +53,14 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
     num_workers = data_config.get('num_workers', 0 if num_cpus == 1 else min(num_cpus, 8))
     train_transformer = transforms.Compose(train_comp_list)
     valid_transformer = transforms.Compose(valid_comp_list)
-    train_dataset = AdvRgbImageDataset(train_file_path, reshape_size, train_transformer)
-    valid_dataset = AdvRgbImageDataset(valid_file_path, reshape_size, valid_transformer)
     test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, reshape_size)
-    test_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
-    test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
+    train_dataset = AdvRgbImageDataset(train_file_path, reshape_size, train_transformer)
+    eval_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
+    if dataset_name == 'imagenet':
+        valid_transformer = test_transformer
+    
+    valid_dataset = AdvRgbImageDataset(valid_file_path, eval_reshape_size, valid_transformer)
+    test_dataset = AdvRgbImageDataset(test_file_path, eval_reshape_size, test_transformer, jpeg_quality)
 
     if distributed:
         train_sampler = DistributedSampler(train_dataset)
