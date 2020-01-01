@@ -132,6 +132,27 @@ def mimic_version3(make_bottleneck, bottleneck_channel):
     )
 
 
+def mimic_version_test(bottleneck_channel):
+    return nn.Sequential(
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(bottleneck_channel),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(bottleneck_channel, 512, kernel_size=2, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 512, kernel_size=2, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 512, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 512, kernel_size=2, stride=1, bias=False),
+        nn.AvgPool2d(kernel_size=2, stride=1)
+    )
+
+
 class ResNet152HeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
     def __init__(self, version, bottleneck_channel=3, use_aux=False):
@@ -148,6 +169,8 @@ class ResNet152HeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel, use_aux)
         elif version in ['3', '3b']:
             self.module_seq = mimic_version3(version == '3b', bottleneck_channel)
+        elif version == 'test':
+            self.module_seq = mimic_version_test(bottleneck_channel)
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()
