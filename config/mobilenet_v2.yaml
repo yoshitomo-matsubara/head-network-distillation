@@ -14,9 +14,12 @@ input_shape: [3, 224, 224]
 model:
     type: &model_type 'mobilenet_v2'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
+    pretrained: False
     ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
     params:
         num_classes: 101
+        # Default parameters for input size(3, 224, 224)
+        pretrained: False
 
 train:
     epoch: 200
@@ -26,13 +29,13 @@ train:
     optimizer:
         type: 'SGD'
         params:
-            lr: 0.1
+            lr: 0.001
             momentum: 0.9
             weight_decay: 0.0005
     scheduler:
         type: 'MultiStepLR'
         params:
-            milestones: [50, 100, 150, 200]
+            milestones: [100, 200]
             gamma: 0.1
     criterion:
         type: 'CrossEntropyLoss'
