@@ -11,6 +11,7 @@ torchvision = "==0.4.2"
 numpy = "*"
 matplotlib = "*"
 pyyaml = "*"
+scipy = "*"
 
 [requires]
 python_version = "3.6"
