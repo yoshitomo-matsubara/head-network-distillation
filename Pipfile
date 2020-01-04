@@ -12,6 +12,7 @@ numpy = "*"
 matplotlib = "*"
 pyyaml = "*"
 scipy = "*"
+pillow = "==6.2.1"
 
 [requires]
 python_version = "3.6"
