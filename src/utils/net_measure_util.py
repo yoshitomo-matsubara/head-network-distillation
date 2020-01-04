@@ -210,11 +210,12 @@ def compute_layerwise_complexity_and_data_size(model, model_name, input_shape, s
                 net.register_forward_hook(linear_hook)
             elif isinstance(net, (nn.MaxPool2d, nn.AvgPool2d)):
                 net.register_forward_hook(pooling_hook)
-            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.Sigmoid,
+            elif isinstance(net, (nn.BatchNorm2d, nn.ReLU, nn.ReLU6, nn.Sigmoid,
                                   nn.LeakyReLU, nn.Dropout, nn.Softmax, nn.LogSoftmax)):
                 net.register_forward_hook(simple_hook)
             else:
                 print('Non-registered instance:', type(net))
+                net.register_forward_hook(simple_hook)
             return
 
         for child in children:

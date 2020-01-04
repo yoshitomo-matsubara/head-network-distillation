@@ -2,6 +2,7 @@ import argparse
 import os
 
 import numpy as np
+import torch
 import torchvision
 
 from models.classification.lenet5 import MnistLeNet5
@@ -35,7 +36,7 @@ def read_config(config_file_path):
     if config['model']['type'] == 'inception_v3':
         config['model']['params']['aux_logits'] = False
 
-    model = module_util.get_model(config, 'cpu')
+    model = module_util.get_model(config, torch.device('cpu'))
     model_type = config['model']['type']
     input_shape = config['input_shape']
     return model, model_type, input_shape

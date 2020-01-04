@@ -1,6 +1,13 @@
+import torch
 import torchvision
+from torch import nn
 
-from models.classification import *
+from models.classification.alexnet import AlexNet
+from models.classification.densenet import densenet_model
+from models.classification.inception import inception_v3
+from models.classification.lenet5 import LeNet5
+from models.classification.mobilenet import mobilenet_model
+from models.classification.resnet import resnet_model
 from myutils.common import file_util
 
 
