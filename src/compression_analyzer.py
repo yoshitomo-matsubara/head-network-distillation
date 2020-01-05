@@ -203,9 +203,10 @@ def run(args):
     compress_config = test_config['compression']
     input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                      compress_config['type'], compress_config['size'],
-                                      reshape_size=input_shape[1:3], jpeg_quality=test_config['jquality'])
+        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+                                      compression_type=compress_config['type'], compressed_size=compress_config['size'],
+                                      rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
+                                      jpeg_quality=test_config['jquality'])
 
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):
