@@ -1,10 +1,11 @@
 import torch
+from torch import nn
 
 from models.classification.inception import Inception3
-from models.mimic.densenet_mimic import *
-from models.mimic.inception_mimic import *
-from models.mimic.resnet_mimic import *
-from models.mimic.vgg_mimic import *
+from models.mimic.densenet_mimic import DenseNetHeadMimic, DenseNetMimic
+from models.mimic.inception_mimic import InceptionHeadMimic, InceptionMimic
+from models.mimic.mobilenet_mimic import MobileNetHeadMimic, MobileNetMimic
+from models.mimic.resnet_mimic import ResNet152HeadMimic, ResNetMimic
 from myutils.common import file_util, yaml_util
 from utils import module_util
 
@@ -61,8 +62,8 @@ def get_student_model(teacher_model_type, student_model_config):
         return InceptionHeadMimic(student_model_config['version'], **student_model_config['params'])
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
         return ResNet152HeadMimic(student_model_config['version'], **student_model_config['params'])
-    elif teacher_model_type == 'vgg' and student_model_type == 'vgg16_head_mimic':
-        return Vgg16HeadMimic()
+    elif teacher_model_type == 'mobilenet_v2' and student_model_type == 'mobilenet_v2_head_mimic':
+        return MobileNetHeadMimic(student_model_config['version'], **student_model_config['params'])
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
@@ -94,6 +95,8 @@ def get_tail_network(config, tail_modules):
         return InceptionMimic(None, tail_modules)
     elif mimic_type.startswith('resnet'):
         return ResNetMimic(None, tail_modules)
+    elif mimic_type.startswith('mobilenet'):
+        return MobileNetMimic(None, tail_modules)
     raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
 
 
@@ -114,6 +117,8 @@ def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
         mimic_model = InceptionMimic(student_model, tail_modules)
     elif mimic_type.startswith('resnet'):
         mimic_model = ResNetMimic(student_model, tail_modules)
+    elif mimic_type.startswith('mobilenet'):
+        mimic_model = MobileNetMimic(student_model, tail_modules)
     else:
         raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
     return mimic_model.to(device)
