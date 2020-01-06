@@ -19,7 +19,7 @@ teacher_model:
 
 student_model:
     type: &smodel_type 'mobilenet_v2_head_mimic'
-    version: &ver '2b'
+    version: &ver '1b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
     params:
