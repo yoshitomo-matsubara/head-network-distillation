@@ -89,6 +89,44 @@ def mimic_version2(make_bottleneck, bottleneck_channel):
     )
 
 
+def mimic_version_test1(bottleneck_channel):
+    return nn.Sequential(
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, bias=False),
+        nn.BatchNorm2d(bottleneck_channel),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(bottleneck_channel, 512, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 512, kernel_size=3, stride=1, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 448, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(448),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(448, 448, kernel_size=3, stride=1, bias=False),
+        nn.BatchNorm2d(448),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(448, 384, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(384),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(384, 384, kernel_size=3, stride=1, bias=False),
+        nn.BatchNorm2d(384),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(384, 256, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(256),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(256, 256, kernel_size=3, stride=1, bias=False),
+        nn.BatchNorm2d(256),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(256, 192, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(192),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(192, 192, kernel_size=2, stride=1, bias=False)
+    )
+
+
 class MobileNetHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 224, 224]
     def __init__(self, version, bottleneck_channel=3, use_aux=False):
@@ -103,6 +141,8 @@ class MobileNetHeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version1(version == '1b', bottleneck_channel, use_aux)
         elif version in ['2', '2b']:
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel)
+        elif version == 'test1':
+            self.module_seq = mimic_version_test1(bottleneck_channel)
         else:
             raise ValueError('version `{}` is not expected'.format(version))
         self.initialize_weights()
