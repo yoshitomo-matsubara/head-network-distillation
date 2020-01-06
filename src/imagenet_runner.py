@@ -144,7 +144,7 @@ def main(args):
         train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
     imagenet_util.validate(valid_loader, model, criterion, args)
-    if args.jpeg_quality > 0:
+    if args.jpeg_quality > 0 and not args.skip_comp_rate:
         valid_loader.dataset.compute_compression_rate()
 
 
