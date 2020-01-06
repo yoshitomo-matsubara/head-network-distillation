@@ -174,13 +174,14 @@ def mobilenet_v2(pretrained=False, progress=True, **kwargs):
     """
     model = MobileNetV2(**kwargs)
     if pretrained:
+        print('Loading pretrained weights..')
         state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
                                               progress=progress)
         model.load_state_dict(state_dict)
     return model
 
 
-def mobilenet_model(model_type, param_config):
+def mobilenet_model(model_type, param_config, pretrained=False):
     if model_type == 'mobilenet_v2':
-        return mobilenet_v2(**param_config)
+        return mobilenet_v2(pretrained=pretrained, **param_config)
     return None
