@@ -38,7 +38,7 @@ class AdvRgbImageDataset(RgbImageDataset):
         file_path, target = self.file_paths[idx], self.labels[idx]
         img = Image.open(file_path).convert('RGB')
         img = functional.resize(img, self.size, interpolation=2)
-        if 1 <= self.jpeg_quality <= 95:
+        if 1 <= self.jpeg_quality <= 100:
             img, org_file_size, comp_file_size = self.compress_img(img)
             self.org_file_sizes.append(org_file_size / 1024)
             self.comp_file_sizes.append(comp_file_size / 1024)
@@ -126,7 +126,7 @@ class AdvImageFolder(ImageFolder):
         file_path, target = self.samples[idx]
         img = Image.open(file_path).convert('RGB')
         img = functional.resize(img, self.size, interpolation=2)
-        if 1 <= self.jpeg_quality <= 95:
+        if 1 <= self.jpeg_quality <= 100:
             img, org_file_size, comp_file_size = self.compress_img(img)
             self.org_file_sizes.append(org_file_size / 1024)
             self.comp_file_sizes.append(comp_file_size / 1024)

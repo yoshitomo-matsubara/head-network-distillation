@@ -75,7 +75,7 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
                               num_workers=num_workers, pin_memory=pin_memory)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, sampler=valid_sampler,
                               num_workers=num_workers, pin_memory=pin_memory)
-    if 1 <= test_dataset.jpeg_quality <= 95:
+    if 1 <= test_dataset.jpeg_quality <= 100:
         test_dataset.compute_compression_rate()
 
     test_loader = DataLoader(test_dataset, batch_size=test_batch_size, sampler=test_sampler,
