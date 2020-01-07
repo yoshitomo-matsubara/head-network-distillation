@@ -25,7 +25,7 @@ class AdvRgbImageDataset(RgbImageDataset):
 
     def compress_img(self, img):
         img_buffer = BytesIO()
-        img.save(img_buffer, 'JPEG', quality=95)
+        img.save(img_buffer, 'JPEG', quality=100)
         org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
@@ -73,7 +73,7 @@ class AdvRgbImageDataset(RgbImageDataset):
         return data.reshape(len(self.labels), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
-        if self.jpeg_quality < 1 or self.jpeg_quality > 95:
+        if self.jpeg_quality < 1 or self.jpeg_quality > 100:
             print('Compression rate: 0 +- 0')
             return
 
@@ -113,7 +113,7 @@ class AdvImageFolder(ImageFolder):
 
     def compress_img(self, img):
         img_buffer = BytesIO()
-        img.save(img_buffer, 'JPEG', quality=95)
+        img.save(img_buffer, 'JPEG', quality=100)
         org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
@@ -164,7 +164,7 @@ class AdvImageFolder(ImageFolder):
         return data.reshape(len(self.targets), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
-        if self.jpeg_quality < 1 or self.jpeg_quality > 95:
+        if self.jpeg_quality < 1 or self.jpeg_quality > 100:
             print('Compression rate: 0 +- 0')
             return
 
