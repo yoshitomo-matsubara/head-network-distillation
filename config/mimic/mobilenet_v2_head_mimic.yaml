@@ -15,7 +15,7 @@ teacher_model:
     config: './config/mobilenet_v2.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 31 # 31, 55 for vers. 1, 2
+    end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
 
 student_model:
     type: &smodel_type 'mobilenet_v2_head_mimic'

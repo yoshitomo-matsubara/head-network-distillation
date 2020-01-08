@@ -23,6 +23,40 @@ def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
         return mimic_version1b_with_aux(bottleneck_channel) if use_aux else nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
+            nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(bottleneck_channel),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(bottleneck_channel, 256, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 128, kernel_size=2, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 64, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 32, kernel_size=2, stride=1, bias=False),
+            nn.AvgPool2d(kernel_size=2, stride=2)
+        )
+    return nn.Sequential(
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, 128, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(128),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(128, 64, kernel_size=2, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, 32, kernel_size=2, stride=1, bias=False),
+        nn.AvgPool2d(kernel_size=2, stride=1)
+    )
+
+
+def mimic_version2(make_bottleneck, bottleneck_channel):
+    if make_bottleneck:
+        return nn.Sequential(
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(bottleneck_channel),
             nn.ReLU(inplace=True),
@@ -49,7 +83,7 @@ def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
     )
 
 
-def mimic_version2(make_bottleneck, bottleneck_channel):
+def mimic_version3(make_bottleneck, bottleneck_channel):
     if make_bottleneck:
         return nn.Sequential(
             nn.BatchNorm2d(64),
@@ -125,6 +159,8 @@ class MobileNetHeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version1(version == '1b', bottleneck_channel, use_aux)
         elif version in ['2', '2b']:
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel)
+        elif version in ['3', '3b']:
+            self.module_seq = mimic_version3(version == '3b', bottleneck_channel)
         elif version == 'test1':
             self.module_seq = mimic_version_test1(bottleneck_channel)
         else:
