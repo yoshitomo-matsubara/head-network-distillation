@@ -128,7 +128,10 @@ def mimic_version_test1(bottleneck_channel):
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
-        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=1, padding=1, bias=False),
+        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(bottleneck_channel),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(bottleneck_channel, bottleneck_channel, kernel_size=1, stride=1, bias=False),
         nn.BatchNorm2d(bottleneck_channel),
         nn.ReLU(inplace=True),
         nn.Conv2d(bottleneck_channel, 256, kernel_size=2, stride=1, padding=1, bias=False),
@@ -141,7 +144,9 @@ def mimic_version_test1(bottleneck_channel):
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
         nn.Conv2d(64, 32, kernel_size=2, stride=1, bias=False),
-        nn.AvgPool2d(kernel_size=2, stride=2)
+        nn.BatchNorm2d(32),
+        nn.Conv2d(32, 32, kernel_size=1, stride=1, bias=False),
+        nn.AvgPool2d(kernel_size=2, stride=1)
     )
 
 
