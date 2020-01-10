@@ -3,21 +3,24 @@ import torch.nn as nn
 from .base import BaseHeadMimic, BaseMimic, SeqWithAux
 
 
-def mimic_version1(make_bottleneck=False):
+def mimic_version1(make_bottleneck, bottleneck_channel):
     if make_bottleneck:
         return nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 3, kernel_size=2, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(3),
+            nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(bottleneck_channel),
             nn.ReLU(inplace=True),
-            nn.Conv2d(3, 64, kernel_size=2, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(64),
+            nn.ConvTranspose2d(bottleneck_channel, 512, kernel_size=4, stride=2, bias=False),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(512, 256, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 256, kernel_size=1, stride=1, bias=False),
+            nn.Conv2d(256, 256, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=2, stride=1, bias=False),
             nn.AvgPool2d(kernel_size=2, stride=1)
         )
     return nn.Sequential(
