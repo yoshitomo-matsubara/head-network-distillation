@@ -21,6 +21,8 @@ def mimic_version1(make_bottleneck, bottleneck_channel):
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 256, kernel_size=2, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
             nn.AvgPool2d(kernel_size=2, stride=1)
         )
     return nn.Sequential(
