@@ -123,12 +123,13 @@ def mimic_version3(make_bottleneck, bottleneck_channel):
     )
 
 
-def mimic_version_test1(bottleneck_channel):
+def mimic_version_test0(bottleneck_channel):
     # end_idx: 24
     return nn.Sequential(
-        nn.BatchNorm2d(64),
+        nn.Conv2d(32, 32, kernel_size=2, stride=2, bias=False),
+        nn.BatchNorm2d(32),
         nn.ReLU(inplace=True),
-        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.Conv2d(32, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
         nn.BatchNorm2d(bottleneck_channel),
         nn.ReLU(inplace=True),
         nn.ConvTranspose2d(bottleneck_channel, 256, kernel_size=4, stride=2, bias=False),
@@ -142,8 +143,30 @@ def mimic_version_test1(bottleneck_channel):
         nn.ReLU(inplace=True),
         nn.Conv2d(32, 32, kernel_size=2, stride=1, bias=False),
         nn.BatchNorm2d(32),
-        nn.ReLU6(inplace=True),
+        nn.ReLU(inplace=True),
         nn.Conv2d(32, 32, kernel_size=2, stride=1, bias=False)
+    )
+
+
+def mimic_version_test1(bottleneck_channel):
+    # end_idx: 24
+    return nn.Sequential(
+        nn.BatchNorm2d(64),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(bottleneck_channel),
+        nn.ReLU(inplace=True),
+        nn.ConvTranspose2d(bottleneck_channel, 512, kernel_size=4, stride=2, bias=False),
+        nn.BatchNorm2d(512),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(512, 256, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(256),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(256, 32, kernel_size=2, stride=1, bias=False),
+        nn.BatchNorm2d(32),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(32, 32, kernel_size=2, stride=1, bias=False),
+        nn.AvgPool2d(kernel_size=2, stride=2)
     )
 
 
@@ -163,6 +186,13 @@ class MobileNetHeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel)
         elif version in ['3', '3b']:
             self.module_seq = mimic_version3(version == '3b', bottleneck_channel)
+        elif version == 'test0':
+            self.extractor = nn.Sequential(
+                nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(32),
+                nn.ReLU(inplace=True)
+            )
+            self.module_seq = mimic_version_test1(bottleneck_channel)
         elif version == 'test1':
             self.module_seq = mimic_version_test1(bottleneck_channel)
         else:
