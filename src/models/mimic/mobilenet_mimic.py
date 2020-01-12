@@ -126,10 +126,10 @@ def mimic_version3(make_bottleneck, bottleneck_channel):
 def mimic_version_test0(bottleneck_channel):
     # end_idx: 24
     return nn.Sequential(
-        nn.Conv2d(32, 32, kernel_size=2, stride=2, bias=False),
-        nn.BatchNorm2d(32),
+        nn.Conv2d(128, 128, kernel_size=2, stride=2, bias=False),
+        nn.BatchNorm2d(128),
         nn.ReLU(inplace=True),
-        nn.Conv2d(32, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+        nn.Conv2d(128, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
         nn.BatchNorm2d(bottleneck_channel),
         nn.ReLU(inplace=True),
         nn.ConvTranspose2d(bottleneck_channel, 256, kernel_size=4, stride=2, bias=False),
@@ -188,8 +188,8 @@ class MobileNetHeadMimic(BaseHeadMimic):
             self.module_seq = mimic_version3(version == '3b', bottleneck_channel)
         elif version == 'test0':
             self.extractor = nn.Sequential(
-                nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False),
-                nn.BatchNorm2d(32),
+                nn.Conv2d(3, 128, kernel_size=3, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(128),
                 nn.ReLU(inplace=True)
             )
             self.module_seq = mimic_version_test0(bottleneck_channel)
