@@ -192,7 +192,7 @@ class MobileNetHeadMimic(BaseHeadMimic):
                 nn.BatchNorm2d(32),
                 nn.ReLU(inplace=True)
             )
-            self.module_seq = mimic_version_test1(bottleneck_channel)
+            self.module_seq = mimic_version_test0(bottleneck_channel)
         elif version == 'test1':
             self.module_seq = mimic_version_test1(bottleneck_channel)
         else:
