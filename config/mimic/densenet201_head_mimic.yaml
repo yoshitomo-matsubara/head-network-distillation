@@ -35,7 +35,7 @@ mimic_model:
 train:
     epoch: 150
     batch_size: 20
-    rough_size: [256, 256]
+    rough_size: 256
     interval: -1
     optimizer:
         type: 'Adam'
