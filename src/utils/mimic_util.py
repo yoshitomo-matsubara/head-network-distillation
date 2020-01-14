@@ -53,23 +53,25 @@ def get_teacher_model(teacher_model_config, input_shape, device):
     return extract_teacher_model(model, input_shape, device, teacher_model_config), model_config['type']
 
 
-def get_student_model(teacher_model_type, student_model_config):
+def get_student_model(teacher_model_type, student_model_config, dataset_name):
     student_model_type = student_model_config['type']
+    student_model_version = student_model_config['version']
+    params_config = student_model_config['params']
     if teacher_model_type.startswith('densenet')\
             and student_model_type in ['densenet169_head_mimic', 'densenet201_head_mimic']:
-        return DenseNetHeadMimic(teacher_model_type, student_model_config['version'], **student_model_config['params'])
+        return DenseNetHeadMimic(teacher_model_type, student_model_version, dataset_name, **params_config)
     elif teacher_model_type == 'inception_v3' and student_model_type == 'inception_v3_head_mimic':
-        return InceptionHeadMimic(student_model_config['version'], **student_model_config['params'])
+        return InceptionHeadMimic(student_model_version, dataset_name, **params_config)
     elif teacher_model_type.startswith('resnet') and student_model_type == 'resnet152_head_mimic':
-        return ResNet152HeadMimic(student_model_config['version'], **student_model_config['params'])
+        return ResNet152HeadMimic(student_model_version, dataset_name, **params_config)
     elif teacher_model_type == 'mobilenet_v2' and student_model_type == 'mobilenet_v2_head_mimic':
-        return MobileNetHeadMimic(student_model_config['version'], **student_model_config['params'])
+        return MobileNetHeadMimic(student_model_version, **params_config)
     raise ValueError('teacher_model_type `{}` is not expected'.format(teacher_model_type))
 
 
-def load_student_model(student_config, teacher_model_type, device):
-    student_model_config = student_config['student_model']
-    student_model = get_student_model(teacher_model_type, student_model_config)
+def load_student_model(config, teacher_model_type, device):
+    student_model_config = config['student_model']
+    student_model = get_student_model(teacher_model_type, student_model_config, config['dataset']['name'])
     student_model = student_model.to(device)
     resume_from_ckpt(student_model_config['ckpt'], student_model, True)
     return student_model

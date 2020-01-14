@@ -131,7 +131,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, device)
     module_util.freeze_module_params(teacher_model)
     student_model_config = config['student_model']
-    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config)
+    student_model = mimic_util.get_student_model(teacher_model_type, student_model_config, config['dataset']['name'])
     student_model = student_model.to(device)
     start_epoch, best_valid_acc = mimic_util.resume_from_ckpt(student_model_config['ckpt'], student_model,
                                                               is_student=True)

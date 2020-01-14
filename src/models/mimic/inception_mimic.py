@@ -1,25 +1,15 @@
 import torch.nn as nn
 
-from .base import BaseHeadMimic, BaseMimic, SeqWithAux
+from models.mimic.base import BaseHeadMimic, BaseMimic, SeqWithAux
 
 
-def mimic_version1b_with_aux(bottleneck_channel, aux_output_size=1000):
-    modules = [
-        nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(bottleneck_channel), nn.ReLU(inplace=True),
-        nn.Conv2d(bottleneck_channel, 64, kernel_size=2, stride=1, padding=1, bias=False),
-        nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, 128, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
-        nn.Conv2d(128, 192, kernel_size=2, stride=1, bias=False),
-        nn.AvgPool2d(kernel_size=2, stride=1)
-    ]
-    return SeqWithAux(modules, aux_idx=2, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
+def mimic_version1b_with_aux(modules, aux_idx, bottleneck_channel, aux_output_size=1000):
+    return SeqWithAux(modules, aux_idx=aux_idx, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
 
 
-def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
+def mimic_version1(make_bottleneck, dataset_name, bottleneck_channel, use_aux):
     if make_bottleneck:
-        return mimic_version1b_with_aux(bottleneck_channel) if use_aux else nn.Sequential(
+        modules = [
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
@@ -33,7 +23,28 @@ def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 192, kernel_size=2, stride=1, bias=False),
             nn.AvgPool2d(kernel_size=2, stride=1)
-        )
+        ]
+        aux_idx = 2
+        aux_output_size = 101
+        if dataset_name == 'imagenet':
+            modules = [
+                nn.BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(bottleneck_channel),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(bottleneck_channel, 256, kernel_size=2, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(256, 256, kernel_size=2, stride=1, bias=False),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(256, 192, kernel_size=2, stride=1, bias=False),
+                nn.AvgPool2d(kernel_size=2, stride=1)
+            ]
+            aux_output_size = 1000
+        return mimic_version1b_with_aux(modules, aux_idx, bottleneck_channel, aux_output_size) if use_aux \
+            else nn.Sequential(*modules)
     return nn.Sequential(
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
@@ -169,7 +180,7 @@ def mimic_version_test(bottleneck_channel):
 
 class InceptionHeadMimic(BaseHeadMimic):
     # designed for input image size [3, 299, 299]
-    def __init__(self, version, bottleneck_channel=3, use_aux=False):
+    def __init__(self, version, dataset_name, bottleneck_channel=3, use_aux=False):
         super().__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, bias=False),
@@ -178,7 +189,7 @@ class InceptionHeadMimic(BaseHeadMimic):
             nn.MaxPool2d(kernel_size=3, stride=2)
         )
         if version in ['1', '1b']:
-            self.module_seq = mimic_version1(version == '1b', bottleneck_channel, use_aux)
+            self.module_seq = mimic_version1(version == '1b', dataset_name, bottleneck_channel, use_aux)
         elif version in ['2', '2b']:
             self.module_seq = mimic_version2(version == '2b', bottleneck_channel)
         elif version in ['3', '3b']:
