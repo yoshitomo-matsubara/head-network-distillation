@@ -34,21 +34,6 @@ def mimic_version1(make_bottleneck, bottleneck_channel):
     )
 
 
-def mimic_version2b_with_aux(bottleneck_channel, aux_output_size=1000):
-    modules = [
-        nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(bottleneck_channel), nn.ReLU(inplace=True),
-        nn.Conv2d(bottleneck_channel, 64, kernel_size=2, stride=1, padding=1, bias=False),
-        nn.BatchNorm2d(64), nn.ReLU(inplace=True),
-        nn.Conv2d(64, 128, kernel_size=2, stride=1, padding=1, bias=False), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
-        nn.Conv2d(128, 256, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(256), nn.ReLU(inplace=True),
-        nn.Conv2d(256, 512, kernel_size=2, stride=1, bias=False), nn.BatchNorm2d(512), nn.ReLU(inplace=True),
-        nn.AvgPool2d(kernel_size=2, stride=1)
-    ]
-    return SeqWithAux(modules, aux_idx=2, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
-
-
 def mimic_version2b_with_aux(modules, aux_idx, bottleneck_channel, aux_output_size=1000):
     return SeqWithAux(modules, aux_idx=aux_idx, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
 
