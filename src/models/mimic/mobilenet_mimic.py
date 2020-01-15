@@ -6,19 +6,19 @@ from .base import BaseHeadMimic, BaseMimic, SeqWithAux
 def mimic_version1b_with_aux(bottleneck_channel, aux_output_size=1000):
     modules = [
         nn.BatchNorm2d(64),
-        nn.ReLU(inplace=True),
+        nn.ReLU6(inplace=True),
         nn.Conv2d(64, bottleneck_channel, kernel_size=2, stride=2, padding=1, bias=False),
         nn.BatchNorm2d(bottleneck_channel),
-        nn.ReLU(inplace=True),
+        nn.ReLU6(inplace=True),
         nn.ConvTranspose2d(bottleneck_channel, 512, kernel_size=4, stride=2, bias=False),
         nn.BatchNorm2d(512),
-        nn.ReLU(inplace=True),
+        nn.ReLU6(inplace=True),
         nn.Conv2d(512, 256, kernel_size=2, stride=1, bias=False),
         nn.BatchNorm2d(256),
-        nn.ReLU(inplace=True),
+        nn.ReLU6(inplace=True),
         nn.Conv2d(256, 32, kernel_size=2, stride=1, bias=False),
         nn.BatchNorm2d(32),
-        nn.ReLU(inplace=True),
+        nn.ReLU6(inplace=True),
         nn.Conv2d(32, 32, kernel_size=2, stride=1, bias=False),
         nn.AvgPool2d(kernel_size=2, stride=2)
     ]
