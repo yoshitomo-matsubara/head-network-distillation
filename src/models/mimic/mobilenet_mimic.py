@@ -22,7 +22,7 @@ def mimic_version1b_with_aux(bottleneck_channel, aux_output_size=1000):
         nn.Conv2d(32, 32, kernel_size=2, stride=1, bias=False),
         nn.AvgPool2d(kernel_size=2, stride=2, padding=1)
     ]
-    return SeqWithAux(modules, aux_idx=5, aux_input_channel=512, aux_output_size=aux_output_size)
+    return SeqWithAux(modules, aux_idx=2, aux_input_channel=bottleneck_channel, aux_output_size=aux_output_size)
 
 
 def mimic_version1(make_bottleneck, bottleneck_channel, use_aux):
