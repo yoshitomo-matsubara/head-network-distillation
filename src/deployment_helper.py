@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import numpy as np
 import torch
@@ -37,9 +38,10 @@ def predict(preds, targets):
 def test_split_model(model, head_network, tail_network, sensor_device, edge_device, spbit, config):
     dataset_config = config['dataset']
     _, _, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=config['test']['batch_size'],
+        general_util.get_data_loaders(dataset_config, batch_size=config['train']['batch_size'],
                                       rough_size=config['train']['rough_size'],
-                                      reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1)
+                                      reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
+                                      test_batch_size=config['test']['batch_size'])
     print('Testing..')
     device = torch.devie('cuda' if next(model.parameters()).is_cuda else 'cpu')
     if device.type == 'cuda':
@@ -57,26 +59,33 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
     org_test_loss = 0
     total = 0
     file_size_list = list()
+    head_proc_time_list = list()
+    tail_proc_time_list = list()
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             total += targets.size(0)
             inputs, targets = inputs.to(sensor_device), targets.to(edge_device)
+            head_start_time = time.time()
             zs = head_network(inputs)
             if spbit in ['8bits', '16bits']:
                 if spbit == '8bits':
                     # Quantization and dequantization
                     qzs = data_util.quantize_tensor(zs)
+                    head_end_time = time.time()
                     file_size_list.append(file_util.get_binary_object_size(qzs))
                     zs = data_util.dequantize_tensor(qzs)
                 else:
                     # Casting and recasting
                     zs = zs.half()
+                    head_end_time = time.time()
                     file_size_list.append(file_util.get_binary_object_size(zs))
                     zs = zs.float()
             else:
+                head_end_time = time.time()
                 file_size_list.append(file_util.get_binary_object_size(zs))
 
             preds = tail_network(zs.to(edge_device))
+            tail_end_time = time.time()
             sub_correct_count, sub_test_loss = predict(preds, targets)
             split_correct_count += sub_correct_count
             split_test_loss += sub_test_loss
@@ -85,15 +94,19 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
             sub_correct_count, sub_test_loss = predict(preds, targets)
             org_correct_count += sub_correct_count
             org_test_loss += sub_test_loss
+            head_proc_time_list.append(head_end_time - head_start_time)
+            tail_proc_time_list.append(tail_end_time - head_end_time)
 
     org_acc = 100.0 * org_correct_count / total
-    print('[Before splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    print('[Before splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} [{:.4f}%]\n'.format(
         org_test_loss / total, org_correct_count, total, org_acc))
     split_acc = 100.0 * split_correct_count / total
-    print('[After splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    print('[After splitting]\tAverage Loss: {:.4f}, Accuracy: {}/{} [{:.4f}%]\n'.format(
         split_test_loss / total, split_correct_count, total, split_acc))
     print('Output file size at splitting point [KB]: {} +- {}'.format(
         np.average(file_size_list), np.std(file_size_list)))
+    print('Local processing time [sec]: {} +- {}'.format(np.average(head_proc_time_list), np.std(head_proc_time_list)))
+    print('Edge processing time [sec]: {} +- {}'.format(np.average(tail_proc_time_list), np.std(tail_proc_time_list)))
 
 
 def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
