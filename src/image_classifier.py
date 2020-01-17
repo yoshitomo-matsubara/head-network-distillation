@@ -1,11 +1,15 @@
 import argparse
+import time
 
 import torch
-import torch.backends.cudnn as cudnn
+from torch.backends import cudnn
+from torch.nn import DataParallel
+from torch.nn.parallel.distributed import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
-from utils import module_util
+from structure.logger import MetricLogger, SmoothedValue
+from utils import main_util, module_util
 from utils.dataset import general_util
 
 
@@ -19,45 +23,39 @@ def get_argparser():
     return argparser
 
 
-def get_data_loaders(config):
+def get_data_loaders(config, distributed):
     dataset_config = config['dataset']
     train_config = config['train']
     test_config = config['test']
     compress_config = test_config['compression']
     dataset_name = dataset_config['name']
-    if dataset_name.startswith('caltech'):
+    if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
         return general_util.get_data_loaders(dataset_config, train_config['batch_size'],
                                              compress_config['type'], compress_config['size'],
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             jpeg_quality=test_config['jquality'])
+                                             jpeg_quality=test_config['jquality'], distributed=distributed)
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
-def train(model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
+def train_epoch(model, train_loader, optimizer, criterion, epoch, device, interval):
     model.train()
-    train_size = len(train_loader.sampler)
-    train_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
+    metric_logger = MetricLogger(delimiter='  ')
+    metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value}'))
+    metric_logger.add_meter('img/s', SmoothedValue(window_size=10, fmt='{value}'))
+    header = 'Epoch: [{}]'.format(epoch)
+    for sample_batch, targets in metric_logger.log_every(train_loader, interval, header):
+        start_time = time.time()
+        sample_batch, targets = sample_batch.to(device), targets.to(device)
         optimizer.zero_grad()
-        outputs = model(inputs)
+        outputs = model(sample_batch)
         loss = sum((criterion(o, targets) for o in outputs)) if isinstance(outputs, tuple)\
             else criterion(outputs, targets)
         loss.backward()
         optimizer.step()
-        train_loss += loss.item()
-        _, predicted = outputs[0].max(1) if isinstance(outputs, tuple) else outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
-        if batch_idx > 0 and batch_idx % interval == 0:
-            progress = 100.0 * total / train_size
-            train_accuracy = correct / total
-            print('[{}/{} ({:.0f}%)]\tLoss: {:.4f}\tTraining Accuracy: {:.4f}'.format(total, train_size, progress,
-                                                                                      loss.item(), train_accuracy))
+        batch_size = sample_batch.shape[0]
+        metric_logger.update(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
+        metric_logger.meters['img/s'].update(batch_size / (time.time() - start_time))
 
 
 def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
@@ -72,66 +70,85 @@ def save_ckpt(model, acc, epoch, ckpt_file_path, model_type):
     torch.save(state, ckpt_file_path)
 
 
-def test(model, test_loader, criterion, device, data_type='Test'):
+def test(model, data_loader, device, interval=1000, split_name='Test'):
+    num_threads = torch.get_num_threads()
+    torch.set_num_threads(1)
     model.eval()
-    test_loss = 0
-    correct = 0
-    total = 0
+    metric_logger = MetricLogger(delimiter='  ')
+    header = '{}:'.format(split_name)
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(test_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+        for image, target in metric_logger.log_every(data_loader, interval, header):
+            image = image.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
+            output = model(image)
 
-    acc = 100.0 * correct / total
-    print('\n{} set: Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        data_type, test_loss, correct, total, acc))
+            acc1, acc5 = main_util.compute_accuracy(output, target, topk=(1, 5))
+            # FIXME need to take into account that the datasets
+            # could have been padded in distributed setup
+            batch_size = image.shape[0]
+            metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+            metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    top1_accuracy = metric_logger.acc1.global_avg
+    top5_accuracy = metric_logger.acc5.global_avg
+    print(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
+    torch.set_num_threads(num_threads)
+    return metric_logger.acc1.global_avg
+
+
+def validate(model, valid_loader, device):
+    acc = test(model, valid_loader, device, split_name='Validation')
     return acc
 
 
-def validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type):
-    acc = test(model, valid_loader, criterion, device, 'Validation')
-    if acc > best_acc:
-        save_ckpt(model, acc, epoch, ckpt_file_path, model_type)
-        best_acc = acc
-    return best_acc
+def train(model, train_loader, valid_loader, best_acc, criterion, device, distributed, device_ids, train_config,
+          num_epochs, start_epoch, init_lr, ckpt_file_path, model_type):
+    model_without_ddp = model.module if isinstance(model, (DataParallel, DistributedDataParallel)) else model
+    if distributed:
+        model = DistributedDataParallel(model_without_ddp, device_ids=device_ids)
+
+    optim_config = train_config['optimizer']
+    if init_lr is not None:
+        optim_config['params']['lr'] = init_lr
+
+    optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
+    scheduler_config = train_config['scheduler']
+    scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
+    interval = train_config['interval']
+    if interval <= 0:
+        num_batches = len(train_loader)
+        interval = num_batches // 100 if num_batches >= 100 else 1
+
+    end_epoch = start_epoch + train_config['epoch'] if num_epochs is None else start_epoch + num_epochs
+    for epoch in range(start_epoch, end_epoch):
+        train_epoch(model, train_loader, optimizer, criterion, epoch, device, interval)
+        valid_acc = validate(model, valid_loader, device)
+        if valid_acc > best_acc and main_util.is_main_process():
+            best_acc = valid_acc
+            save_ckpt(model_without_ddp, best_acc, epoch, ckpt_file_path, model_type)
+        scheduler.step()
 
 
 def run(args):
+    distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 
     config = yaml_util.load_yaml_file(args.config)
-    train_loader, valid_loader, test_loader = get_data_loaders(config)
+    train_loader, valid_loader, test_loader = get_data_loaders(config, distributed)
     model = module_util.get_model(config, device)
-    model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, config['model'], args.init)
+    model_config = config.get('student_model', config['model'])
+    model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, model_config, args.init)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
-        optim_config = train_config['optimizer']
-        if args.lr is not None:
-            optim_config['params']['lr'] = args.lr
-
-        optimizer = func_util.get_optimizer(model, optim_config['type'], optim_config['params'])
-        scheduler_config = train_config['scheduler']
-        scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
-        interval = train_config['interval']
-        if interval <= 0:
-            num_batches = len(train_loader)
-            interval = num_batches // 100 if num_batches >= 100 else 1
-
-        end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
-        for epoch in range(start_epoch, end_epoch):
-            train(model, train_loader, optimizer, criterion, epoch, device, interval)
-            best_acc = validate(model, valid_loader, criterion, epoch, device, best_acc, ckpt_file_path, model_type)
-            scheduler.step()
-    test(model, test_loader, criterion, device)
+        train(model, train_loader, valid_loader, best_acc, criterion, device, distributed, device_ids,
+              train_config, args.epoch, args.lr, ckpt_file_path, model_type)
+    test(model, test_loader, device)
 
 
 if __name__ == '__main__':

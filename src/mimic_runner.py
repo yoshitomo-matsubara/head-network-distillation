@@ -55,19 +55,6 @@ def distill_one_epoch(student_model, teacher_model, train_loader, optimizer, cri
         metric_logger.meters['img/s'].update(batch_size / (time.time() - start_time))
 
 
-def compute_accuracy(output, target, topk=(1,)):
-    maxk = max(topk)
-    batch_size = target.size(0)
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target[None])
-    acc_list = []
-    for k in topk:
-        correct_k = correct[:k].flatten().sum(dtype=torch.float32)
-        acc_list.append(correct_k * (100.0 / batch_size))
-    return acc_list
-
-
 @torch.no_grad()
 def evaluate(model, data_loader, device, interval=1000, split_name='Test', title=None):
     if title is not None:
@@ -84,7 +71,7 @@ def evaluate(model, data_loader, device, interval=1000, split_name='Test', title
             target = target.to(device, non_blocking=True)
             output = model(image)
 
-            acc1, acc5 = compute_accuracy(output, target, topk=(1, 5))
+            acc1, acc5 = main_util.compute_accuracy(output, target, topk=(1, 5))
             # FIXME need to take into account that the datasets
             # could have been padded in distributed setup
             batch_size = image.shape[0]

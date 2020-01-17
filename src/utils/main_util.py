@@ -73,3 +73,16 @@ def get_rank():
 
 def is_main_process():
     return get_rank() == 0
+
+
+def compute_accuracy(output, target, topk=(1,)):
+    maxk = max(topk)
+    batch_size = target.size(0)
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(target[None])
+    acc_list = []
+    for k in topk:
+        correct_k = correct[:k].flatten().sum(dtype=torch.float32)
+        acc_list.append(correct_k * (100.0 / batch_size))
+    return acc_list
