@@ -126,7 +126,7 @@ def train(model, train_loader, valid_loader, best_acc, criterion, device, distri
     interval = train_config['interval']
     if interval <= 0:
         num_batches = len(train_loader)
-        interval = num_batches // 100 if num_batches >= 100 else 1
+        interval = num_batches // 20 if num_batches >= 20 else 1
 
     end_epoch = start_epoch + train_config['epoch'] if num_epochs is None else start_epoch + num_epochs
     for epoch in range(start_epoch, end_epoch):
