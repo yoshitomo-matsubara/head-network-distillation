@@ -139,6 +139,7 @@ def train(model, train_loader, valid_loader, best_acc, criterion, device, distri
 
 
 def run(args):
+    print(args)
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
