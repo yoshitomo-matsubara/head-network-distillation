@@ -15,7 +15,7 @@ model:
     type: &model_type 'resnet152'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     pretrained: False
-    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/', *experiment, '.pt']
     params:
         num_classes: 101
         num_init_features: 64

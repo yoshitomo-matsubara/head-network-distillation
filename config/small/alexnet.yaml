@@ -7,7 +7,7 @@ input_shape: [3, 32, 32]
 model:
     type: &model_type 'alexnet'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
-    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/', *experiment, '.pt']
     params:
         num_classes: 10
         # additional parameters for CIFAR-10 and -100

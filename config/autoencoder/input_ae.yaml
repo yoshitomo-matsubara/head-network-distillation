@@ -18,7 +18,7 @@ org_model:
 autoencoder:
     type: &ae_type 'input_ae'
     experiment: &ae_experiment !join [*dataset_name, '-', *ae_type]
-    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.pt']
     params:
         input_channel: 3
         bottleneck_channel: 3

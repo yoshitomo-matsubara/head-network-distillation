@@ -21,7 +21,7 @@ student_model:
     type: &smodel_type 'densenet201_head_mimic'
     version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.pt']
     params:
         bottleneck_channel: 3
         use_aux: False
@@ -30,7 +30,7 @@ student_model:
 mimic_model:
     type: &mmodel_type 'densenet201_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
+    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
