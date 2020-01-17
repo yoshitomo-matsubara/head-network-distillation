@@ -43,7 +43,7 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
                                       test_batch_size=config['test']['batch_size'])
     print('Testing..')
-    device = torch.devie('cuda' if next(model.parameters()).is_cuda else 'cpu')
+    device = torch.device('cuda' if next(model.parameters()).is_cuda else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 
