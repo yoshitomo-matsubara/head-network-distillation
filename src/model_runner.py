@@ -20,6 +20,9 @@ def get_argparser():
     argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
     argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
     argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    # distributed training parameters
+    argparser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
+    argparser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     return argparser
 
 
