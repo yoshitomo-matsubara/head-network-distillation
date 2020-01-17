@@ -51,6 +51,9 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
 
     head_network = module_util.use_multiple_gpus_if_available(head_network, sensor_device)
     tail_network = module_util.use_multiple_gpus_if_available(tail_network, edge_device)
+    model.to(device)
+    head_network.to(sensor_device)
+    tail_network.to(edge_device)
     head_network.eval()
     tail_network.eval()
     model.eval()
