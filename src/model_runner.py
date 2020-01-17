@@ -33,13 +33,14 @@ def get_data_loaders(config, distributed):
     compress_config = test_config.get('compression', dict())
     compress_type = compress_config.get('type', None)
     compress_size = compress_config.get('size', None)
+    jpeg_quality = test_config.get('jquality', 0)
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
         return general_util.get_data_loaders(dataset_config, train_config['batch_size'],
                                              compress_type, compress_size,
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             jpeg_quality=test_config['jquality'], distributed=distributed)
+                                             jpeg_quality=jpeg_quality, distributed=distributed)
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
