@@ -45,11 +45,10 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
                                       test_batch_size=config['test']['batch_size'])
     print('Testing..')
-    device = torch.device('cuda' if next(model.parameters()).is_cuda else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 
-    model = module_util.use_multiple_gpus_if_available(model, device)
     head_network = module_util.use_multiple_gpus_if_available(head_network, sensor_device)
     tail_network = module_util.use_multiple_gpus_if_available(tail_network, edge_device)
     head_network.eval()
@@ -199,7 +198,7 @@ def run(args):
                                        args.test, args.spbit)
 
     if args.model is not None and args.device is not None:
-        convert_model(model, args.device, args.model)
+        convert_model(model, torch.device(args.device), args.model)
 
 
 if __name__ == '__main__':
