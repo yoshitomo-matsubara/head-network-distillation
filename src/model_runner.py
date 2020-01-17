@@ -27,6 +27,7 @@ def get_argparser():
 
 
 def get_data_loaders(config, distributed):
+    print('Loading data')
     dataset_config = config['dataset']
     train_config = config['train']
     test_config = config['test']
