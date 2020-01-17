@@ -165,12 +165,12 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
 
 
 def run(args):
-    print(args)
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     device = torch.device(args.device)
     if torch.cuda.is_available():
         cudnn.benchmark = True
 
+    print(args)
     config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']
     input_shape = config['input_shape']

@@ -139,12 +139,12 @@ def train(model, train_loader, valid_loader, best_acc, criterion, device, distri
 
 
 def run(args):
-    print(args)
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 
+    print(args)
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config, distributed)
     if 'mimic_model' in config:
