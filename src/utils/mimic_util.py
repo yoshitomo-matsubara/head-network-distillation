@@ -7,7 +7,7 @@ from models.mimic.inception_mimic import InceptionHeadMimic, InceptionMimic
 from models.mimic.mobilenet_mimic import MobileNetHeadMimic, MobileNetMimic
 from models.mimic.resnet_mimic import ResNet152HeadMimic, ResNetMimic
 from myutils.common import file_util, yaml_util
-from utils import module_util
+from utils import mimic_util, module_util
 
 
 def resume_from_ckpt(ckpt_file_path, model, is_student=False):
@@ -124,3 +124,9 @@ def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
     else:
         raise ValueError('mimic_type `{}` is not expected'.format(mimic_type))
     return mimic_model.to(device)
+
+
+def get_mimic_model_easily(config, device=torch.device('cpu')):
+    teacher_model_config = config['teacher_model']
+    org_model, teacher_model_type = get_org_model(teacher_model_config, device)
+    return mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)

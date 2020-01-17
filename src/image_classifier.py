@@ -9,7 +9,7 @@ from torch.nn.parallel.distributed import DistributedDataParallel
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from structure.logger import MetricLogger, SmoothedValue
-from utils import main_util, module_util
+from utils import main_util, mimic_util, module_util
 from utils.dataset import general_util
 
 
@@ -139,15 +139,20 @@ def run(args):
 
     config = yaml_util.load_yaml_file(args.config)
     train_loader, valid_loader, test_loader = get_data_loaders(config, distributed)
-    model = module_util.get_model(config, device)
-    model_config = config.get('student_model', config['model'])
+    if 'mimic_model' in config:
+        model = mimic_util.get_mimic_model_easily(config, device)
+        model_config = config['mimic_model']
+    else:
+        model = module_util.get_model(config, device)
+        model_config = config['model']
+
     model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, model_config, args.init)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
         train(model, train_loader, valid_loader, best_acc, criterion, device, distributed, device_ids,
-              train_config, args.epoch, args.lr, ckpt_file_path, model_type)
+              train_config, args.epoch, start_epoch, args.lr, ckpt_file_path, model_type)
     test(model, test_loader, device)
 
 

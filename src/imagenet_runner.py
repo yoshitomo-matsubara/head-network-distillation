@@ -20,9 +20,7 @@ from utils.dataset import imagenet_util
 
 def get_mimic_model(args, device=torch.device('cpu')):
     config = yaml_util.load_yaml_file(args.mimic)
-    teacher_model_config = config['teacher_model']
-    org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
-    return mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
+    return mimic_util.get_mimic_model_easily(config, device)
 
 
 def setup_model(args):
