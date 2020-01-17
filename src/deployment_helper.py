@@ -180,6 +180,7 @@ def convert_model(model, device, output_file_path):
 
 
 def run(args):
+    print(args)
     config = yaml_util.load_yaml_file(args.config)
     sensor_device = torch.device('cpu' if args.scpu else 'cuda')
     edge_device = torch.device('cpu' if args.ecpu else 'cuda')
