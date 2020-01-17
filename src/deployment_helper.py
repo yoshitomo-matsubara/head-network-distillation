@@ -186,7 +186,7 @@ def run(args):
         model = module_util.get_model(config, torch.device('cuda') if torch.cuda.is_available() else None)
         module_util.resume_from_ckpt(model, config['model'], False)
     else:
-        model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], 'cuda')
+        model, teacher_model_type = mimic_util.get_org_model(config['teacher_model'], torch.device('cuda'))
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
             split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                                  head_output_file_path, tail_output_file_path, args.test, args.spbit)
