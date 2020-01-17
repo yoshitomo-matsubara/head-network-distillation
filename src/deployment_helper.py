@@ -4,6 +4,8 @@ import time
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from torch.nn import DataParallel
+from torch.nn.parallel import DistributedDataParallel
 import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
@@ -140,7 +142,8 @@ def split_within_student_model(model, input_shape, config, teacher_model_type, s
     print('Splitting within a student DNN model')
     org_modules = list()
     z = torch.rand(1, *input_shape).to('cuda')
-    module_util.extract_decomposable_modules(model, z, org_modules)
+    plain_model = model.module if isinstance(model, (DataParallel, DistributedDataParallel)) else model
+    module_util.extract_decomposable_modules(plain_model, z, org_modules)
     student_model = mimic_util.load_student_model(config, teacher_model_type, 'cuda')
     student_modules = list()
     module_util.extract_decomposable_modules(student_model, z, student_modules)
