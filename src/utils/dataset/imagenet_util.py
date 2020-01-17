@@ -69,6 +69,7 @@ def get_argparser():
                         help='JPEG compression quality')
     parser.add_argument('--skip_comp_rate', action='store_true',
                         help='skip JPEG compression rate calculation')
+    parser.add_argument('--mimic', help='mimic config yaml file path')
     return parser
 
 

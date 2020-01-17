@@ -12,8 +12,17 @@ from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 
+from myutils.common import yaml_util
 from structure.dataset import AdvImageFolder
+from utils import mimic_util
 from utils.dataset import imagenet_util
+
+
+def get_mimic_model(args, device=torch.device('cpu')):
+    config = yaml_util.load_yaml_file(args.mimic)
+    teacher_model_config = config['teacher_model']
+    org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
+    return mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
 
 
 def setup_model(args):
@@ -22,7 +31,10 @@ def setup_model(args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url, world_size=args.world_size)
 
     # create model
-    if args.pretrained:
+    if args.mimic is not None:
+        print('=> using mimic model')
+        model = get_mimic_model(args.mimic)
+    elif args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
         model = models.__dict__[args.arch](pretrained=True)
     else:
@@ -30,7 +42,7 @@ def setup_model(args):
         model = models.__dict__[args.arch]()
 
     if not args.distributed:
-        if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
+        if args.mimic is None and args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
             model.features = DataParallel(model.features)
             model.cuda()
         else:
