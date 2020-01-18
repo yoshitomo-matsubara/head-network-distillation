@@ -110,7 +110,7 @@ def validate(model, valid_loader, device):
     return acc
 
 
-def train(model, train_loader, valid_loader, best_acc, criterion, device, distributed, device_ids, train_config,
+def train(model, train_loader, valid_loader, best_valid_acc, criterion, device, distributed, device_ids, train_config,
           num_epochs, start_epoch, init_lr, ckpt_file_path, model_type):
     model_without_ddp = model.module if isinstance(model, (DataParallel, DistributedDataParallel)) else model
     if distributed:
@@ -132,9 +132,10 @@ def train(model, train_loader, valid_loader, best_acc, criterion, device, distri
     for epoch in range(start_epoch, end_epoch):
         train_epoch(model, train_loader, optimizer, criterion, epoch, device, interval)
         valid_acc = validate(model, valid_loader, device)
-        if valid_acc > best_acc and main_util.is_main_process():
-            best_acc = valid_acc
-            save_ckpt(model_without_ddp, best_acc, epoch, ckpt_file_path, model_type)
+        if valid_acc > best_valid_acc and main_util.is_main_process():
+            print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_valid_acc, valid_acc))
+            best_valid_acc = valid_acc
+            save_ckpt(model_without_ddp, best_valid_acc, epoch, ckpt_file_path, model_type)
         scheduler.step()
 
 
@@ -154,12 +155,13 @@ def run(args):
         model = module_util.get_model(config, device)
         model_config = config['model']
 
-    model_type, best_acc, start_epoch, ckpt_file_path = module_util.resume_from_ckpt(model, model_config, args.init)
+    model_type, best_valid_acc, start_epoch, ckpt_file_path =\
+        module_util.resume_from_ckpt(model, model_config, args.init)
     train_config = config['train']
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     if not args.evaluate:
-        train(model, train_loader, valid_loader, best_acc, criterion, device, distributed, device_ids,
+        train(model, train_loader, valid_loader, best_valid_acc, criterion, device, distributed, device_ids,
               train_config, args.epoch, start_epoch, args.lr, ckpt_file_path, model_type)
     test(model, test_loader, device)
 
