@@ -139,14 +139,14 @@ def split_original_model(model, input_shape, config, sensor_device, edge_device,
         test_split_model(model, head_network, tail_network, sensor_device, edge_device, spbit, config)
 
 
-def split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
+def split_within_student_model(model, input_shape, device, config, teacher_model_type, sensor_device, edge_device,
                                partition_idx, head_output_file_path, tail_output_file_path, require_test, spbit):
     print('Splitting within a student DNN model')
     org_modules = list()
-    z = torch.rand(1, *input_shape).to('cuda')
+    z = torch.rand(1, *input_shape).to(device)
     plain_model = model.module if isinstance(model, (DataParallel, DistributedDataParallel)) else model
     module_util.extract_decomposable_modules(plain_model, z, org_modules)
-    student_model = mimic_util.load_student_model(config, teacher_model_type, 'cuda')
+    student_model = mimic_util.load_student_model(config, teacher_model_type, device)
     student_modules = list()
     module_util.extract_decomposable_modules(student_model, z, student_modules)
     head_module_list = list()
@@ -192,16 +192,16 @@ def run(args):
         model = module_util.get_model(config, torch.device('cuda') if torch.cuda.is_available() else None)
         module_util.resume_from_ckpt(model, config['model'], False)
     else:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model, teacher_model_type =\
-            mimic_util.get_org_model(config['teacher_model'],
-                                     torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+            mimic_util.get_org_model(config['teacher_model'], device)
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
             split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
                                  head_output_file_path, tail_output_file_path, args.test, args.spbit)
         elif head_output_file_path is not None and tail_output_file_path is not None:
-            split_within_student_model(model, input_shape, config, teacher_model_type, sensor_device, edge_device,
-                                       partition_idx, head_output_file_path, tail_output_file_path,
-                                       args.test, args.spbit)
+            split_within_student_model(model, input_shape, device, config, teacher_model_type,
+                                       sensor_device, edge_device, partition_idx,
+                                       head_output_file_path, tail_output_file_path, args.test, args.spbit)
 
     if args.model is not None and args.device is not None:
         convert_model(model, torch.device(args.device), args.model)
