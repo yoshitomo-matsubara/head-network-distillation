@@ -113,11 +113,11 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
     print('Edge processing time [sec]: {} +- {}'.format(np.average(tail_proc_time_list), np.std(tail_proc_time_list)))
 
 
-def split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
+def split_original_model(model, input_shape, device, config, sensor_device, edge_device, partition_idx,
                          head_output_file_path, tail_output_file_path, require_test, spbit):
     print('Splitting an original DNN model')
     modules = list()
-    z = torch.rand(1, *input_shape).to('cuda')
+    z = torch.rand(1, *input_shape).to(device)
     module_util.extract_decomposable_modules(model, z, modules)
     head_module_list = list()
     tail_module_list = list()
@@ -196,7 +196,7 @@ def run(args):
         model, teacher_model_type =\
             mimic_util.get_org_model(config['teacher_model'], device)
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
-            split_original_model(model, input_shape, config, sensor_device, edge_device, partition_idx,
+            split_original_model(model, input_shape, device, config, sensor_device, edge_device, partition_idx,
                                  head_output_file_path, tail_output_file_path, args.test, args.spbit)
         elif head_output_file_path is not None and tail_output_file_path is not None:
             split_within_student_model(model, input_shape, device, config, teacher_model_type,
