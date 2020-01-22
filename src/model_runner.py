@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import time
 
 import torch
@@ -129,6 +130,7 @@ def train(model, train_loader, valid_loader, best_valid_acc, criterion, device, 
         interval = num_batches // 20 if num_batches >= 20 else 1
 
     end_epoch = start_epoch + train_config['epoch'] if num_epochs is None else start_epoch + num_epochs
+    start_time = time.time()
     for epoch in range(start_epoch, end_epoch):
         train_epoch(model, train_loader, optimizer, criterion, epoch, device, interval)
         valid_acc = validate(model, valid_loader, device)
@@ -137,6 +139,10 @@ def train(model, train_loader, valid_loader, best_valid_acc, criterion, device, 
             best_valid_acc = valid_acc
             save_ckpt(model_without_ddp, best_valid_acc, epoch, ckpt_file_path, model_type)
         scheduler.step()
+
+    total_time = time.time() - start_time
+    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+    print('Training time {}'.format(total_time_str))
 
 
 def run(args):
