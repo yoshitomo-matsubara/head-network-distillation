@@ -1,19 +1,26 @@
 import os
 
 import torch
-import torch.backends.cudnn as cudnn
 import torch.distributed as dist
-import torch.nn as nn
-import torch.nn.parallel
-import torch.optim
-import torch.utils.data
-import torch.utils.data.distributed
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torchvision.transforms as transforms
+from torch import nn
+from torch.backends import cudnn
+from torch.nn import DataParallel
+from torch.nn.parallel import DistributedDataParallel
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+from torchvision import models
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
 
+from myutils.common import yaml_util
 from structure.dataset import AdvImageFolder
+from utils import mimic_util
 from utils.dataset import imagenet_util
+
+
+def get_mimic_model(args, device=torch.device('cpu')):
+    config = yaml_util.load_yaml_file(args.mimic)
+    return mimic_util.get_mimic_model_easily(config, device)
 
 
 def setup_model(args):
@@ -22,7 +29,10 @@ def setup_model(args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url, world_size=args.world_size)
 
     # create model
-    if args.pretrained:
+    if args.mimic is not None:
+        print('=> using mimic model')
+        model = get_mimic_model(args.mimic)
+    elif args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
         model = models.__dict__[args.arch](pretrained=True)
     else:
@@ -30,14 +40,14 @@ def setup_model(args):
         model = models.__dict__[args.arch]()
 
     if not args.distributed:
-        if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
-            model.features = torch.nn.DataParallel(model.features)
+        if args.mimic is None and args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
+            model.features = DataParallel(model.features)
             model.cuda()
         else:
-            model = torch.nn.DataParallel(model).cuda()
+            model = DataParallel(model).cuda()
     else:
         model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        model = DistributedDataParallel(model)
     return model
 
 
@@ -59,7 +69,7 @@ def resume_from_ckpt(model, optimizer, args):
 
 
 def get_training_data_loader_and_sampler(train_dir, args, normalize):
-    train_dataset = datasets.ImageFolder(
+    train_dataset = ImageFolder(
         train_dir,
         transforms.Compose([
             transforms.RandomResizedCrop(224),
@@ -69,13 +79,12 @@ def get_training_data_loader_and_sampler(train_dir, args, normalize):
         ]))
 
     if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_sampler = DistributedSampler(train_dataset)
     else:
         train_sampler = None
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
+                              num_workers=args.workers, pin_memory=True, sampler=train_sampler)
     return train_loader, train_sampler
 
 
@@ -94,11 +103,8 @@ def get_validation_data_loader(valid_dir, args, normalize):
             transforms.ToTensor(),
             normalize
         ])
-    return torch.utils.data.DataLoader(
-        AdvImageFolder(valid_dir, rough_size, valid_transformer, jpeg_quality=args.jpeg_quality),
-        batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True
-    )
+    return DataLoader(AdvImageFolder(valid_dir, rough_size, valid_transformer, jpeg_quality=args.jpeg_quality),
+                      batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
 
 def train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, best_prec1, args):
@@ -144,7 +150,7 @@ def main(args):
         train_model(model, train_loader, valid_loader, train_sampler, criterion, optimizer, args)
 
     imagenet_util.validate(valid_loader, model, criterion, args)
-    if args.jpeg_quality > 0:
+    if args.jpeg_quality > 0 and not args.skip_comp_rate:
         valid_loader.dataset.compute_compression_rate()
 
 

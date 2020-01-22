@@ -12,25 +12,29 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/vgg16.yaml'
+    config: './config/mobilenet_v2.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 8
+    end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'vgg16_head_mimic'
-    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type]
-    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
+    type: &smodel_type 'mobilenet_v2_head_mimic'
+    version: &ver '1b'
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.pt']
+    params:
+        bottleneck_channel: 3
+        use_aux: False
 
 mimic_model:
-    type: &mmodel_type 'vgg16_mimic'
-    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type]
-    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
+    type: &mmodel_type 'mobilenet_v2_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/mimic_naive/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
     batch_size: 20
-    rough_size: [256, 256]
+    rough_size: 256
     interval: -1
     optimizer:
         type: 'Adam'
@@ -48,3 +52,7 @@ train:
 
 test:
     batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:

@@ -2,6 +2,7 @@ import argparse
 import os
 
 import numpy as np
+import torch
 import torchvision
 
 from models.classification.lenet5 import MnistLeNet5
@@ -35,7 +36,7 @@ def read_config(config_file_path):
     if config['model']['type'] == 'inception_v3':
         config['model']['params']['aux_logits'] = False
 
-    model = module_util.get_model(config, 'cpu')
+    model = module_util.get_model(config, torch.device('cpu'))
     model_type = config['model']['type']
     input_shape = config['input_shape']
     return model, model_type, input_shape
@@ -50,16 +51,17 @@ def analyze(model, input_shape, model_type, scaled, submoduled, plot):
 
 
 def analyze_single_model(config_file_path, args, plot=True):
+    cpu_device = torch.device('cpu')
     if file_util.check_if_exists(config_file_path):
         config = yaml_util.load_yaml_file(config_file_path)
         if 'teacher_model' in config:
             teacher_model_config = config['teacher_model']
-            org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, 'cpu')
-            model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, 'cpu')
+            org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, cpu_device)
+            model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, cpu_device)
             model_type = config['mimic_model']['type']
             input_shape = config['input_shape']
         elif 'autoencoder' in config:
-            model, model_type = ae_util.get_autoencoder(config, 'cpu', True)
+            model, model_type = ae_util.get_autoencoder(config, cpu_device, True)
             input_shape = config['input_shape']
         else:
             model, model_type, input_shape = read_config(config_file_path)
@@ -93,8 +95,10 @@ def analyze_multiple_models(config_file_paths, args):
 
 def get_teacher_and_student_models(mimic_config, input_shape):
     teacher_model_config = mimic_config['teacher_model']
-    teacher_model, teacher_model_type = mimic_util.get_teacher_model(teacher_model_config, input_shape, 'cpu')
-    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'])
+    teacher_model, teacher_model_type =\
+        mimic_util.get_teacher_model(teacher_model_config, input_shape, torch.device('cpu'))
+    student_model = mimic_util.get_student_model(teacher_model_type, mimic_config['student_model'],
+                                                 mimic_config['dataset']['name'])
     return teacher_model_type, teacher_model, student_model
 
 

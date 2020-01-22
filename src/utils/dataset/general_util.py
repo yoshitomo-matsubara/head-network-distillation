@@ -1,7 +1,9 @@
 import multiprocessing
 
 import torch
-import torchvision.transforms as transforms
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data.distributed import DistributedSampler
+from torchvision import transforms
 
 from structure.dataset import AdvRgbImageDataset
 from utils import data_util
@@ -26,7 +28,7 @@ def get_test_transformer(dataset_name, normalizer, compression_type, compressed_
 
 
 def get_data_loaders(dataset_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0):
+                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0, test_batch_size=1, distributed=False):
     data_config = dataset_config['data']
     dataset_name = dataset_config['name']
     train_file_path = data_config['train']
@@ -48,21 +50,34 @@ def get_data_loaders(dataset_config, batch_size=100, compression_type=None, comp
 
     pin_memory = torch.cuda.is_available()
     num_cpus = multiprocessing.cpu_count()
-    num_workers = 0 if num_cpus == 1 else min(num_cpus, 8)
+    num_workers = data_config.get('num_workers', 0 if num_cpus == 1 else min(num_cpus, 8))
     train_transformer = transforms.Compose(train_comp_list)
     valid_transformer = transforms.Compose(valid_comp_list)
-    train_dataset = AdvRgbImageDataset(train_file_path, reshape_size, train_transformer)
-    valid_dataset = AdvRgbImageDataset(valid_file_path, reshape_size, valid_transformer)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                                               num_workers=num_workers, pin_memory=pin_memory)
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=True,
-                                               num_workers=num_workers, pin_memory=pin_memory)
     test_transformer = get_test_transformer(dataset_name, normalizer, compression_type, compressed_size, reshape_size)
-    test_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
-    test_dataset = AdvRgbImageDataset(test_file_path, test_reshape_size, test_transformer, jpeg_quality)
-    if 1 <= test_dataset.jpeg_quality <= 95:
+    train_dataset = AdvRgbImageDataset(train_file_path, reshape_size, train_transformer)
+    eval_reshape_size = rough_size if dataset_name == 'imagenet' else reshape_size
+    if dataset_name == 'imagenet':
+        valid_transformer = test_transformer
+    
+    valid_dataset = AdvRgbImageDataset(valid_file_path, eval_reshape_size, valid_transformer)
+    test_dataset = AdvRgbImageDataset(test_file_path, eval_reshape_size, test_transformer, jpeg_quality)
+
+    if distributed:
+        train_sampler = DistributedSampler(train_dataset)
+        valid_sampler = DistributedSampler(valid_dataset)
+        test_sampler = DistributedSampler(test_dataset)
+    else:
+        train_sampler = RandomSampler(train_dataset)
+        valid_sampler = SequentialSampler(valid_dataset)
+        test_sampler = SequentialSampler(test_dataset)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler,
+                              num_workers=num_workers, pin_memory=pin_memory)
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, sampler=valid_sampler,
+                              num_workers=num_workers, pin_memory=pin_memory)
+    if 1 <= test_dataset.jpeg_quality <= 100:
         test_dataset.compute_compression_rate()
 
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True,
-                                              num_workers=num_workers, pin_memory=pin_memory)
+    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, sampler=test_sampler,
+                             num_workers=num_workers, pin_memory=pin_memory)
     return train_loader, valid_loader, test_loader

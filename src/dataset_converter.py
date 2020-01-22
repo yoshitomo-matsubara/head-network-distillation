@@ -63,7 +63,6 @@ def convert_imagenet_dataset(input_dir_path, output_dir_path):
 
     write_converted_dataset(dataset_dict['train'], False, os.path.join(output_dir_path, 'train.txt'))
     write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'valid.txt'))
-    write_converted_dataset(dataset_dict['val'], False, os.path.join(output_dir_path, 'test.txt'))
 
 
 def run(args):

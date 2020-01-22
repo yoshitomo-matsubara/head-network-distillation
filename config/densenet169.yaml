@@ -15,7 +15,7 @@ model:
     type: &model_type 'densenet169'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     pretrained: False
-    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/', *experiment, '.pt']
     params:
         growth_rate: 32
         block_config: [6, 12, 32, 32]
@@ -35,7 +35,7 @@ model:
 train:
     epoch: 200
     batch_size: 20
-    rough_size: [256, 256]
+    rough_size: 256
     interval: -1
     optimizer:
         type: 'SGD'

@@ -21,7 +21,7 @@ student_model:
     type: &smodel_type 'inception_v3_head_mimic'
     version: &ver '1b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.pt']
     params:
         bottleneck_channel: 3
         use_aux: False
@@ -29,12 +29,12 @@ student_model:
 mimic_model:
     type: &mmodel_type 'inception_v3_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/model/mimic/', *mimic_experiment, '.pkl']
+    ckpt: !join ['./resource/ckpt/mimic_naive/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
     batch_size: 20
-    rough_size: [327, 327]
+    rough_size: 327
     interval: -1
     optimizer:
         type: 'Adam'
@@ -52,3 +52,7 @@ train:
 
 test:
     batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:

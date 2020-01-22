@@ -25,7 +25,7 @@ class AdvRgbImageDataset(RgbImageDataset):
 
     def compress_img(self, img):
         img_buffer = BytesIO()
-        img.save(img_buffer, 'JPEG', quality=95)
+        img.save(img_buffer, 'JPEG', quality=100)
         org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
@@ -38,7 +38,7 @@ class AdvRgbImageDataset(RgbImageDataset):
         file_path, target = self.file_paths[idx], self.labels[idx]
         img = Image.open(file_path).convert('RGB')
         img = functional.resize(img, self.size, interpolation=2)
-        if 1 <= self.jpeg_quality <= 95:
+        if 1 <= self.jpeg_quality <= 100:
             img, org_file_size, comp_file_size = self.compress_img(img)
             self.org_file_sizes.append(org_file_size / 1024)
             self.comp_file_sizes.append(comp_file_size / 1024)
@@ -65,13 +65,15 @@ class AdvRgbImageDataset(RgbImageDataset):
             self.sd_comp_file_size = np.std(self.comp_file_sizes)
             self.avg_compression_rate = np.average(self.compression_rates)
             self.sd_compression_rate = np.std(self.compression_rates)
-            print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
-            print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
+            print('[Original]')
+            print('File size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+            print('[JPEG quality={}]'.format(self.jpeg_quality))
+            print('File size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
             print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
         return data.reshape(len(self.labels), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
-        if self.jpeg_quality < 1 or self.jpeg_quality > 95:
+        if self.jpeg_quality < 1 or self.jpeg_quality > 100:
             print('Compression rate: 0 +- 0')
             return
 
@@ -87,8 +89,10 @@ class AdvRgbImageDataset(RgbImageDataset):
         self.sd_comp_file_size = np.std(self.comp_file_sizes)
         self.avg_compression_rate = np.average(self.compression_rates)
         self.sd_compression_rate = np.std(self.compression_rates)
-        print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
-        print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
+        print('[Original]')
+        print('File size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+        print('[JPEG quality={}]'.format(self.jpeg_quality))
+        print('File size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
         print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
 
 
@@ -109,7 +113,7 @@ class AdvImageFolder(ImageFolder):
 
     def compress_img(self, img):
         img_buffer = BytesIO()
-        img.save(img_buffer, 'JPEG', quality=95)
+        img.save(img_buffer, 'JPEG', quality=100)
         org_file_size = img_buffer.tell()
         img_buffer.close()
         img_buffer = BytesIO()
@@ -122,7 +126,7 @@ class AdvImageFolder(ImageFolder):
         file_path, target = self.samples[idx]
         img = Image.open(file_path).convert('RGB')
         img = functional.resize(img, self.size, interpolation=2)
-        if 1 <= self.jpeg_quality <= 95:
+        if 1 <= self.jpeg_quality <= 100:
             img, org_file_size, comp_file_size = self.compress_img(img)
             self.org_file_sizes.append(org_file_size / 1024)
             self.comp_file_sizes.append(comp_file_size / 1024)
@@ -152,13 +156,15 @@ class AdvImageFolder(ImageFolder):
             self.sd_comp_file_size = np.std(self.comp_file_sizes)
             self.avg_compression_rate = np.average(self.compression_rates)
             self.sd_compression_rate = np.std(self.compression_rates)
-            print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
-            print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
+            print('[Original]')
+            print('File size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+            print('[JPEG quality={}]'.format(self.jpeg_quality))
+            print('File size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
             print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
         return data.reshape(len(self.targets), self.size[0], self.size[1], 3)
 
     def compute_compression_rate(self):
-        if self.jpeg_quality < 1 or self.jpeg_quality > 95:
+        if self.jpeg_quality < 1 or self.jpeg_quality > 100:
             print('Compression rate: 0 +- 0')
             return
 
@@ -174,7 +180,9 @@ class AdvImageFolder(ImageFolder):
         self.sd_comp_file_size = np.std(self.comp_file_sizes)
         self.avg_compression_rate = np.average(self.compression_rates)
         self.sd_compression_rate = np.std(self.compression_rates)
-        print('Original file size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
-        print('Compressed file size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
+        print('[Original]')
+        print('File size [KB]:', self.avg_org_file_size, '+-', self.sd_org_file_size)
+        print('[JPEG quality={}]'.format(self.jpeg_quality))
+        print('File size [KB]:', self.avg_comp_file_size, '+-', self.sd_comp_file_size)
         print('Compression rate:', self.avg_compression_rate, '+-', self.sd_compression_rate)
 

@@ -18,7 +18,6 @@ def get_argparser():
     parser.add_argument('--mode', default='comp_rate', help='evaluation option')
     parser.add_argument('--comp_layer', type=int, default=-1, help='index of layer to compress its input'
                                                                    ' (starts from 1, no compression if 0 is given)')
-    parser.add_argument('--gpu', type=int, help='gpu number')
     parser.add_argument('-cpu', action='store_true', help='use CPU')
     return parser
 
@@ -31,7 +30,7 @@ def resume_from_ckpt(model, model_config, device):
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     model_state_dict = checkpoint['model']
-    if device == 'cpu':
+    if device.type == 'cpu':
         for key in list(model_state_dict.keys()):
             if key.startswith('module.'):
                 val = model_state_dict.pop(key)
@@ -193,12 +192,9 @@ def analyze_running_time(model, input_shape, comp_layer_idx, test_loader, device
 
 
 def run(args):
-    device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
-    if device == 'cuda':
+    device = torch.device('cuda' if torch.cuda.is_available() and not args.cpu else 'cpu')
+    if device.type == 'cuda':
         cudnn.benchmark = True
-        gpu_number = args.gpu
-        if gpu_number is not None and gpu_number >= 0:
-            device += ':' + str(gpu_number)
 
     config = yaml_util.load_yaml_file(args.config)
     dataset_config = config['dataset']
@@ -207,9 +203,10 @@ def run(args):
     compress_config = test_config['compression']
     input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                      compress_config['type'], compress_config['size'],
-                                      reshape_size=input_shape[1:3], jpeg_quality=test_config['jquality'])
+        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+                                      compression_type=compress_config['type'], compressed_size=compress_config['size'],
+                                      rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
+                                      jpeg_quality=test_config['jquality'])
 
     pickle_file_path = args.pkl
     if not file_util.check_if_exists(pickle_file_path):

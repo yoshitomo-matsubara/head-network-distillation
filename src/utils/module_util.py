@@ -1,11 +1,18 @@
+import torch
 import torchvision
+from torch import nn
 
-from models.classification import *
+from models.classification.alexnet import AlexNet
+from models.classification.densenet import densenet_model
+from models.classification.inception import inception_v3
+from models.classification.lenet5 import LeNet5
+from models.classification.mobilenet import mobilenet_model
+from models.classification.resnet import resnet_model
 from myutils.common import file_util
 
 
 def use_multiple_gpus_if_available(model, device):
-    return nn.DataParallel(model) if device.startswith('cuda') else model
+    return nn.DataParallel(model) if device.type == 'cuda' else model
 
 
 def get_model(config, device=None):
@@ -21,7 +28,7 @@ def get_model(config, device=None):
     elif model_type.startswith('resnet'):
         model = resnet_model(model_type, model_config['params'], model_config['pretrained'])
     elif model_type.startswith('mobilenet'):
-        model = mobilenet_model(model_type, model_config['params'])
+        model = mobilenet_model(model_type, model_config['params'], model_config['pretrained'])
     elif model_type.startswith('inception_v3'):
         model = inception_v3(model_config['pretrained'], **model_config['params'])
     elif model_type in torchvision.models.__dict__:

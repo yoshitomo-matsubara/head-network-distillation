@@ -18,7 +18,7 @@ org_model:
 autoencoder:
     type: &ae_type 'input_vae'
     experiment: &ae_experiment !join [*dataset_name, '-', *ae_type]
-    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.pt']
     params:
         input_channel: 3
         h_dim: 18432
@@ -27,7 +27,7 @@ autoencoder:
 train:
     epoch: 150
     batch_size: 20
-    rough_size: [256, 256]
+    rough_size: 256
     interval: -1
     optimizer:
         type: 'Adam'
@@ -45,3 +45,7 @@ train:
 
 test:
     batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:

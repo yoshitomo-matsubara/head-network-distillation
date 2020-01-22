@@ -15,7 +15,7 @@ model:
     type: &model_type 'inception_v3'
     experiment: &experiment !join [*dataset_name, '-', *model_type]
     pretrained: False
-    ckpt: !join ['./resource/ckpt/', *experiment, '.ckpt']
+    ckpt: !join ['./resource/ckpt/', *experiment, '.pt']
     params:
         num_classes: 101
         aux_logits: True
@@ -24,7 +24,7 @@ model:
 train:
     epoch: 200
     batch_size: 20
-    rough_size: [327, 327]
+    rough_size: 327
     interval: -1
     optimizer:
         type: 'SGD'
