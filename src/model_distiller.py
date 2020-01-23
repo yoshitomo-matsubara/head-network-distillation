@@ -80,12 +80,12 @@ def save_ckpt(model, optimizer, lr_scheduler, best_value, config, args, output_f
                              output_file_path)
 
 
-def distill_one_epoch(distillation_box, train_data_loader, optimizer, device, epoch, log_freq, use_apex=False):
+def distill_one_epoch(distillation_box, train_data_loader, optimizer, device, epoch, interval, use_apex=False):
     metric_logger = MetricLogger(delimiter='  ')
     metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value}'))
     metric_logger.add_meter('img/s', SmoothedValue(window_size=10, fmt='{value}'))
     header = 'Epoch: [{}]'.format(epoch)
-    for sample_batch, targets in metric_logger.log_every(train_data_loader, log_freq, header):
+    for sample_batch, targets in metric_logger.log_every(train_data_loader, interval, header):
         start_time = time.time()
         sample_batch, targets = sample_batch.to(device), targets.to(device)
         loss = distillation_box(sample_batch, targets)
@@ -103,7 +103,7 @@ def distill_one_epoch(distillation_box, train_data_loader, optimizer, device, ep
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, log_freq=1000, title=None):
+def evaluate(model, data_loader, device, interval=1000, title=None):
     if title is not None:
         print(title)
 
@@ -113,7 +113,7 @@ def evaluate(model, data_loader, device, log_freq=1000, title=None):
     metric_logger = MetricLogger(delimiter='  ')
     header = 'Test:'
     with torch.no_grad():
-        for image, target in metric_logger.log_every(data_loader, log_freq, header):
+        for image, target in metric_logger.log_every(data_loader, interval, header):
             image = image.to(device, non_blocking=True)
             target = target.to(device, non_blocking=True)
             output = model(image)
@@ -148,10 +148,10 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
     if file_util.check_if_exists(ckpt_file_path):
         best_val_map, _, _ = load_ckpt(ckpt_file_path, optimizer=optimizer, lr_scheduler=lr_scheduler)
 
-    log_freq = train_config['log_freq']
-    if log_freq <= 0:
+    interval = train_config['interval']
+    if interval <= 0:
         num_batches = len(train_data_loader)
-        log_freq = num_batches // 20 if num_batches >= 20 else 1
+        interval = num_batches // 20 if num_batches >= 20 else 1
 
     student_model_without_ddp = \
         student_model.module if isinstance(student_model, DistributedDataParallel) else student_model
@@ -162,8 +162,8 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
 
         teacher_model.eval()
         student_model.train()
-        distill_one_epoch(distillation_box, train_data_loader, optimizer, device, epoch, log_freq, args.apex)
-        val_top1_accuracy = evaluate(student_model, val_data_loader, device=device, log_freq=log_freq)
+        distill_one_epoch(distillation_box, train_data_loader, optimizer, device, epoch, interval, args.apex)
+        val_top1_accuracy = evaluate(student_model, val_data_loader, device=device, log_freq=interval)
         if val_top1_accuracy > best_val_top1_accuracy and main_util.is_main_process():
             print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_val_top1_accuracy,
                                                                                 val_top1_accuracy))
