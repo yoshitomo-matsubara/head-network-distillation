@@ -210,7 +210,9 @@ def main(args):
         student_model, optimizer = amp.initialize(student_model, optimizer, opt_level=args.apex_opt_level)
 
     if distributed:
-        teacher_model = nn.DataParallel(teacher_model, device_ids=device_ids)
+        teacher_model =\
+            nn.DataParallel(teacher_model.module if isinstance(teacher_model, nn.DataParallel) else teacher_model,
+                            device_ids=device_ids)
         student_model = DistributedDataParallel(student_model, device_ids=device_ids)
 
     start_epoch = args.start_epoch

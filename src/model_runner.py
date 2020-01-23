@@ -113,9 +113,11 @@ def validate(model, valid_loader, device):
 
 def train(model, train_loader, valid_loader, best_valid_acc, criterion, device, distributed, device_ids, train_config,
           num_epochs, start_epoch, init_lr, ckpt_file_path, model_type):
-    model_without_ddp = model.module if isinstance(model, (DataParallel, DistributedDataParallel)) else model
+    model_without_ddp = model
     if distributed:
         model = DistributedDataParallel(model_without_ddp, device_ids=device_ids)
+    elif device.type == 'cuda':
+        model = DataParallel(model_without_ddp)
 
     optim_config = train_config['optimizer']
     if init_lr is not None:

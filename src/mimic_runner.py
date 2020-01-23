@@ -188,7 +188,7 @@ def run(args):
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     if not args.student_only:
         if distributed:
-            org_model = DataParallel(org_model.module, device_ids=device_ids)
+            org_model = DataParallel(org_model, device_ids=device_ids)
         evaluate(org_model, test_loader, device, title='[Original model]')
 
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
