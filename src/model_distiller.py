@@ -154,7 +154,7 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
     student_model_without_ddp = \
         student_model.module if isinstance(student_model, DistributedDataParallel) else student_model
     start_time = time.time()
-    for epoch in range(start_epoch, train_config['num_epochs']):
+    for epoch in range(start_epoch, train_config['epoch']):
         if distributed:
             train_data_loader.sampler.set_epoch(epoch)
 
