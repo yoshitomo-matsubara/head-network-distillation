@@ -149,6 +149,10 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
         best_val_map, _, _ = load_ckpt(ckpt_file_path, optimizer=optimizer, lr_scheduler=lr_scheduler)
 
     log_freq = train_config['log_freq']
+    if log_freq <= 0:
+        num_batches = len(train_data_loader)
+        log_freq = num_batches // 20 if num_batches >= 20 else 1
+
     student_model_without_ddp = \
         student_model.module if isinstance(student_model, DistributedDataParallel) else student_model
     start_time = time.time()
