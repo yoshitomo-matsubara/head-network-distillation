@@ -26,8 +26,6 @@ def get_argparser():
     parser.add_argument('--config', required=True, help='yaml file path')
     parser.add_argument('--device', default='cuda', help='device')
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N', help='start epoch')
-    parser.add_argument('-use_cache', action='store_true',
-                        help='Cache the datasets for quicker initialization. It also serializes the transforms')
     parser.add_argument('-sync_bn', action='store_true', help='Use sync batch norm')
     parser.add_argument('-test_only', action='store_true', help='Only test the models')
     parser.add_argument('-student_only', action='store_true', help='Test the student model only')
