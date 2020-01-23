@@ -129,4 +129,4 @@ def get_mimic_model(config, org_model, teacher_model_type, teacher_model_config,
 def get_mimic_model_easily(config, device=torch.device('cpu')):
     teacher_model_config = config['teacher_model']
     org_model, teacher_model_type = get_org_model(teacher_model_config, device)
-    return mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
+    return get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)
