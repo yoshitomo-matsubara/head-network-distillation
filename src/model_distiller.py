@@ -61,7 +61,7 @@ def load_ckpt(ckpt_file_path, model=None, optimizer=None, lr_scheduler=None, str
 
 
 def get_model(model_config, device, distributed, sync_bn):
-    model_name = model_config['name']
+    model_name = model_config['type']
     model = torchvision.models.__dict__[model_name](**model_config['params'])
     if distributed and sync_bn:
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
@@ -197,7 +197,7 @@ def main(args):
                                       distributed=distributed)
 
     teacher_model_config = config['teacher_model']
-    teacher_model = get_model(teacher_model_config, device, distributed, False)
+    teacher_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     module_util.freeze_module_params(teacher_model)
 
     student_model = mimic_util.get_mimic_model_easily(config, device)
@@ -222,8 +222,8 @@ def main(args):
         load_ckpt(student_model_config['ckpt'], model=student_model_without_ddp, strict=True)
 
     if not args.student_only:
-        evaluate(teacher_model, test_data_loader, device, title='[Teacher: {}]'.format(teacher_model_config['name']))
-    evaluate(student_model, test_data_loader, device, title='[Student: {}]'.format(student_model_config['name']))
+        evaluate(teacher_model, test_data_loader, device, title='[Teacher: {}]'.format(teacher_model_type))
+    evaluate(student_model, test_data_loader, device, title='[Student: {}]'.format(student_model_config['type']))
 
 
 if __name__ == '__main__':
