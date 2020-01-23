@@ -5,7 +5,7 @@ import time
 
 import torch
 import torchvision
-from torch import nn
+from torch.nn import DataParallel, SyncBatchNorm
 from torch.nn.parallel import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
@@ -64,7 +64,7 @@ def get_model(model_config, device, distributed, sync_bn):
     model_name = model_config['type']
     model = torchvision.models.__dict__[model_name](**model_config['params'])
     if distributed and sync_bn:
-        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = SyncBatchNorm.convert_sync_batchnorm(model)
 
     ckpt_file_path = model_config['ckpt']
     load_ckpt(ckpt_file_path, model=model, strict=True)
@@ -210,9 +210,7 @@ def main(args):
         student_model, optimizer = amp.initialize(student_model, optimizer, opt_level=args.apex_opt_level)
 
     if distributed:
-        teacher_model =\
-            nn.DataParallel(teacher_model.module if isinstance(teacher_model, nn.DataParallel) else teacher_model,
-                            device_ids=device_ids)
+        teacher_model = DataParallel(teacher_model, device_ids=device_ids)
         student_model = DistributedDataParallel(student_model, device_ids=device_ids)
 
     start_epoch = args.start_epoch
