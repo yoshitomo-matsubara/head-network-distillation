@@ -174,7 +174,6 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
 
 
 def main(args):
-    print(args)
     if args.apex:
         if sys.version_info < (3, 0):
             raise RuntimeError('Apex currently only supports Python 3. Aborting.')
@@ -183,6 +182,7 @@ def main(args):
                                'to enable mixed-precision training.')
 
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
+    print(args)
     torch.backends.cudnn.benchmark = True
     config = yaml_util.load_yaml_file(args.config)
     device = torch.device(args.device)
