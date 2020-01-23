@@ -163,7 +163,7 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
         teacher_model.eval()
         student_model.train()
         distill_one_epoch(distillation_box, train_data_loader, optimizer, device, epoch, interval, args.apex)
-        val_top1_accuracy = evaluate(student_model, val_data_loader, device=device, log_freq=interval)
+        val_top1_accuracy = evaluate(student_model, val_data_loader, device=device, interval=interval)
         if val_top1_accuracy > best_val_top1_accuracy and main_util.is_main_process():
             print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_val_top1_accuracy,
                                                                                 val_top1_accuracy))
