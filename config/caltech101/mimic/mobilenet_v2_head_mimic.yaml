@@ -29,7 +29,7 @@ student_model:
 mimic_model:
     type: &mmodel_type 'mobilenet_v2_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic_naive/', *mimic_experiment, '.pt']
+    ckpt: !join ['./resource/ckpt/mimic/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
