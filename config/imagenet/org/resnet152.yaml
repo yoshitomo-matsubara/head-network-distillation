@@ -1,0 +1,50 @@
+dataset:
+    name: &dataset_name 'imagenet'
+    root: &data_dir './resource/data/ILSVRC2012/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'valid.txt']
+    normalizer:
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+input_shape: [3, 224, 224]
+
+model:
+    type: &model_type 'resnet152'
+    experiment: &experiment !join [*dataset_name, '-', *model_type]
+    pretrained: True
+    ckpt: !join ['./resource/ckpt/org/', *experiment, '.pt']
+    params:
+        num_classes: 1000
+        num_init_features: 64
+        first_conv2d_ksize: 7
+        first_conv2d_stride: 2
+        first_conv2d_padding: 3
+        last_avgpool2d_ksize: 7
+        last_avgpool2d_stride: 1
+
+train:
+    epoch: 50
+    batch_size: 20
+    rough_size: [256, 256]
+    interval: 50
+    optimizer:
+        type: 'sgd'
+        params:
+            lr: 0.01
+            momentum: 0.9
+            weight_decay: 0.0005
+    criterion:
+        type: 'CrossEntropyLoss'
+        params:
+            reduction: 'elementwise_mean'
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:
+    autoencoder:
