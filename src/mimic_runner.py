@@ -148,6 +148,9 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     end_epoch = start_epoch + train_config['epoch']
     start_time = time.time()
     for epoch in range(start_epoch, end_epoch):
+        if distributed:
+            train_loader.sampler.set_epoch(epoch)
+
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
         valid_acc = validate(student_model, valid_loader, config, device, distributed, device_ids)
