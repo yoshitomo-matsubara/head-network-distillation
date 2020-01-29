@@ -1,0 +1,64 @@
+dataset:
+    name: &dataset_name 'imagenet'
+    root: &data_dir './resource/data/ILSVRC2012/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'valid.txt']
+    num_workers: 16
+    normalizer:
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+input_shape: [3, 299, 299]
+
+teacher_model:
+    config: './config/imagenet/org/inception_v3.yaml'
+    extract_designed_module: False
+    start_idx: 0
+    end_idx: 17 # 17, 21, 26 for vers. 1, 2, 3
+
+student_model:
+    type: &smodel_type 'inception_v3_head_mimic'
+    version: &ver '1b'
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    params:
+        bottleneck_channel: &bottleneck_channel 12
+        use_aux: False
+    ckpt: !join ['./resource/ckpt/kd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
+
+mimic_model:
+    type: &mmodel_type 'inception_v3_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/kd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
+
+train:
+    epoch: 20
+    batch_size: 32
+    rough_size: 327
+    interval: -1
+    optimizer:
+        type: 'SGD'
+        params:
+            lr: 0.001
+            momentum: 0.9
+            weight_decay: 0.0001
+    scheduler:
+        type: 'MultiStepLR'
+        params:
+            milestones: [5, 10, 15]
+            gamma: 0.1
+    criterion:
+        type: 'general'
+        org_term:
+            criterion:
+                type: 'kd'
+                params:
+                    temperature: 1.0
+                    alpha: 0.5
+                    reduction: 'batchmean'
+            factor: 1.0
+        sub_terms:
+
+test:
+    batch_size: 50

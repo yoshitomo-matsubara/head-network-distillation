@@ -148,6 +148,9 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     end_epoch = start_epoch + train_config['epoch']
     start_time = time.time()
     for epoch in range(start_epoch, end_epoch):
+        if distributed:
+            train_loader.sampler.set_epoch(epoch)
+
         distill_one_epoch(student_model, teacher_model, train_loader, optimizer, criterion,
                           epoch, device, interval, aux_weight)
         valid_acc = validate(student_model, valid_loader, config, device, distributed, device_ids)
@@ -188,7 +191,7 @@ def run(args):
     org_model, teacher_model_type = mimic_util.get_org_model(teacher_model_config, device)
     if not args.student_only:
         if distributed:
-            org_model = DataParallel(org_model.module, device_ids=device_ids)
+            org_model = DataParallel(org_model, device_ids=device_ids)
         evaluate(org_model, test_loader, device, title='[Original model]')
 
     mimic_model = mimic_util.get_mimic_model(config, org_model, teacher_model_type, teacher_model_config, device)

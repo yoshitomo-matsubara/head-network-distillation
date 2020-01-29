@@ -38,9 +38,7 @@ def get_model(config, device=None):
         raise ValueError('model_type `{}` is not expected'.format(model_type))
     elif device is None:
         return model
-
-    model = model.to(device)
-    return use_multiple_gpus_if_available(model, device)
+    return model.to(device)
 
 
 def resume_from_ckpt(model, model_config, init):

@@ -12,14 +12,14 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/mobilenet_v2.yaml'
+    config: './config/resnet152.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
+    end_idx: 15 # 7, 15, 55 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'mobilenet_v2_head_mimic'
-    version: &ver '1b'
+    type: &smodel_type 'resnet152_head_mimic'
+    version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.pt']
     params:
@@ -27,9 +27,9 @@ student_model:
         use_aux: False
 
 mimic_model:
-    type: &mmodel_type 'mobilenet_v2_mimic'
+    type: &mmodel_type 'resnet152_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic_naive/', *mimic_experiment, '.pt']
+    ckpt: !join ['./resource/ckpt/mimic/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150

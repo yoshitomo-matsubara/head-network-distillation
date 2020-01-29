@@ -71,6 +71,11 @@ def get_rank():
     return dist.get_rank()
 
 
+def save_on_master(*args, **kwargs):
+    if is_main_process():
+        torch.save(*args, **kwargs)
+
+
 def is_main_process():
     return get_rank() == 0
 
