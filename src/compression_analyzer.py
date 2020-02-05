@@ -1,4 +1,6 @@
 import argparse
+import sys
+import zlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,9 +8,8 @@ import torch
 import torch.backends.cudnn as cudnn
 
 from myutils.common import file_util, yaml_util
-from structure.wrapper import *
-from utils import misc_util, module_util, module_wrap_util
-from utils.dataset import general_util
+from structure.wrapper import CompressionWrapper, RunTimeWrapper
+from utils import misc_util, module_util, module_wrap_util, dataset_util
 
 
 def get_argparser():
@@ -203,7 +204,7 @@ def run(args):
     compress_config = test_config['compression']
     input_shape = config['input_shape']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       compression_type=compress_config['type'], compressed_size=compress_config['size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
                                       jpeg_quality=test_config['jquality'])

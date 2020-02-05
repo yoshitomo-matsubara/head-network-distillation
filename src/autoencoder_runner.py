@@ -1,13 +1,12 @@
 import argparse
 
 import torch
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
+from torch import nn
+from torch.backends import cudnn
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
-from utils import ae_util, module_util
-from utils.dataset import general_util
+from utils import ae_util, module_util, dataset_util
 
 
 def get_argparser():
@@ -159,7 +158,7 @@ def run(args):
     start_epoch, best_avg_loss = resume_from_ckpt(ckpt_file_path, autoencoder)
     train_config = config['train']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       reshape_size=input_shape[1:3], jpeg_quality=-1)
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])

@@ -3,16 +3,15 @@ import datetime
 import time
 
 import torch
-import torch.backends.cudnn as cudnn
 from torch import nn
+from torch.backends import cudnn
 from torch.nn import DataParallel
 from torch.nn.parallel.distributed import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util, module_util
 from structure.logger import MetricLogger, SmoothedValue
-from utils import main_util, mimic_util
-from utils.dataset import general_util
+from utils import main_util, mimic_util, dataset_util
 
 
 def get_argparser():
@@ -180,7 +179,7 @@ def run(args):
     train_config = config['train']
     test_config = config['test']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
                                       jpeg_quality=-1, test_batch_size=test_config['batch_size'],
                                       distributed=distributed)

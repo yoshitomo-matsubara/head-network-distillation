@@ -2,7 +2,7 @@ import pickle
 import sys
 
 import numpy as np
-import torch.nn as nn
+from torch import nn
 
 from utils import data_util, module_util
 

@@ -2,7 +2,7 @@ import sys
 import time
 import zlib
 
-import torch.nn as nn
+from torch import nn
 
 
 class CompressionWrapper(nn.Module):

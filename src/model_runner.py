@@ -10,8 +10,7 @@ from torch.nn.parallel.distributed import DistributedDataParallel
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from structure.logger import MetricLogger, SmoothedValue
-from utils import main_util, mimic_util, module_util
-from utils.dataset import general_util
+from utils import main_util, mimic_util, module_util, dataset_util
 
 
 def get_argparser():
@@ -38,7 +37,7 @@ def get_data_loaders(config, distributed):
     jpeg_quality = test_config.get('jquality', 0)
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
-        return general_util.get_data_loaders(dataset_config, train_config['batch_size'],
+        return dataset_util.get_data_loaders(dataset_config, train_config['batch_size'],
                                              compress_type, compress_size,
                                              rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],

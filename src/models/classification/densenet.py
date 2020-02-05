@@ -1,10 +1,9 @@
+import re
 from collections import OrderedDict
 
 import torch
-import torch.nn as nn
-import re
 import torch.utils.model_zoo as model_zoo
-
+from torch import nn
 
 MODEL_URLS = {
     'densenet121': 'https://download.pytorch.org/models/densenet121-a639ec97.pth',

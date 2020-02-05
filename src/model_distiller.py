@@ -12,8 +12,7 @@ from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util, module_util
 from structure.logger import MetricLogger, SmoothedValue
 from tools.distillation import DistillationBox
-from utils import main_util, mimic_util
-from utils.dataset import general_util
+from utils import main_util, mimic_util, dataset_util
 
 try:
     from apex import amp
@@ -196,7 +195,7 @@ def main(args):
     train_config = config['train']
     test_config = config['test']
     train_data_loader, val_data_loader, test_data_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
                                       jpeg_quality=-1, test_batch_size=test_config['batch_size'],
                                       distributed=distributed)
