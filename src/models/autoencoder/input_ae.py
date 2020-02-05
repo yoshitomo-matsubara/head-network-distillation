@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from .base import BaseAutoencoder
+
+from models.autoencoder.base import BaseAutoencoder
 
 
 class InputAutoencoder(BaseAutoencoder):
