@@ -31,6 +31,28 @@ def get_autoencoder(config, device=None, is_static=False):
     return autoencoder, ae_type
 
 
+def extract_head_model(model, input_shape, device, partition_idx):
+    if partition_idx is None or partition_idx == 0:
+        return nn.Sequential()
+
+    modules = list()
+    module = model.module if isinstance(model, nn.DataParallel) else model
+    module_util.extract_decomposable_modules(module, torch.rand(1, *input_shape).to(device), modules)
+    return nn.Sequential(*modules[:partition_idx]).to(device)
+
+
+def get_head_model(config, input_shape, device):
+    org_model_config = config['org_model']
+    model_config = yaml_util.load_yaml_file(org_model_config['config'])
+    sub_model_config = model_config['model']
+    if sub_model_config['type'] == 'inception_v3':
+        sub_model_config['params']['aux_logits'] = False
+
+    model = module_util.get_model(model_config, device)
+    module_util.resume_from_ckpt(model, sub_model_config, False)
+    return extract_head_model(model, input_shape, device, org_model_config['partition_idx'])
+
+
 def extend_model(autoencoder, model, input_shape, device, partition_idx):
     if partition_idx is None or partition_idx == 0:
         return nn.Sequential(autoencoder, model)

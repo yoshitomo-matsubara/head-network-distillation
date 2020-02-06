@@ -1,202 +1,205 @@
 import argparse
+import datetime
+import time
 
 import torch
-from torch import nn
 from torch.backends import cudnn
+from torch.nn import DataParallel
+from torch.nn.parallel.distributed import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
-from myutils.pytorch import func_util
-from utils import ae_util, module_util, dataset_util
+from myutils.pytorch import func_util, module_util
+from structure.logger import MetricLogger, SmoothedValue
+from utils import ae_util, dataset_util, main_util
 
 
 def get_argparser():
-    argparser = argparse.ArgumentParser(description='Autoencoder Trainer')
+    argparser = argparse.ArgumentParser(description='PyTorch autoencoder trainer')
     argparser.add_argument('--config', required=True, help='yaml file path')
-    argparser.add_argument('--epoch', type=int, help='epoch (higher priority than config if set)')
-    argparser.add_argument('--lr', type=float, help='learning rate (higher priority than config if set)')
-    argparser.add_argument('-init', action='store_true', help='overwrite checkpoint')
-    argparser.add_argument('-evaluate', action='store_true', help='evaluation option')
+    argparser.add_argument('--device', default='cuda', help='device')
+    argparser.add_argument('-test_only', action='store_true', help='only test model')
+    # distributed training parameters
+    argparser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
+    argparser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     return argparser
 
 
-def extract_head_model(model, input_shape, device, partition_idx):
-    if partition_idx is None or partition_idx == 0:
-        return nn.Sequential()
-
-    modules = list()
-    module = model.module if isinstance(model, nn.DataParallel) else model
-    module_util.extract_decomposable_modules(module, torch.rand(1, *input_shape).to(device), modules)
-    return nn.Sequential(*modules[:partition_idx]).to(device)
-
-
-def get_head_model(config, input_shape, device):
-    org_model_config = config['org_model']
-    model_config = yaml_util.load_yaml_file(org_model_config['config'])
-    sub_model_config = model_config['model']
-    if sub_model_config['type'] == 'inception_v3':
-        sub_model_config['params']['aux_logits'] = False
-
-    model = module_util.get_model(model_config, device)
-    module_util.resume_from_ckpt(model, sub_model_config, False)
-    return extract_head_model(model, input_shape, device, org_model_config['partition_idx'])
+def get_data_loaders(config, distributed):
+    print('Loading data')
+    dataset_config = config['dataset']
+    train_config = config['train']
+    test_config = config['test']
+    compress_config = test_config.get('compression', dict())
+    compress_type = compress_config.get('type', None)
+    compress_size = compress_config.get('size', None)
+    jpeg_quality = test_config.get('jquality', 0)
+    dataset_name = dataset_config['name']
+    if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
+        return dataset_util.get_data_loaders(dataset_config, train_config['batch_size'],
+                                             compress_type, compress_size,
+                                             rough_size=train_config['rough_size'],
+                                             reshape_size=config['input_shape'][1:3],
+                                             jpeg_quality=jpeg_quality, distributed=distributed)
+    raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
 def resume_from_ckpt(ckpt_file_path, autoencoder):
     if not file_util.check_if_exists(ckpt_file_path):
         print('Autoencoder checkpoint was not found at {}'.format(ckpt_file_path))
-        return 1, 1e60
+        return 1, None
 
     print('Resuming from checkpoint..')
     checkpoint = torch.load(ckpt_file_path)
     state_dict = checkpoint['model']
     autoencoder.load_state_dict(state_dict)
     start_epoch = checkpoint['epoch']
-    return start_epoch, checkpoint['best_avg_loss']
+    return start_epoch, checkpoint['best_value']
 
 
-def train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
+def train_epoch(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
     print('\nEpoch: {}, LR: {:.3E}'.format(epoch, optimizer.param_groups[0]['lr']))
     autoencoder.train()
     head_model.eval()
-    train_size = len(train_loader.sampler)
-    train_loss = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
+    metric_logger = MetricLogger(delimiter='  ')
+    metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value}'))
+    metric_logger.add_meter('img/s', SmoothedValue(window_size=10, fmt='{value}'))
+    header = 'Epoch: [{}]'.format(epoch)
+    for sample_batch, targets in metric_logger.log_every(train_loader, interval, header):
+        start_time = time.time()
+        sample_batch = sample_batch.to(device)
         optimizer.zero_grad()
-        head_outputs = head_model(inputs)
+        head_outputs = head_model(sample_batch)
         ae_outputs = autoencoder(head_outputs)
         loss = criterion(ae_outputs, head_outputs) if not isinstance(ae_outputs, tuple) else ae_outputs[1]
         loss.backward()
         optimizer.step()
-        train_loss += loss.item()
-        total += targets.size(0)
-        if batch_idx > 0 and batch_idx % interval == 0:
-            print('[{}/{} ({:.0f}%)]\tAvg Loss: {:.6f}'.format(total, train_size, 100.0 * total / train_size,
-                                                               loss.item() / targets.size(0)))
+        batch_size = sample_batch.shape[0]
+        metric_logger.update(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
+        metric_logger.meters['img/s'].update(batch_size / (time.time() - start_time))
 
 
-def validate(autoencoder, head_model, valid_loader, criterion, device):
-    autoencoder.eval()
-    head_model.eval()
-    valid_loss = 0
-    total = 0
+@torch.no_grad()
+def evaluate(model, data_loader, device, interval=1000, split_name='Test', title=None):
+    if title is not None:
+        print(title)
+
+    num_threads = torch.get_num_threads()
+    torch.set_num_threads(1)
+    model.eval()
+    metric_logger = MetricLogger(delimiter='  ')
+    header = '{}:'.format(split_name)
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(valid_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            head_outputs = head_model(inputs) if head_model is not None else inputs
-            ae_outputs = autoencoder(head_outputs)
-            loss = criterion(ae_outputs, head_outputs)
-            valid_loss += loss.item()
-            total += targets.size(0)
+        for image, target in metric_logger.log_every(data_loader, interval, header):
+            image = image.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
+            output = model(image)
 
-    avg_valid_loss = valid_loss / total
-    print('Validation Loss: {:.6f}\tAvg Loss: {:.6f}'.format(valid_loss, avg_valid_loss))
-    return avg_valid_loss
+            acc1, acc5 = main_util.compute_accuracy(output, target, topk=(1, 5))
+            # FIXME need to take into account that the datasets
+            # could have been padded in distributed setup
+            batch_size = image.shape[0]
+            metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+            metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    top1_accuracy = metric_logger.acc1.global_avg
+    top5_accuracy = metric_logger.acc5.global_avg
+    print(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
+    torch.set_num_threads(num_threads)
+    return metric_logger.acc1.global_avg
+
+
+def validate(ae_without_ddp, data_loader, config, device, distributed, device_ids):
+    input_shape = config['input_shape']
+    extended_model, model = ae_util.get_extended_model(ae_without_ddp, config, input_shape, device)
+    if distributed:
+        extended_model = DistributedDataParallel(extended_model, device_ids=device_ids)
+    return evaluate(extended_model, data_loader, device, split_name='Validation')
 
 
 def save_ckpt(autoencoder, epoch, best_avg_loss, ckpt_file_path, ae_type):
     print('Saving..')
-    module = autoencoder.module if isinstance(autoencoder, nn.DataParallel) else autoencoder
+    module = autoencoder.module if isinstance(autoencoder, (DistributedDataParallel, DataParallel)) else autoencoder
     state = {
         'type': ae_type,
         'model': module.state_dict(),
         'epoch': epoch + 1,
-        'best_avg_loss': best_avg_loss
+        'best_value': best_avg_loss
     }
     file_util.make_parent_dirs(ckpt_file_path)
     torch.save(state, ckpt_file_path)
 
 
-def predict(inputs, targets, model):
-    preds = model(inputs)
-    loss = nn.functional.cross_entropy(preds, targets)
-    _, pred_labels = preds.max(1)
-    correct_count = pred_labels.eq(targets).sum().item()
-    return correct_count, loss.item()
+def train(train_loader, valid_loader, input_shape, config, device, distributed, device_ids):
+    ae_without_ddp, ae_type = ae_util.get_autoencoder(config, device)
+    head_model = ae_util.get_head_model(config, input_shape, device)
+    module_util.freeze_module_params(head_model)
+    ckpt_file_path = config['autoencoder']['ckpt']
+    start_epoch, best_valid_acc = resume_from_ckpt(ckpt_file_path, ae_without_ddp)
+    if best_valid_acc is None:
+        best_valid_acc = 0.0
 
+    train_config = config['train']
+    criterion_config = train_config['criterion']
+    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+    optim_config = train_config['optimizer']
+    optimizer = func_util.get_optimizer(ae_without_ddp, optim_config['type'], optim_config['params'])
+    scheduler_config = train_config['scheduler']
+    scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
+    interval = train_config['interval']
+    if interval <= 0:
+        num_batches = len(train_loader)
+        interval = num_batches // 20 if num_batches >= 20 else 1
 
-def test(extended_model, org_model, test_loader, device):
-    print('Testing..')
-    extended_model.eval()
-    org_model.eval()
-    ext_correct_count = 0
-    ext_test_loss = 0
-    org_correct_count = 0
-    org_test_loss = 0
-    total = 0
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(test_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            total += targets.size(0)
-            sub_correct_count, sub_test_loss = predict(inputs, targets, extended_model)
-            ext_correct_count += sub_correct_count
-            ext_test_loss += sub_test_loss
-            sub_correct_count, sub_test_loss = predict(inputs, targets, org_model)
-            org_correct_count += sub_correct_count
-            org_test_loss += sub_test_loss
+    autoencoder = ae_without_ddp
+    if distributed:
+        autoencoder = DistributedDataParallel(ae_without_ddp, device_ids=device_ids)
+        head_model = DataParallel(head_model, device_ids=device_ids)
+    elif device.type == 'cuda':
+        autoencoder = DataParallel(ae_without_ddp)
+        head_model = DataParallel(head_model)
 
-    ext_acc = 100.0 * ext_correct_count / total
-    print('[Extended]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        ext_correct_count / total, ext_correct_count, total, ext_acc))
-    org_acc = 100.0 * org_correct_count / total
-    print('[Original]\tAverage Loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        org_test_loss / total, org_correct_count, total, org_acc))
-    return ext_acc, org_acc
+    end_epoch = start_epoch + train_config['epoch']
+    start_time = time.time()
+    for epoch in range(start_epoch, end_epoch):
+        if distributed:
+            train_loader.sampler.set_epoch(epoch)
+
+        train_epoch(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval)
+        valid_acc = validate(ae_without_ddp, valid_loader, config, device, distributed, device_ids)
+        if valid_acc < best_valid_acc and main_util.is_main_process():
+            best_valid_acc = valid_acc
+            save_ckpt(ae_without_ddp, epoch, best_valid_acc, ckpt_file_path, ae_type)
+        scheduler.step()
+
+    total_time = time.time() - start_time
+    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+    print('Training time {}'.format(total_time_str))
+    del head_model
 
 
 def run(args):
+    distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 
+    print(args)
     config = yaml_util.load_yaml_file(args.config)
-    dataset_config = config['dataset']
     input_shape = config['input_shape']
-    autoencoder, ae_type = ae_util.get_autoencoder(config, device)
     ckpt_file_path = config['autoencoder']['ckpt']
-    start_epoch, best_avg_loss = resume_from_ckpt(ckpt_file_path, autoencoder)
-    train_config = config['train']
-    train_loader, valid_loader, test_loader =\
-        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
-                                      reshape_size=input_shape[1:3], jpeg_quality=-1)
-    criterion_config = train_config['criterion']
-    criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
+    train_loader, valid_loader, test_loader = get_data_loaders(config, distributed)
     if not args.evaluate:
-        head_model = get_head_model(config, input_shape, device)
-        module_util.use_multiple_gpus_if_available(autoencoder, device)
-        module_util.use_multiple_gpus_if_available(head_model, device)
-        optim_config = train_config['optimizer']
-        if args.lr is not None:
-            optim_config['params']['lr'] = args.lr
+        train(train_loader, valid_loader, input_shape, config, device, distributed, device_ids)
 
-        optimizer = func_util.get_optimizer(autoencoder, optim_config['type'], optim_config['params'])
-        scheduler_config = train_config['scheduler']
-        scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
-        interval = train_config['interval']
-        if interval <= 0:
-            num_batches = len(train_loader)
-            interval = num_batches // 100 if num_batches >= 100 else 1
-
-        end_epoch = start_epoch + train_config['epoch'] if args.epoch is None else start_epoch + args.epoch
-        for epoch in range(start_epoch, end_epoch):
-            train(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval)
-            avg_valid_loss = validate(autoencoder, head_model, valid_loader, criterion, device)
-            if avg_valid_loss < best_avg_loss:
-                best_avg_loss = avg_valid_loss
-                save_ckpt(autoencoder, epoch, best_avg_loss, ckpt_file_path, ae_type)
-            scheduler.step()
-
-        if isinstance(autoencoder, nn.DataParallel):
-            autoencoder = autoencoder.module
-
-        resume_from_ckpt(ckpt_file_path, autoencoder)
-        del head_model
-
+    autoencoder, _ = ae_util.get_autoencoder(config, device)
+    resume_from_ckpt(ckpt_file_path, autoencoder)
     extended_model, model = ae_util.get_extended_model(autoencoder, config, input_shape, device)
-    extended_model = module_util.use_multiple_gpus_if_available(extended_model, device)
-    model = module_util.use_multiple_gpus_if_available(model, device)
-    test(extended_model, model, test_loader, device)
+    if device.type == 'cuda':
+        extended_model = DistributedDataParallel(extended_model, device_ids=device_ids) if distributed \
+            else DataParallel(extended_model)
+    evaluate(extended_model, test_loader, device, title='[Mimic model]')
 
 
 if __name__ == '__main__':
