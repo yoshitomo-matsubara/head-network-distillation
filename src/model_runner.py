@@ -10,7 +10,7 @@ from torch.nn.parallel.distributed import DistributedDataParallel
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util
 from structure.logger import MetricLogger, SmoothedValue
-from utils import main_util, mimic_util, module_util, dataset_util
+from utils import main_util, mimic_util, module_util
 
 
 def get_argparser():
@@ -24,25 +24,6 @@ def get_argparser():
     argparser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
     argparser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     return argparser
-
-
-def get_data_loaders(config, distributed):
-    print('Loading data')
-    dataset_config = config['dataset']
-    train_config = config['train']
-    test_config = config['test']
-    compress_config = test_config.get('compression', dict())
-    compress_type = compress_config.get('type', None)
-    compress_size = compress_config.get('size', None)
-    jpeg_quality = test_config.get('jquality', 0)
-    dataset_name = dataset_config['name']
-    if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
-        return dataset_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                             compress_type, compress_size,
-                                             rough_size=train_config['rough_size'],
-                                             reshape_size=config['input_shape'][1:3],
-                                             jpeg_quality=jpeg_quality, distributed=distributed)
-    raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
 def train_epoch(model, train_loader, optimizer, criterion, epoch, device, interval):
@@ -157,7 +138,7 @@ def run(args):
 
     print(args)
     config = yaml_util.load_yaml_file(args.config)
-    train_loader, valid_loader, test_loader = get_data_loaders(config, distributed)
+    train_loader, valid_loader, test_loader = main_util.get_data_loaders(config, distributed)
     if 'mimic_model' in config:
         model = mimic_util.get_mimic_model_easily(config, device)
         model_config = config['mimic_model']
