@@ -128,7 +128,6 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']
-
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     scheduler_config = train_config['scheduler']
     scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
