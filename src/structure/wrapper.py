@@ -2,6 +2,8 @@ import sys
 import time
 import zlib
 
+import numpy as np
+from sklearn.manifold import TSNE
 from torch import nn
 
 
@@ -67,3 +69,35 @@ class RunTimeWrapper(CompressionWrapper):
 
     def get_compression_time_list(self):
         return [self.comp_timestamp_list[i] - self.timestamp_list[i] for i in range(len(self.comp_timestamp_list))]
+
+
+class RepresentationWrapper(nn.Module):
+    def __init__(self, org_module, method='tsne'):
+        super().__init__()
+        self.org_module = org_module
+        self.method = method
+        self.transformed_list = list()
+
+    @staticmethod
+    def normalize(np_mat):
+        min_values = np.min(np_mat, axis=0, keepdims=True)
+        max_values = np.max(np_mat, axis=0, keepdims=True)
+        return (np_mat - min_values) / (max_values - min_values)
+
+    def transform_by_tsne(self, np_flat_output):
+        transformed_output = TSNE(n_components=2).fit_transform(np_flat_output)
+        return self.normalize(transformed_output)
+
+    def forward(self, *input):
+        output = self.org_module(*input)
+        np_flat_output = output.clone().cpu().detach().flatten(1).numpy()
+        if self.method == 'tsne':
+            transformed_output = self.transform_by_tsne(np_flat_output)
+        else:
+            transformed_output = self.normalize(np_flat_output)
+
+        self.transformed_list.append(transformed_output)
+        return output
+
+    def get_transformed_list(self):
+        return self.transformed_list.copy()
