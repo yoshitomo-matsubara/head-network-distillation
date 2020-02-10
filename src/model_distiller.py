@@ -5,6 +5,7 @@ import time
 
 import torch
 import torchvision
+from torch import distributed as dist
 from torch.nn import DataParallel, SyncBatchNorm
 from torch.nn.parallel import DistributedDataParallel
 
@@ -172,6 +173,7 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
                       best_val_top1_accuracy, config, args, ckpt_file_path)
         lr_scheduler.step()
 
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))

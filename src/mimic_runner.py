@@ -3,6 +3,7 @@ import datetime
 import time
 
 import torch
+from torch import distributed as dist
 from torch import nn
 from torch.backends import cudnn
 from torch.nn import DataParallel
@@ -158,6 +159,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
         scheduler.step()
 
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))

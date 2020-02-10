@@ -3,6 +3,7 @@ import datetime
 import time
 
 import torch
+from torch import distributed as dist
 from torch.backends import cudnn
 from torch.nn import DataParallel
 from torch.nn.parallel.distributed import DistributedDataParallel
@@ -125,6 +126,7 @@ def train(model, train_loader, valid_loader, best_valid_acc, criterion, device, 
             save_ckpt(model_without_ddp, best_valid_acc, epoch, ckpt_file_path, model_type)
         scheduler.step()
 
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
