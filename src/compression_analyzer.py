@@ -109,7 +109,7 @@ def plot_compression_rates(model, avg_input_data_size, avg_compressed_input_data
     extract_compression_rates(model, org_data_size_list, compressed_data_size_list, name_list)
     xs = list(range(len(org_data_size_list)))
     if not misc_util.check_if_plottable():
-        print('Average Input Data Size: {}\tCompressed: {}'.format(avg_input_data_size,avg_compressed_input_data_size))
+        print('Average Input Data Size: {}\tCompressed: {}'.format(avg_input_data_size, avg_compressed_input_data_size))
         print('Layer\tOriginal Data Size\tCompressed Data Size')
         for i in range(len(xs)):
             print('{}\t{}\t{}'.format(name_list[i], org_data_size_list[i], compressed_data_size_list[i]))
