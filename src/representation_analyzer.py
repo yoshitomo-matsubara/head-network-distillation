@@ -98,7 +98,7 @@ def run(args):
         model = module_util.get_model(config, device)
         model_config = config['model']
 
-    model_type, _, _, _ = module_util.resume_from_ckpt(model, model_config, args.init)
+    model_type, _, _, _ = module_util.resume_from_ckpt(model, model_config, False)
     split_name = args.split
     data_loader = train_loader if split_name == 'train' else valid_loader if split_name == 'valid' else test_loader
     analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name, args.method)
