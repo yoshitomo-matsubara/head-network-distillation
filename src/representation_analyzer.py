@@ -58,6 +58,7 @@ def analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name
     model.eval()
     accumulated_tensor_dict = dict()
     with torch.no_grad():
+        print('Computing mean inputs ...')
         for batch_idx, (sample_batch, targets) in enumerate(data_loader):
             for x, y in zip(sample_batch, targets):
                 class_label = y.item()
@@ -71,7 +72,9 @@ def analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name
         for y, (x, num_samples) in accumulated_tensor_dict.items():
             mean_x = x / num_samples
             mean_input_list.append(mean_x)
+
         mean_batch = torch.stack(mean_input_list)
+        print('Analyzing layer-wise discriminability ...')
         preds = model(mean_batch)
 
     transformed_output_list = list()
