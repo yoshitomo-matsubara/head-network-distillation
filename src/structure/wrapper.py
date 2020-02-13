@@ -72,10 +72,11 @@ class RunTimeWrapper(CompressionWrapper):
 
 
 class RepresentationWrapper(nn.Module):
-    def __init__(self, org_module, method='tsne'):
+    def __init__(self, org_module, method='tsne', dim=2):
         super().__init__()
         self.org_module = org_module
         self.method = method
+        self.dim = dim
         self.transformed_list = list()
 
     @staticmethod
@@ -85,7 +86,7 @@ class RepresentationWrapper(nn.Module):
         return (np_mat - min_values) / (max_values - min_values)
 
     def transform_by_tsne(self, np_flat_output):
-        transformed_output = TSNE(n_components=2).fit_transform(np_flat_output)
+        transformed_output = TSNE(n_components=self.dim).fit_transform(np_flat_output)
         return self.normalize(transformed_output)
 
     def forward(self, *input):

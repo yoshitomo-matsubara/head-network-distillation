@@ -8,7 +8,7 @@ from torch.nn import DataParallel
 
 from myutils.common import file_util, yaml_util
 from structure.wrapper import RepresentationWrapper
-from utils import main_util, mimic_util, misc_util, module_util, module_wrap_util
+from utils import main_util, mimic_util, module_util, module_wrap_util
 
 
 def get_argparser():
@@ -16,6 +16,7 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--split', default='train', help='dataset split')
     argparser.add_argument('--method', default='tsne', help='representation method')
+    argparser.add_argument('--dim', type=int, default=2, help='number of dimensions after transformation')
     argparser.add_argument('--output', help='output plot file path')
     argparser.add_argument('-cpu', action='store_true', help='use CPU')
     return argparser
@@ -44,14 +45,15 @@ def assess_discriminabilities(transformed_outputs):
     return value_list
 
 
-def analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name, method, model_type, output_file_path):
+def analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name,
+                             method, dim, model_type, output_file_path):
     if output_file_path is None:
-        output_file_path = './{}_with_mean_inputs.eps'.format(model_type)
+        output_file_path = './{}_with_mean_inputs_by_{}.eps'.format(model_type, '{}_{}-dim'.format(method, dim))
 
     file_util.make_parent_dirs(output_file_path)
     model = model.module if isinstance(model, DataParallel) else model
     input_batch = torch.rand(input_shape).unsqueeze(0).to(device)
-    module_wrap_util.wrap_decomposable_modules(model, RepresentationWrapper, input_batch, method=method)
+    module_wrap_util.wrap_decomposable_modules(model, RepresentationWrapper, input_batch, method=method, dim=dim)
     if device.type == 'cuda':
         model = DataParallel(model)
 
@@ -110,7 +112,8 @@ def run(args):
     model_type, _, _, _ = module_util.resume_from_ckpt(model, model_config, False)
     split_name = args.split
     data_loader = train_loader if split_name == 'train' else valid_loader if split_name == 'valid' else test_loader
-    analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name, args.method, model_type, args.output)
+    analyze_with_mean_inputs(model, input_shape, data_loader, device, split_name,
+                             args.method, args.dim, model_type, args.output)
 
 
 if __name__ == '__main__':
