@@ -173,7 +173,7 @@ def run(args):
     input_shape = config['input_shape']
     ckpt_file_path = config['autoencoder']['ckpt']
     train_loader, valid_loader, test_loader = main_util.get_data_loaders(config, distributed)
-    if not args.evaluate:
+    if not args.test_only:
         train(train_loader, valid_loader, input_shape, config, device, distributed, device_ids)
 
     autoencoder, _ = ae_util.get_autoencoder(config, device)
