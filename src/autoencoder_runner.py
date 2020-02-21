@@ -19,6 +19,7 @@ def get_argparser():
     argparser.add_argument('--config', required=True, help='yaml file path')
     argparser.add_argument('--device', default='cuda', help='device')
     argparser.add_argument('-test_only', action='store_true', help='only test model')
+    argparser.add_argument('-extended_only', action='store_true', help='test extended model only')
     # distributed training parameters
     argparser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
     argparser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
@@ -180,9 +181,16 @@ def run(args):
     autoencoder, _ = ae_util.get_autoencoder(config, device)
     resume_from_ckpt(ckpt_file_path, autoencoder)
     extended_model, model = ae_util.get_extended_model(autoencoder, config, input_shape, device)
+    if not args.extended_only:
+        if device.type == 'cuda':
+            model = DistributedDataParallel(model, device_ids=device_ids) if distributed \
+                else DataParallel(model)
+        evaluate(model, test_loader, device, title='[Original model]')
+
     if device.type == 'cuda':
         extended_model = DistributedDataParallel(extended_model, device_ids=device_ids) if distributed \
             else DataParallel(extended_model)
+
     evaluate(extended_model, test_loader, device, title='[Mimic model]')
 
 
