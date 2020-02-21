@@ -150,7 +150,8 @@ def train(train_loader, valid_loader, input_shape, config, device, distributed, 
 
         train_epoch(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval)
         valid_acc = validate(ae_without_ddp, valid_loader, config, device, distributed, device_ids)
-        if valid_acc < best_valid_acc and main_util.is_main_process():
+        if valid_acc > best_valid_acc and main_util.is_main_process():
+            print('Updating ckpt (Best top1 accuracy: {:.4f} -> {:.4f})'.format(best_valid_acc, valid_acc))
             best_valid_acc = valid_acc
             save_ckpt(ae_without_ddp, epoch, best_valid_acc, ckpt_file_path, ae_type)
         scheduler.step()
