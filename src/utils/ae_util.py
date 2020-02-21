@@ -53,7 +53,7 @@ def get_head_model(config, input_shape, device):
     return extract_head_model(model, input_shape, device, org_model_config['partition_idx'])
 
 
-def extend_model(autoencoder, model, input_shape, device, partition_idx):
+def extend_model(autoencoder, model, input_shape, device, partition_idx, skip_bottleneck_size):
     if partition_idx is None or partition_idx == 0:
         return nn.Sequential(autoencoder, model)
 
@@ -62,11 +62,12 @@ def extend_model(autoencoder, model, input_shape, device, partition_idx):
     x = torch.rand(1, *input_shape).to(device)
     module_util.extract_decomposable_modules(module, x, modules)
     extended_model = BaseExtendedModel(modules[:partition_idx], autoencoder, modules[partition_idx:]).to(device)
-    extended_model.compute_ae_bottleneck_size(x, True)
+    if not skip_bottleneck_size:
+        extended_model.compute_ae_bottleneck_size(x, True)
     return extended_model
 
 
-def get_extended_model(autoencoder, config, input_shape, device):
+def get_extended_model(autoencoder, config, input_shape, device, skip_bottleneck_size=False):
     org_model_config = config['org_model']
     model_config = yaml_util.load_yaml_file(org_model_config['config'])
     sub_model_config = model_config['model']
@@ -75,4 +76,5 @@ def get_extended_model(autoencoder, config, input_shape, device):
 
     model = module_util.get_model(model_config, device)
     module_util.resume_from_ckpt(model, sub_model_config, False)
-    return extend_model(autoencoder, model, input_shape, device, org_model_config['partition_idx']), model
+    return extend_model(autoencoder, model, input_shape, device,
+                        org_model_config['partition_idx'], skip_bottleneck_size), model
