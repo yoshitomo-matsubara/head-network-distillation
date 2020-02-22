@@ -95,7 +95,7 @@ def evaluate(model, data_loader, device, interval=1000, split_name='Test', title
 
 def validate(ae_without_ddp, data_loader, config, device, distributed, device_ids):
     input_shape = config['input_shape']
-    extended_model, model = ae_util.get_extended_model(ae_without_ddp, config, input_shape, device, True)
+    extended_model, _ = ae_util.get_extended_model(ae_without_ddp, config, input_shape, device, True)
     if distributed:
         extended_model = DistributedDataParallel(extended_model, device_ids=device_ids)
     return evaluate(extended_model, data_loader, device, split_name='Validation')
