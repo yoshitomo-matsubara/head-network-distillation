@@ -166,7 +166,7 @@ def train(train_loader, valid_loader, input_shape, config, device, distributed, 
 
 def run(args):
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         cudnn.benchmark = True
 

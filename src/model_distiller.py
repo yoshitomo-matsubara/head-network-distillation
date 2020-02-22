@@ -189,9 +189,11 @@ def main(args):
 
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     print(args)
-    torch.backends.cudnn.benchmark = True
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+
     config = yaml_util.load_yaml_file(args.config)
-    device = torch.device(args.device)
+    device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     dataset_config = config['dataset']
     input_shape = config['input_shape']
     train_config = config['train']
