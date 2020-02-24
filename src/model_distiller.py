@@ -5,6 +5,7 @@ import time
 
 import torch
 import torchvision
+from torch import distributed as dist
 from torch.nn import DataParallel, SyncBatchNorm
 from torch.nn.parallel import DistributedDataParallel
 
@@ -12,8 +13,7 @@ from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util, module_util
 from structure.logger import MetricLogger, SmoothedValue
 from tools.distillation import DistillationBox
-from utils import main_util, mimic_util
-from utils.dataset import general_util
+from utils import main_util, mimic_util, dataset_util
 
 try:
     from apex import amp
@@ -173,6 +173,7 @@ def distill(teacher_model, student_model, train_data_loader, val_data_loader, de
                       best_val_top1_accuracy, config, args, ckpt_file_path)
         lr_scheduler.step()
 
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -188,15 +189,17 @@ def main(args):
 
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
     print(args)
-    torch.backends.cudnn.benchmark = True
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+
     config = yaml_util.load_yaml_file(args.config)
-    device = torch.device(args.device)
+    device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     dataset_config = config['dataset']
     input_shape = config['input_shape']
     train_config = config['train']
     test_config = config['test']
     train_data_loader, val_data_loader, test_data_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
                                       jpeg_quality=-1, test_batch_size=test_config['batch_size'],
                                       distributed=distributed)

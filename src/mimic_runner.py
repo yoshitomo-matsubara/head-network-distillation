@@ -3,16 +3,16 @@ import datetime
 import time
 
 import torch
-import torch.backends.cudnn as cudnn
+from torch import distributed as dist
 from torch import nn
+from torch.backends import cudnn
 from torch.nn import DataParallel
 from torch.nn.parallel.distributed import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import func_util, module_util
 from structure.logger import MetricLogger, SmoothedValue
-from utils import main_util, mimic_util
-from utils.dataset import general_util
+from utils import main_util, mimic_util, dataset_util
 
 
 def get_argparser():
@@ -129,7 +129,6 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
     criterion_config = train_config['criterion']
     criterion = func_util.get_loss(criterion_config['type'], criterion_config['params'])
     optim_config = train_config['optimizer']
-
     optimizer = func_util.get_optimizer(student_model, optim_config['type'], optim_config['params'])
     scheduler_config = train_config['scheduler']
     scheduler = func_util.get_scheduler(optimizer, scheduler_config['type'], scheduler_config['params'])
@@ -160,6 +159,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
             save_ckpt(student_model_without_ddp, epoch, best_valid_acc, ckpt_file_path, teacher_model_type)
         scheduler.step()
 
+    dist.barrier()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -169,7 +169,7 @@ def distill(train_loader, valid_loader, input_shape, aux_weight, config, device,
 
 def run(args):
     distributed, device_ids = main_util.init_distributed_mode(args.world_size, args.dist_url)
-    device = torch.device(args.device)
+    device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
         cudnn.benchmark = True
 
@@ -180,7 +180,7 @@ def run(args):
     train_config = config['train']
     test_config = config['test']
     train_loader, valid_loader, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
                                       jpeg_quality=-1, test_batch_size=test_config['batch_size'],
                                       distributed=distributed)

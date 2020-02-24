@@ -3,14 +3,13 @@ import time
 
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
+from torch import nn
+from torch.backends import cudnn
 from torch.nn import DataParallel
 from torch.nn.parallel import DistributedDataParallel
-import torch.nn as nn
 
 from myutils.common import file_util, yaml_util
-from utils import data_util, mimic_util, module_util
-from utils.dataset import general_util
+from utils import data_util, mimic_util, module_util, dataset_util
 
 
 def get_argparser():
@@ -40,7 +39,7 @@ def predict(preds, targets):
 def test_split_model(model, head_network, tail_network, sensor_device, edge_device, spbit, config):
     dataset_config = config['dataset']
     _, _, test_loader =\
-        general_util.get_data_loaders(dataset_config, batch_size=config['train']['batch_size'],
+        dataset_util.get_data_loaders(dataset_config, batch_size=config['train']['batch_size'],
                                       rough_size=config['train']['rough_size'],
                                       reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
                                       test_batch_size=config['test']['batch_size'])

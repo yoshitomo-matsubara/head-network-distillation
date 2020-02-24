@@ -2,9 +2,10 @@ import pickle
 import sys
 
 import numpy as np
-import torch.nn as nn
+from torch import nn
 
 from utils import data_util, module_util
+from myutils.pytorch import tensor_util
 
 
 class BaseAutoencoder(nn.Module):
@@ -60,7 +61,7 @@ class BaseExtendedModel(nn.Module):
             if min_rate is None or rate < min_rate:
                 min_rate = rate
                 bo = pickle.dumps(z)
-                bqo = pickle.dumps(data_util.quantize_tensor(z))
+                bqo = pickle.dumps(tensor_util.quantize_tensor(z))
 
         output_data_size = sys.getsizeof(bo) / 1024
         quantized_output_data_size = sys.getsizeof(bqo) / 1024

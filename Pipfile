@@ -13,6 +13,7 @@ matplotlib = "*"
 pyyaml = "*"
 scipy = "*"
 pillow = "==6.2.1"
+scikit-learn = "*"
 
 [requires]
 python_version = "3.6"
