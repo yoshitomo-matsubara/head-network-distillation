@@ -40,7 +40,6 @@ def resume_from_ckpt(ckpt_file_path, autoencoder):
 
 
 def train_epoch(autoencoder, head_model, train_loader, optimizer, criterion, epoch, device, interval):
-    print('\nEpoch: {}'.format(epoch))
     autoencoder.train()
     head_model.eval()
     metric_logger = MetricLogger(delimiter='  ')
