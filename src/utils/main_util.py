@@ -93,10 +93,10 @@ def get_data_loaders(config, distributed):
     dataset_name = dataset_config['name']
     if dataset_name.startswith('caltech') or dataset_name.startswith('imagenet'):
         return dataset_util.get_data_loaders(dataset_config, train_config['batch_size'],
-                                             compress_type, compress_size,
-                                             rough_size=train_config['rough_size'],
+                                             compress_type, compress_size, rough_size=train_config['rough_size'],
                                              reshape_size=config['input_shape'][1:3],
-                                             jpeg_quality=jpeg_quality, distributed=distributed)
+                                             test_batch_size=test_config['batch_size'], jpeg_quality=jpeg_quality,
+                                             distributed=distributed)
     raise ValueError('dataset_name `{}` is not expected'.format(dataset_name))
 
 
