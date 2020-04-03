@@ -1,7 +1,7 @@
 import argparse
 import datetime
 import time
-
+import numpy as np
 import torch
 from torch import distributed as dist
 from torch.backends import cudnn
@@ -65,12 +65,15 @@ def test(model, data_loader, device, interval=1000, split_name='Test'):
     model.eval()
     metric_logger = MetricLogger(delimiter='  ')
     header = '{}:'.format(split_name)
+    proc_time_list = list()
     with torch.no_grad():
         for image, target in metric_logger.log_every(data_loader, interval, header):
             image = image.to(device, non_blocking=True)
             target = target.to(device, non_blocking=True)
+            start_time = time.time()
             output = model(image)
-
+            end_time = time.time()
+            proc_time_list.append(end_time - start_time)
             acc1, acc5 = main_util.compute_accuracy(output, target, topk=(1, 5))
             # FIXME need to take into account that the datasets
             # could have been padded in distributed setup
@@ -83,6 +86,7 @@ def test(model, data_loader, device, interval=1000, split_name='Test'):
     top1_accuracy = metric_logger.acc1.global_avg
     top5_accuracy = metric_logger.acc5.global_avg
     print(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
+    print('Processing time [sec]: {} +- {}'.format(np.average(proc_time_list), np.std(proc_time_list)))
     torch.set_num_threads(num_threads)
     return metric_logger.acc1.global_avg
 

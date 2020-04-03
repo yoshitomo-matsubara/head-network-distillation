@@ -28,7 +28,7 @@ def get_test_transformer(dataset_name, normalizer, compression_type, compressed_
 
 
 def get_data_loaders(dataset_config, batch_size=100, compression_type=None, compressed_size=None, normalized=True,
-                     rough_size=None, reshape_size=(224, 224), jpeg_quality=0, test_batch_size=1, distributed=False):
+                     rough_size=None, reshape_size=(224, 224), test_batch_size=1, jpeg_quality=0, distributed=False):
     data_config = dataset_config['data']
     dataset_name = dataset_config['name']
     train_file_path = data_config['train']

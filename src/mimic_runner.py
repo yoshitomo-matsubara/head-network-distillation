@@ -182,7 +182,7 @@ def run(args):
     train_loader, valid_loader, test_loader =\
         dataset_util.get_data_loaders(dataset_config, batch_size=train_config['batch_size'],
                                       rough_size=train_config['rough_size'], reshape_size=input_shape[1:3],
-                                      jpeg_quality=-1, test_batch_size=test_config['batch_size'],
+                                      test_batch_size=test_config['batch_size'], jpeg_quality=-1,
                                       distributed=distributed)
     teacher_model_config = config['teacher_model']
     if not args.test_only:

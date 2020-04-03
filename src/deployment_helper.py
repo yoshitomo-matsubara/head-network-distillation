@@ -41,8 +41,8 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
     _, _, test_loader =\
         dataset_util.get_data_loaders(dataset_config, batch_size=config['train']['batch_size'],
                                       rough_size=config['train']['rough_size'],
-                                      reshape_size=tuple(config['input_shape'][1:3]), jpeg_quality=-1,
-                                      test_batch_size=config['test']['batch_size'])
+                                      reshape_size=tuple(config['input_shape'][1:3]),
+                                      test_batch_size=config['test']['batch_size'], jpeg_quality=-1)
     print('Testing..')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
