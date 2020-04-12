@@ -59,7 +59,7 @@ class GeneralizedCustomLoss(CustomLoss):
         loss_dict = dict()
         for loss_name, ((teacher_path, teacher_output), (student_path, student_output)) in output_dict.items():
             _, criterion, factor = self.term_dict[loss_name]
-            loss_dict[loss_name] = criterion(teacher_output, student_output) * factor
+            loss_dict[loss_name] = criterion(student_output, teacher_output) * factor
 
         sub_total_loss = sum(loss for loss in loss_dict.values()) if len(loss_dict) > 0 else 0
         if self.org_loss_factor == 0:
