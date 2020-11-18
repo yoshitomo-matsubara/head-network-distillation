@@ -78,85 +78,89 @@ ILSVRC 2012 (a.k.a. ImageNet) dataset in the following three methods:
 
 Unzip the downloaded zip files under `./resource/ckpt/`, then there will be `./resource/ckpt/{naive,kd,hnd}/`.
 
-## Run trained models (test only)
+## Test trained models
 
 ### Naive
 ```
 # DenseNet-169
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-6ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-9ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet169_head_mimic-ver2b-12ch.yaml -test_only
 
 # DenseNet-201
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-6ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-9ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/densenet201_head_mimic-ver2b-12ch.yaml -test_only
 
 # ResNet-152
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-6ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-9ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/resnet152_head_mimic-ver2b-12ch.yaml -test_only
 
 # Inception-v3
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-6ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-9ch.yaml -test_only
+pipenv run python src/model_runner.py --config config/official/imagenet/naive/inception_v3_head_mimic-ver1b-12ch.yaml -test_only
 ```
 
 ### KD
 ```
 # DenseNet-169
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet169_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # DenseNet-201
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/densenet201_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # ResNet-152
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/resnet152_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # Inception-v3
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
+pipenv run python src/model_distiller.py --config config/official/imagenet/kd/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
 ```
 
 ### HND
 ```
 # DenseNet-169
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet169_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # DenseNet-201
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/densenet201_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # ResNet-152
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/resnet152_head_mimic-ver2b-12ch.yaml -test_only -student_only
 
 # Inception-v3
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
-pipenv run python -m torch.distributed.launch --nproc_per_node=3 --use_env src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
 ```
+
+## Train models
+If you would like to train models, you should exclude `-test_only` from the above commands, and set new file paths for student model in the yaml files.  
+To enable the distributed training mode, you should use `pipenv run python -m torch.distributed.launch --nproc_per_node=${NUM_GPUS} --use_env ONE_OF_THE_ABOVE_THREE.py  ... --world_size ${NUM_GPUS}`
