@@ -9,33 +9,32 @@ dataset:
         mean:
         std:
 
-input_shape: [3, 224, 224]
+input_shape: [3, 299, 299]
 
 teacher_model:
-    config: './config/densenet201.yaml'
+    config: './config/sample/caltech101/org/inception_v3.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 30 # 14, 30, 82 for vers. 1, 2, 3
+    end_idx: 17 # 17, 21, 26 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'densenet201_head_mimic'
-    version: &ver '2b'
+    type: &smodel_type 'inception_v3_head_mimic'
+    version: &ver '1b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic/', *distill_experiment, '.pt']
+    ckpt: !join ['./resource/ckpt/hnd/', *distill_experiment, '.pt']
     params:
         bottleneck_channel: 3
         use_aux: False
 
-
 mimic_model:
-    type: &mmodel_type 'densenet201_mimic'
+    type: &mmodel_type 'inception_v3_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/mimic/', *mimic_experiment, '.pt']
+    ckpt: !join ['./resource/ckpt/hnd/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
     batch_size: 20
-    rough_size: 256
+    rough_size: 327
     interval: -1
     optimizer:
         type: 'Adam'

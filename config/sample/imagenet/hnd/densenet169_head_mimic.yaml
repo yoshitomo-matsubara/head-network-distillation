@@ -13,24 +13,24 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/imagenet/org/resnet152.yaml'
+    config: './config/sample/imagenet/org/densenet169.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 15 # 7, 15, 55 for vers. 1, 2, 3
+    end_idx: 30 # 14, 30, 66 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'resnet152_head_mimic'
+    type: &smodel_type 'densenet169_head_mimic'
     version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     params:
         bottleneck_channel: &bottleneck_channel 12
         use_aux: False
-    ckpt: !join ['./resource/ckpt/naive/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/hnd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 mimic_model:
-    type: &mmodel_type 'resnet152_mimic'
+    type: &mmodel_type 'densenet169_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/naive/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/hnd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 train:
     epoch: 20
@@ -38,20 +38,18 @@ train:
     rough_size: 256
     interval: -1
     optimizer:
-        type: 'SGD'
+        type: 'Adam'
         params:
             lr: 0.001
-            momentum: 0.9
-            weight_decay: 0.0001
     scheduler:
         type: 'MultiStepLR'
         params:
             milestones: [5, 10, 15]
             gamma: 0.1
     criterion:
-        type: 'CrossEntropyLoss'
+        type: 'MSELoss'
         params:
-            reduction: 'mean'
+            reduction: 'sum'
 
 test:
     batch_size: 50

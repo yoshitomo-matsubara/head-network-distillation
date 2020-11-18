@@ -13,14 +13,14 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/imagenet/org/densenet169.yaml'
+    config: './config/sample/imagenet/org/mobilenet_v2.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 30 # 14, 30, 66 for vers. 1, 2, 3
+    end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'densenet169_head_mimic'
-    version: &ver '2b'
+    type: &smodel_type 'mobilenet_v2_head_mimic'
+    version: &ver '1b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     params:
         bottleneck_channel: &bottleneck_channel 12
@@ -28,7 +28,7 @@ student_model:
     ckpt: !join ['./resource/ckpt/naive/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 mimic_model:
-    type: &mmodel_type 'densenet169_mimic'
+    type: &mmodel_type 'mobilenet_v2_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/naive/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
 

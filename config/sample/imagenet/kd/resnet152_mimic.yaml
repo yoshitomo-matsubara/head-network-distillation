@@ -13,13 +13,13 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/imagenet/org/densenet169.yaml'
+    config: './config/sample/imagenet/org/resnet152.yaml'
     extract_designed_module: False
     start_idx: 0
-    end_idx: 30 # 14, 30, 66 for vers. 1, 2, 3
+    end_idx: 15 # 7, 15, 55 for vers. 1, 2, 3
 
 student_model:
-    type: &smodel_type 'densenet169_head_mimic'
+    type: &smodel_type 'resnet152_head_mimic'
     version: &ver '2b'
     experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
     params:
@@ -28,7 +28,7 @@ student_model:
     ckpt: !join ['./resource/ckpt/kd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 mimic_model:
-    type: &mmodel_type 'densenet169_mimic'
+    type: &mmodel_type 'resnet152_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
     ckpt: !join ['./resource/ckpt/kd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
 

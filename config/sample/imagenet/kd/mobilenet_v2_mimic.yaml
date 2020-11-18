@@ -13,7 +13,7 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/imagenet/org/mobilenet_v2.yaml'
+    config: './config/sample/imagenet/org/mobilenet_v2.yaml'
     extract_designed_module: False
     start_idx: 0
     end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
@@ -25,12 +25,12 @@ student_model:
     params:
         bottleneck_channel: &bottleneck_channel 12
         use_aux: False
-    ckpt: !join ['./resource/ckpt/hnd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/kd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 mimic_model:
     type: &mmodel_type 'mobilenet_v2_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/hnd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/kd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 train:
     epoch: 20
@@ -38,18 +38,27 @@ train:
     rough_size: 256
     interval: -1
     optimizer:
-        type: 'Adam'
+        type: 'SGD'
         params:
             lr: 0.001
+            momentum: 0.9
+            weight_decay: 0.0001
     scheduler:
         type: 'MultiStepLR'
         params:
             milestones: [5, 10, 15]
             gamma: 0.1
     criterion:
-        type: 'MSELoss'
-        params:
-            reduction: 'sum'
+        type: 'general'
+        org_term:
+            criterion:
+                type: 'kd'
+                params:
+                    temperature: 1.0
+                    alpha: 0.5
+                    reduction: 'batchmean'
+            factor: 1.0
+        sub_terms:
 
 test:
     batch_size: 50

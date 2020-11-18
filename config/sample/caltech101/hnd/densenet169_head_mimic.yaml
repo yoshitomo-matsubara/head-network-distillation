@@ -11,17 +11,25 @@ dataset:
 
 input_shape: [3, 224, 224]
 
-org_model:
-    config: './config/densenet169.yaml'
-    partition_idx: 0
+teacher_model:
+    config: './config/sample/caltech101/org/densenet169.yaml'
+    extract_designed_module: False
+    start_idx: 0
+    end_idx: 30 # 14, 30, 66 for vers. 1, 2, 3
 
-autoencoder:
-    type: &ae_type 'input_ae'
-    experiment: &ae_experiment !join [*dataset_name, '-', *ae_type]
-    ckpt: !join ['./resource/ckpt/autoencoder/', *ae_experiment, '.pt']
+student_model:
+    type: &smodel_type 'densenet169_head_mimic'
+    version: &ver '2b'
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/hnd/', *distill_experiment, '.pt']
     params:
-        input_channel: 3
         bottleneck_channel: 3
+        use_aux: False
+
+mimic_model:
+    type: &mmodel_type 'densenet169_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/hnd/', *mimic_experiment, '.pt']
 
 train:
     epoch: 150
@@ -40,7 +48,7 @@ train:
     criterion:
         type: 'MSELoss'
         params:
-            reduction: 'mean'
+            reduction: 'sum'
 
 test:
     batch_size: 1

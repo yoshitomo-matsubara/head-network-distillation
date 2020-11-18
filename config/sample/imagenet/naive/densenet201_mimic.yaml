@@ -13,7 +13,7 @@ dataset:
 input_shape: [3, 224, 224]
 
 teacher_model:
-    config: './config/imagenet/org/densenet201.yaml'
+    config: './config/sample/imagenet/org/densenet201.yaml'
     extract_designed_module: False
     start_idx: 0
     end_idx: 30 # 14, 30, 82 for vers. 1, 2, 3

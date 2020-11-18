@@ -13,7 +13,7 @@ dataset:
 input_shape: [3, 299, 299]
 
 teacher_model:
-    config: './config/imagenet/org/inception_v3.yaml'
+    config: './config/sample/imagenet/org/inception_v3.yaml'
     extract_designed_module: False
     start_idx: 0
     end_idx: 17 # 17, 21, 26 for vers. 1, 2, 3
@@ -25,12 +25,12 @@ student_model:
     params:
         bottleneck_channel: &bottleneck_channel 12
         use_aux: False
-    ckpt: !join ['./resource/ckpt/naive/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/kd/', *distill_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 mimic_model:
     type: &mmodel_type 'inception_v3_mimic'
     experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
-    ckpt: !join ['./resource/ckpt/naive/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
+    ckpt: !join ['./resource/ckpt/kd/', *mimic_experiment, '-', *bottleneck_channel, 'ch.pt']
 
 train:
     epoch: 20
@@ -49,9 +49,16 @@ train:
             milestones: [5, 10, 15]
             gamma: 0.1
     criterion:
-        type: 'CrossEntropyLoss'
-        params:
-            reduction: 'mean'
+        type: 'general'
+        org_term:
+            criterion:
+                type: 'kd'
+                params:
+                    temperature: 1.0
+                    alpha: 0.5
+                    reduction: 'batchmean'
+            factor: 1.0
+        sub_terms:
 
 test:
     batch_size: 50
