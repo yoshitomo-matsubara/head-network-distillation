@@ -1,0 +1,58 @@
+dataset:
+    name: &dataset_name 'caltech101'
+    root: &data_dir './resource/data/caltech101/'
+    data:
+        train: !join [*data_dir, 'train.txt']
+        valid: !join [*data_dir, 'valid.txt']
+        test: !join [*data_dir, 'test.txt']
+    normalizer:
+        mean:
+        std:
+
+input_shape: [3, 224, 224]
+
+teacher_model:
+    config: './config/sample/caltech101/org/mobilenet_v2.yaml'
+    extract_designed_module: False
+    start_idx: 0
+    end_idx: 27 # 27, 31, 55 for vers. 1, 2, 3
+
+student_model:
+    type: &smodel_type 'mobilenet_v2_head_mimic'
+    version: &ver '1b'
+    experiment: &distill_experiment !join [*dataset_name, '-', *smodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/hnd/', *distill_experiment, '.pt']
+    params:
+        bottleneck_channel: 3
+        use_aux: False
+
+mimic_model:
+    type: &mmodel_type 'mobilenet_v2_mimic'
+    experiment: &mimic_experiment !join [*dataset_name, '-', *mmodel_type, '-ver', *ver]
+    ckpt: !join ['./resource/ckpt/hnd/', *mimic_experiment, '.pt']
+
+train:
+    epoch: 150
+    batch_size: 20
+    rough_size: 256
+    interval: -1
+    optimizer:
+        type: 'Adam'
+        params:
+            lr: 0.001
+    scheduler:
+        type: 'MultiStepLR'
+        params:
+            milestones: [50, 150]
+            gamma: 0.1
+    criterion:
+        type: 'MSELoss'
+        params:
+            reduction: 'sum'
+
+test:
+    batch_size: 1
+    jquality: 0
+    compression:
+        type:
+        size:
