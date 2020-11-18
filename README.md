@@ -10,7 +10,7 @@ The official implementations of Head Network Distillation (HND) studies for imag
 
 ## Citations
 ```bibtex
-@article{matsubara2020neural,
+@article{matsubara2020head,
   title={Head Network Distillation: Splitting Distilled Deep Neural Networks for Resource-constrained Edge Computing Systems},
   author={Matsubara, Yoshitomo and Callegaro, Davide and Baidya, Sabur and Levorato, Marco and Singh, Sameer},
   year={2020}
