@@ -2,7 +2,7 @@
 
 The official implementations of Head Network Distillation (HND) studies for image classification tasks:
 - "Head Network Distillation: Splitting Distilled Deep Neural Networks for Resource-constrained Edge Computing Systems," [IEEE Access](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=6287639)  
-[PDF (Open Access)]  
+[[PDF (Open Access)](https://ieeexplore.ieee.org/document/9265295)]  
 - "Distilled Split Deep Neural Networks for Edge-assisted Real-time Systems," [MobiCom 2019 Workshop HotEdgeVideo '19](https://www.microsoft.com/en-us/research/event/the-1st-workshop-on-hot-topics-in-video-analytics-and-intelligent-edges/)  
 [[PDF (Open Access)](https://dl.acm.org/doi/abs/10.1145/3349614.3356022)]
 
