@@ -9,7 +9,8 @@ from torch.nn import DataParallel
 from torch.nn.parallel import DistributedDataParallel
 
 from myutils.common import file_util, yaml_util
-from utils import data_util, mimic_util, module_util, dataset_util
+from myutils.pytorch import tensor_util
+from utils import mimic_util, module_util, dataset_util
 
 
 def get_argparser():
@@ -73,10 +74,10 @@ def test_split_model(model, head_network, tail_network, sensor_device, edge_devi
             if spbit in ['8bits', '16bits']:
                 if spbit == '8bits':
                     # Quantization and dequantization
-                    qzs = data_util.quantize_tensor(zs)
+                    qzs = tensor_util.quantize_tensor(zs)
                     head_end_time = time.time()
                     file_size_list.append(file_util.get_binary_object_size(qzs))
-                    zs = data_util.dequantize_tensor(qzs)
+                    zs = tensor_util.dequantize_tensor(qzs)
                 else:
                     # Casting and recasting
                     zs = zs.half()
