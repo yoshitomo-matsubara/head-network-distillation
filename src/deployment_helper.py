@@ -8,6 +8,7 @@ from torch.backends import cudnn
 from torch.nn import DataParallel
 from torch.nn.parallel import DistributedDataParallel
 
+from model_distiller import load_ckpt
 from myutils.common import file_util, yaml_util
 from myutils.pytorch import tensor_util
 from utils import mimic_util, module_util, dataset_util
@@ -24,6 +25,7 @@ def get_argparser():
     argparser.add_argument('--spbit', help='casting or quantization at splitting point: '
                                            '`8bits`, `16bits` or None (32 bits)')
     argparser.add_argument('-org', action='store_true', help='option to split an original DNN model')
+    argparser.add_argument('-mimic', action='store_true', help='option to split a mimic DNN model')
     argparser.add_argument('-scpu', action='store_true', help='option to make sensor-side model runnable without cuda')
     argparser.add_argument('-ecpu', action='store_true', help='option to make edge-server model runnable without cuda')
     argparser.add_argument('-test', action='store_true', help='option to check if performance changes after splitting')
@@ -196,6 +198,12 @@ def run(args):
         model, teacher_model_type =\
             mimic_util.get_org_model(config['teacher_model'], device)
         if args.org and head_output_file_path is not None and tail_output_file_path is not None:
+            split_original_model(model, input_shape, device, config, sensor_device, edge_device, partition_idx,
+                                 head_output_file_path, tail_output_file_path, args.test, args.spbit)
+        elif args.mimic:
+            model = mimic_util.get_mimic_model_easily(config, sensor_device)
+            student_model_config = config['mimic_model']
+            load_ckpt(student_model_config['ckpt'], model=model, strict=True)
             split_original_model(model, input_shape, device, config, sensor_device, edge_device, partition_idx,
                                  head_output_file_path, tail_output_file_path, args.test, args.spbit)
         elif head_output_file_path is not None and tail_output_file_path is not None:
