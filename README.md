@@ -66,6 +66,7 @@ mv ILSVRC2012_img_val.tar ~/dataset/ilsvrc2012/val/
 wget https://raw.githubusercontent.com/soumith/imagenetloader.torch/master/valprep.sh
 mv valpre.sh ~/dataset/ilsvrc2012/val/
 cd ~/dataset/ilsvrc2012/val/
+tar -xvf ILSVRC2012_img_val.tar
 sh valpre.sh
 ```
 
@@ -75,7 +76,7 @@ pipenv run python dataset_converter.py --input ~/dataset/ilsvrc2012/ --dataset i
 ```
 
 ## Trained models
-We publish bottleneck-injected DenseNet-169, -201, Resnet-152 and Inception-v3 trained on 
+We publish bottleneck-injected DenseNet-169, DenseNet-201, ResNet-152 and Inception-v3 trained on 
 ILSVRC 2012 (a.k.a. ImageNet) dataset in the following three methods:
 - [Naive training](https://drive.google.com/file/d/1yvFslgeewBsHx_GpSJd1MFEcbVTn_Ymq/view?usp=sharing)
 - [Knowledge Distillation](https://drive.google.com/file/d/16Q6KxUXjgK5vCsQ5IGt5P1Z21FVAE54R/view?usp=sharing)
