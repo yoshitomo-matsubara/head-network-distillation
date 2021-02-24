@@ -64,10 +64,10 @@ rm -r *.tar
 
 mv ILSVRC2012_img_val.tar ~/dataset/ilsvrc2012/val/
 wget https://raw.githubusercontent.com/soumith/imagenetloader.torch/master/valprep.sh
-mv valpre.sh ~/dataset/ilsvrc2012/val/
+mv valprep.sh ~/dataset/ilsvrc2012/val/
 cd ~/dataset/ilsvrc2012/val/
 tar -xvf ILSVRC2012_img_val.tar
-sh valpre.sh
+sh valprep.sh
 ```
 
 ```
