@@ -49,12 +49,18 @@ pipenv install
 
 
 ## Download datasets
+As the terms of use do not allow to distribute the URLs, you will have to create an account [here](http://image-net.org/download) to get the URLs, and replace `${TRAIN_DATASET_URL}` and `${VAL_DATASET_URL}` with them.
+```
+wget ${TRAIN_DATASET_URL} ./
+wget ${VAL_DATASET_URL} ./
+```
 
 ### ILSVRC 2012 (ImageNet) dataset
 ```
 # Go to home directory
 mkdir ~/dataset/ilsvrc2012/{train,val} -p
 mv ILSVRC2012_img_train.tar ~/dataset/ilsvrc2012/train/
+mv ILSVRC2012_img_val.tar ~/dataset/ilsvrc2012/val/
 cd ~/dataset/ilsvrc2012/train/
 tar -xvf ILSVRC2012_img_train.tar
 for f in *.tar; do
@@ -64,7 +70,6 @@ for f in *.tar; do
 done
 rm -r *.tar
 
-mv ILSVRC2012_img_val.tar ~/dataset/ilsvrc2012/val/
 wget https://raw.githubusercontent.com/soumith/imagenetloader.torch/master/valprep.sh
 mv valprep.sh ~/dataset/ilsvrc2012/val/
 cd ~/dataset/ilsvrc2012/val/
