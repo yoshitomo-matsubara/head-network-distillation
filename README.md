@@ -5,6 +5,10 @@ The official implementations of Head Network Distillation (HND) studies for imag
 [[PDF (Open Access)](https://ieeexplore.ieee.org/document/9265295)]  
 - "Distilled Split Deep Neural Networks for Edge-assisted Real-time Systems," [MobiCom 2019 Workshop HotEdgeVideo '19](https://www.microsoft.com/en-us/research/event/the-1st-workshop-on-hot-topics-in-video-analytics-and-intelligent-edges/)  
 [[PDF (Open Access)](https://dl.acm.org/doi/abs/10.1145/3349614.3356022)]  
+
+Part of this repository is used as baselines in the following paper:
+- "BottleFit: Learning Compressed Representations in Deep Neural Networks for Effective and Efficient Split Computing," [WoWMoM '22](https://computing.ulster.ac.uk/WoWMoM2022/index.html)  
+[[Preprint](https://arxiv.org/abs/2201.02693)]  
   
 Looking for **object detection tasks**? Take a look at https://github.com/yoshitomo-matsubara/hnd-ghnd-object-detectors as well
 
@@ -88,8 +92,9 @@ ILSVRC 2012 (a.k.a. ImageNet) dataset in the following three methods:
 - [Naive training](https://drive.google.com/file/d/1yvFslgeewBsHx_GpSJd1MFEcbVTn_Ymq/view?usp=sharing)
 - [Knowledge Distillation](https://drive.google.com/file/d/16Q6KxUXjgK5vCsQ5IGt5P1Z21FVAE54R/view?usp=sharing)
 - [Head Network Distillation](https://drive.google.com/file/d/1EpTMxSGMU9tDUpEX3bIj_EXGskzAdZC_/view?usp=sharing)
+- [Autoencoder](https://drive.google.com/file/d/1cWreZ0Wa3wbfDAYxfVlLRFEZtz6F_R7L/view?usp=sharing)
 
-Unzip the downloaded zip files under `./resource/ckpt/`, then there will be `./resource/ckpt/{naive,kd,hnd}/`.
+Unzip the downloaded zip files under `./resource/ckpt/`, then there will be `./resource/ckpt/{naive,kd,hnd,ae}/`.
 
 ## Test trained models
 
@@ -172,6 +177,41 @@ pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/ince
 pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-6ch.yaml -test_only -student_only
 pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-9ch.yaml -test_only -student_only
 pipenv run python src/mimic_runner.py --config config/official/imagenet/hnd/inception_v3_head_mimic-ver1b-12ch.yaml -test_only -student_only
+```
+
+### Autoencoder
+```
+# DenseNet-169
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b15ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet169-b18ch.yaml -test_only -student_only
+
+# DenseNet-201
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b15ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4densenet201-b18ch.yaml -test_only -student_only
+
+# ResNet-152
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b15ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4resnet152-b18ch.yaml -test_only -student_only
+
+# Inception-v3
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b3ch.yaml -test_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b6ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b9ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b12ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b15ch.yaml -test_only -student_only
+pipenv run python src/mimic_runner.py --config config/official/imagenet/ae/middle_ae4inception_v3-b18ch.yaml -test_only -student_only
 ```
 
 ## Train models
