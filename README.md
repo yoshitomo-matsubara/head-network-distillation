@@ -89,10 +89,10 @@ pipenv run python dataset_converter.py --input ~/dataset/ilsvrc2012/ --dataset i
 ## Trained models
 We publish bottleneck-injected DenseNet-169, DenseNet-201, ResNet-152 and Inception-v3 trained on 
 ILSVRC 2012 (a.k.a. ImageNet) dataset in the following three methods:
-- [Naive training](https://drive.google.com/file/d/1yvFslgeewBsHx_GpSJd1MFEcbVTn_Ymq/view?usp=sharing)
-- [Knowledge Distillation](https://drive.google.com/file/d/16Q6KxUXjgK5vCsQ5IGt5P1Z21FVAE54R/view?usp=sharing)
-- [Head Network Distillation](https://drive.google.com/file/d/1EpTMxSGMU9tDUpEX3bIj_EXGskzAdZC_/view?usp=sharing)
-- [Autoencoder](https://drive.google.com/file/d/1cWreZ0Wa3wbfDAYxfVlLRFEZtz6F_R7L/view?usp=sharing)
+- [Naive training](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/naive.zip)
+- Knowledge Distillation ([densenet-169/201](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/kd-densenet.zip), [resnet152](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/kd-resnet.zip), [inception_v3](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/kd-inception.zip))
+- [Head Network Distillation](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/hnd.zip)
+- [Autoencoder](https://github.com/yoshitomo-matsubara/head-network-distillation/releases/download/google_drive-to-github/ae.zip)
 
 Unzip the downloaded zip files under `./resource/ckpt/`, then there will be `./resource/ckpt/{naive,kd,hnd,ae}/`.
 
